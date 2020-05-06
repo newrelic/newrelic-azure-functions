@@ -11,17 +11,23 @@ This function collects logs from Azure Blob Storage and forwards the contents to
 |Runtime stack|Node.js|
 |Version|12|
 
+![blob1](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/BlobForwarder/blob1.png?raw=true)
+
 3. Select the **Hosting** tab and select **Windows** as the Operating System
 4. Fill out remaining required fields as desired.
 
 ## Create and Deploy the Azure Function
 
 1. Once your function app has been created, select the `+` button next to **Functions**
+![func-plus](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/func-plus.png?raw=true)
 2. Click **In-portal** followed by **More templates...**. Next click **Finish and view templates**.
 3. Search for "blob" and select **Azure Blob Storage trigger**
+![blob-trig](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/BlobForwarder/blob-trig.png?raw=true)
 4. Define the desired **Name**, **Path** to your blob, and **Storage account connection**
-5. Paste the New Relic [function code](./index.js) in the function's existing `index.js` and click **Save**.
+![blob3](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/BlobForwarder/blob3.png?raw=true)
+5. Paste the New Relic [function code](index.js?raw=true) in the function's existing `index.js` and click **Save**.
 6. Navigate to the **Integrate** tab and verify **Blob parameter name** is set to `myBlob`.
+![blob4](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/BlobForwarder/blob4.png?raw=true)
 7. Configure your function's [Application settings](https://docs.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings) and define the desired application settings. `NR_INSERT_KEY` must be configured here.
 
 ## Azure Application Settings
