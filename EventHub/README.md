@@ -11,17 +11,24 @@ This function collects logs (e.g. Activity and Diagnostic logs) from Azure Event
 |Runtime stack|Node.js|
 |Version|12|
 
+![ehub1](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub1.png?raw=true)
+
 3. Select the **Hosting** tab and select **Windows** as the Operating System
 4. Fill out remaining required fields as desired and **Create** your Function App.
 
 ## Create and Deploy the Azure Function
 
-1. Once your function app has been created, expand it and select the `+` button next to **Functions**
+1. Once your function app has been created, expand it and select the `+` button next to **Functions** 
+![func-plus](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/func-plus.png?raw=true)
 2. Click **In-portal** followed by **More templates...**. Next click **Finish and view templates**.
+![ehub3](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub3.png?raw=true)
 3. Search for "event hub" and select **Azure Event Hub trigger**
+![ehub5](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub5.png?raw=true)
 4. Define the desired **Name**, **Event Hub connection** and **Event Hub name** of the Event Hub to collect logs from, as well as the **Event Hub consumer group**
+![ehub6](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub6.png?raw=true)
 5. Paste the New Relic [function code](index.js) in the function's existing `index.js` and click **Save**.
 6. Navigate to the **Integrate** tab and verify **Event parameter name** is set to `eventHubMessages` and **Event Hub Cardinality** is set to `Many`.
+![ehub7](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub7.png?raw=true)
 7. [Configure](#azure-application-settings) your function's Application settings and define the desired application settings. `NR_INSERT_KEY` must be configured here.
 
 ## Azure Application Settings
