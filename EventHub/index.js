@@ -225,8 +225,8 @@ function httpSend(data, context) {
       options.headers["X-Insert-Key"] = NR_INSERT_KEY
     }
 
-    const req = https.request(options, (res) => {
-      let body = ''
+    var req = https.request(options, (res) => {
+      var body = ''
       res.setEncoding('utf8')
       res.on('data', (chunk) => {
         body += chunk // don't really do anything with body
