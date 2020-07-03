@@ -4,8 +4,8 @@
     "@semantic-release/release-notes-generator",
     ["@semantic-release/github", {
       "assets": [
-        {"path": "BlobForwarder/index.js", "label": "BlobForwarder Azure Function"},
-        {"path": "EventHub/index.js", "label": "EventHub Azure Function"}
+        {"path": "BlobForwarder/index.js", name: 'index-BlobForwarder-${nextRelease.gitTag}.js', "label": "BlobForwarder Azure Function"},
+        {"path": "EventHub/index.js", name: 'index-EventHub-${nextRelease.gitTag}.js', "label": "EventHub Azure Function"}
       ]
     }],
     ["@semantic-release/npm", {
