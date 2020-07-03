@@ -16,6 +16,7 @@
   "homepage": "https://github.com/newrelic-experimental/newrelic-azure-functions#readme",
   "dependencies": {},
   "devDependencies": {
+    "@semantic-release/changelog": "^5.0.1",
     "eslint": "^7.3.1"
   }
 }
