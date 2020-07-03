@@ -1,6 +1,6 @@
 [![Community Project header](https://github.com/newrelic/open-source-office/raw/master/examples/categories/images/Community_Project.png)](https://github.com/newrelic/open-source-office/blob/master/examples/categories/index.md#community-project)
 
-# newrelic-azure-functions [![Known Vulnerabilities](https://snyk.io/test/github/newrelic-experimental/newrelic-azure-functions/badge.svg?targetFile=package.json)](https://snyk.io/test/github/newrelic-experimental/newrelic-azure-functions?targetFile=package.json)
+# newrelic-azure-functions ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/newrelic/newrelic-azure-functions?include_prereleases) [![Known Vulnerabilities](https://snyk.io/test/github/newrelic-experimental/newrelic-azure-functions/badge.svg?targetFile=package.json)](https://snyk.io/test/github/newrelic-experimental/newrelic-azure-functions?targetFile=package.json)
 
 This repository contains functions to collect and forward logs from Microsoft Azure Blob Storage and Event Hubs.
 
