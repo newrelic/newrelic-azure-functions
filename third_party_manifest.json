@@ -1,0 +1,22 @@
+{
+  "lastUpdated": "Fri Jul 03 2020 13:00:12 GMT+0200 (Central European Summer Time)",
+  "projectName": "newrelic-azure-functions",
+  "projectUrl": "git+https://github.com/newrelic-experimental/newrelic-azure-functions.git",
+  "includeDev": true,
+  "dependencies": {},
+  "devDependencies": {
+    "eslint@7.3.1": {
+      "name": "eslint",
+      "version": "7.3.1",
+      "range": "^7.3.1",
+      "licenses": "MIT",
+      "repoUrl": "https://github.com/eslint/eslint",
+      "versionedRepoUrl": "https://github.com/eslint/eslint/tree/v7.3.1",
+      "licenseFile": "node_modules/eslint/LICENSE",
+      "licenseUrl": "https://github.com/eslint/eslint/blob/v7.3.1/LICENSE",
+      "licenseTextSource": "file",
+      "publisher": "Nicholas C. Zakas",
+      "email": "nicholas+npm@nczconsulting.com"
+    }
+  }
+}
