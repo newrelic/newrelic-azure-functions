@@ -21,7 +21,7 @@ const NR_MAX_RETRIES = process.env.NR_MAX_RETRIES || 3
 const NR_RETRY_INTERVAL =  process.env.NR_RETRY_INTERVAL || 2000 // default: 2 seconds
 
 module.exports = async function main(context, myBlob) {
-  if (!NR_LICENSE_KEY && !NR_INSERT_KEY && true) {
+  if (!NR_LICENSE_KEY && !NR_INSERT_KEY) {
     context.log.error('You have to configure either your LICENSE key or insights insert key. '
       + 'Please follow the instructions in README')
     return
