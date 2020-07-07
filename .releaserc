@@ -15,7 +15,7 @@
       "npmPublish": false
     }],
     ["@semantic-release/git", {
-      "assets": ["docs/CHANGELOG.md", "package.json"],
+      "assets": ["docs/CHANGELOG.md", "package.json", "package-lock.json"],
     }],
   ]
 }
