@@ -23,6 +23,9 @@
     "@semantic-release/npm": "^7.0.5",
     "@semantic-release/release-notes-generator": "^9.0.1",
     "eslint": "^7.3.1",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "prettier": "2.0.5",
     "semantic-release": "^17.1.1",
     "semantic-release-plugin-update-version-in-files": "^1.0.0"
   }
