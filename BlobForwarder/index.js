@@ -1,4 +1,4 @@
-/** 
+/**
 * Azure function to read from Blob Storage and forward logs to New Relic.
 */
 
@@ -21,8 +21,8 @@ const NR_MAX_RETRIES = process.env.NR_MAX_RETRIES || 3
 const NR_RETRY_INTERVAL =  process.env.NR_RETRY_INTERVAL || 2000 // default: 2 seconds
 
 module.exports = async function main(context, myBlob) {
-  if (!NR_LICENSE_KEY && !NR_INSERT_KEY) {
-    context.log.error('You have to configure either your LICENSE key or insights insert key. ' 
+  if (!NR_LICENSE_KEY && !NR_INSERT_KEY && true) {
+    context.log.error('You have to configure either your LICENSE key or insights insert key. '
       + 'Please follow the instructions in README')
     return
   }
@@ -154,7 +154,7 @@ function transformData(logs, context) {
       context.log("Type of logs: records Object")
       parsedLogs.records.forEach(log => buffer.push(log))
       return buffer
-    } 
+    }
     context.log("Type of logs: JSON Object")
     buffer.push(parsedLogs)
     return buffer
@@ -165,7 +165,7 @@ function transformData(logs, context) {
     return buffer
   }
 
-  if (typeof parsedLogs[0] === 'object') { 
+  if (typeof parsedLogs[0] === 'object') {
     // type JSON records
     if (parsedLogs[0].records !== undefined) {
       context.log("Type of logs: records Array")
@@ -190,12 +190,12 @@ function transformData(logs, context) {
 
 function parseData(logs, context) {
   let newLogs = logs
-    
+
   if (!Array.isArray(logs)) {
     try {
       newLogs = JSON.parse(logs) // for strings let's see if we can parse it into Object
     } catch {
-      context.log.warn("cannot parse logs to JSON") 
+      context.log.warn("cannot parse logs to JSON")
     }
   } else {
     newLogs = logs.map(log => {     // for arrays let's see if we can parse it into array of Objects
