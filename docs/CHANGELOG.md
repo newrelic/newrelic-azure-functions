@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.0.1...v1.0.2) (2020-07-07)
+
+
+### Bug Fixes
+
+* [LOGGING-2708] Automatically updates version in index.js before packaging ([f5899b2](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/f5899b2323706437738972b4824dadb67ea524e8))
+
 ## [1.0.1](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.0.0...v1.0.1) (2020-07-07)
 
 
