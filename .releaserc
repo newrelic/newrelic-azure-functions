@@ -17,5 +17,12 @@
     ["@semantic-release/git", {
       "assets": ["docs/CHANGELOG.md", "package.json", "package-lock.json"],
     }],
+    ["semantic-release-plugin-update-version-in-files", {
+      "files": [
+        "BlobForwarder/index.js",
+        "EventHub/index.js"
+      ],
+      "placeholder": "0.0.0-development"
+    }]
   ]
 }

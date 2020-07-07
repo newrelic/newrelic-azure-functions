@@ -8,7 +8,7 @@ var https = require('https')
 var url = require('url')
 var zlib = require('zlib')
 
-const VERSION = '1.0.0'
+const VERSION = '0.0.0-development'
 
 // Global constants
 const NR_LICENSE_KEY = process.env.NR_LICENSE_KEY
