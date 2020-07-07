@@ -8,14 +8,14 @@
         {"path": "EventHub/index.js", name: 'index-EventHub-${nextRelease.gitTag}.js', "label": "EventHub Azure Function"}
       ]
     }],
-    ["@semantic-release/npm", {
-      "npmPublish": false
-    }],
     ["@semantic-release/changelog", {
       "changelogFile": "docs/CHANGELOG.md",
     }],
+    ["@semantic-release/npm", {
+      "npmPublish": false
+    }],
     ["@semantic-release/git", {
-      "assets": ["docs/CHANGELOG.md"],
+      "assets": ["docs/CHANGELOG.md", "package.json"],
     }],
   ]
 }
