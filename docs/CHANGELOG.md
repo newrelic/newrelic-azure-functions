@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.0.2...v1.0.3) (2020-07-09)
+
+
+### Bug Fixes
+
+* [LOGGING-2708] Missing details to complete the repository setup ([a48cccb](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/a48cccb5a76658e8236e9795e73da9de29de53c7))
+
 ## [1.0.2](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.0.1...v1.0.2) (2020-07-07)
 
 
