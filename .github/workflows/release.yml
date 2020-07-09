@@ -1,4 +1,4 @@
-name: CI
+name: New Relic Azure Functions - Merge to master and potential release creation
 
 on:
   push:
@@ -8,8 +8,10 @@ on:
       types: [semantic-release]
 
 env:
-  THIRD_PARTY_GIT_AUTHOR_EMAIL: opensource+bot@newrelic.com
-  THIRD_PARTY_GIT_AUTHOR_NAME: nr-opensource-bot
+  GIT_AUTHOR_EMAIL: opensource+bot@newrelic.com
+  GIT_AUTHOR_NAME: New Relic OpenSource Bot
+  GIT_COMMITTER_EMAIL: opensource+bot@newrelic.com
+  GIT_COMMITTER_NAME: New Relic OpenSource Bot
 
 jobs:
   job-generate-third-party-notices:
@@ -58,8 +60,8 @@ jobs:
           LAST_CHANGED_COMMIT=$(git log -1 --format=format:%H --full-diff package.json)
 
           if [ $LAST_CHANGED_COMMIT = $LATEST_COMMIT ]; then
-            git config user.email "${{ env.THIRD_PARTY_GIT_AUTHOR_EMAIL }}"
-            git config user.name "${{ env.THIRD_PARTY_GIT_AUTHOR_NAME }}"
+            git config user.email "${{ env.GIT_AUTHOR_EMAIL }}"
+            git config user.name "${{ env.GIT_AUTHOR_NAME }}"
 
             oss third-party manifest
             oss third-party notices

@@ -21,7 +21,7 @@ New Relic hosts and moderates an online forum where customers can interact with 
 >Add the url for the support thread here
 
 ## Contributing
-Full details about how to contribute to
+
 Contributions to improve newrelic-azure-functions are encouraged! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
 To execute our corporate CLA, which is required if your contribution is on behalf of a company, or if you have any questions, please drop us an email at open-source@newrelic.com.
 
