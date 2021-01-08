@@ -46,7 +46,7 @@ module.exports = async function main(context, eventHubMessages) {
           compressedPayload,
           context,
         ]);
-        context.log('Logs payload successfully sent to New Relic');
+        context.log('Logs payload successfully sent to New Relic.');
       } catch(e) {
         context.log.error(
           'Max retries reached: failed to send logs payload to New Relic'
@@ -54,7 +54,7 @@ module.exports = async function main(context, eventHubMessages) {
         context.log.error('Exception:', JSON.stringify(e));
       }
     } catch(e) {
-      context.log.error('Error during payload compression');
+      context.log.error('Error during payload compression.');
       context.log.error('Exception:', JSON.stringify(e));
     }
   }
