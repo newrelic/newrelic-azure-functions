@@ -328,7 +328,7 @@ THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH RE
 
 ### semantic-release
 
-This product includes source derived from [semantic-release](https://github.com/semantic-release/semantic-release) ([v17.1.1](https://github.com/semantic-release/semantic-release/tree/v17.1.1)), distributed under the [MIT License](https://github.com/semantic-release/semantic-release/blob/v17.1.1/LICENSE):
+This product includes source derived from [semantic-release](https://github.com/semantic-release/semantic-release) ([v17.2.3](https://github.com/semantic-release/semantic-release/tree/v17.2.3)), distributed under the [MIT License](https://github.com/semantic-release/semantic-release/blob/v17.2.3/LICENSE):
 
 ```
 MIT License
