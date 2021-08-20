@@ -1,4 +1,4 @@
-[![Community Project header](https://github.com/newrelic/open-source-office/raw/master/examples/categories/images/Community_Project.png)](https://github.com/newrelic/open-source-office/blob/master/examples/categories/index.md#community-project)
+[![Community header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Community_Project.png)](https://opensource.newrelic.com/oss-category/#community-project)
 
 # newrelic-azure-functions 
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/newrelic/newrelic-azure-functions?include_prereleases) [![Known Vulnerabilities](https://snyk.io/test/github/newrelic-experimental/newrelic-azure-functions/badge.svg?targetFile=package.json)](https://snyk.io/test/github/newrelic-experimental/newrelic-azure-functions?targetFile=package.json)
