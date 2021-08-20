@@ -52,14 +52,16 @@ module.exports = async function main(context, myBlob) {
           compressedPayload,
           context,
         ]);
-        context.log('Logs payload successfully sent to New Relic');
-      } catch {
+        context.log('Logs payload successfully sent to New Relic.');
+      } catch(e) {
         context.log.error(
           'Max retries reached: failed to send logs payload to New Relic'
         );
+        context.log.error('Exception:', JSON.stringify(e));
       }
-    } catch {
-      context.log.error('Error during payload  compression');
+    } catch(e) {
+      context.log.error('Error during payload compression.');
+      context.log.error('Exception:', JSON.stringify(e));
     }
   }
 };
