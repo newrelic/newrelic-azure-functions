@@ -5,7 +5,7 @@
     ["@semantic-release/github", {
       "assets": [
         {"path": "BlobForwarder/index.js", name: 'index-BlobForwarder-${nextRelease.gitTag}.js', "label": "BlobForwarder Azure Function"},
-        {"path": "EventHub/index.js", name: 'index-EventHub-${nextRelease.gitTag}.js', "label": "EventHub Azure Function"}
+        {"path": "EventHubForwarder/index.js", name: 'index-EventHubForwarder-${nextRelease.gitTag}.js', "label": "EventHubForwarder Azure Function"}
       ]
     }],
     ["@semantic-release/changelog", {
@@ -20,7 +20,7 @@
     ["semantic-release-plugin-update-version-in-files", {
       "files": [
         "BlobForwarder/index.js",
-        "EventHub/index.js"
+        "EventHubForwarder/index.js"
       ],
       "placeholder": "0.0.0-development"
     }]

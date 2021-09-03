@@ -4,8 +4,8 @@
       "type": "eventHubTrigger",
       "name": "eventHubMessages",
       "direction": "in",
-      "eventHubName": "myeventhub",
-      "connection": "Myeventhub_RootManageSharedAccessKey_EVENTHUB",
+      "eventHubName": "%EVENTHUB_NAME%",
+      "connection": "EVENTHUB_CONSUMER_CONNECTION",
       "cardinality": "many",
       "consumerGroup": "$Default"
     }
