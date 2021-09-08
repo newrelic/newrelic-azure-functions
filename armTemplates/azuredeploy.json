@@ -136,7 +136,7 @@
         "createActivityLogsDiagnosticSetting": "[or(parameters('forwardAdministrativeAzureActivityLogs'), parameters('forwardAlertAzureActivityLogs'), parameters('forwardAutoscaleAzureActivityLogs'), parameters('forwardPolicyAzureActivityLogs'), parameters('forwardRecommendationAzureActivityLogs'), parameters('forwardResourceHealthAzureActivityLogs'), parameters('forwardSecurityAzureActivityLogs'), parameters('forwardServiceHealthAzureActivityLogs'))]",
         
         "pluginVersion": "0.0.0-development",
-        "eventHubForwarderFunctionArtifact": "[concat('https://github.com/newrelic/newrelic-azure-functions/releases/download/v', variables('pluginVersion'), '/EventHubForwarder-', variables('pluginVersion'), '.zip')]"
+        "eventHubForwarderFunctionArtifact": "[concat('https://github.com/newrelic/newrelic-azure-functions/releases/download/v', variables('pluginVersion'), '/EventHubForwarder-v', variables('pluginVersion'), '.zip')]"
     },
     "resources": [
         {
