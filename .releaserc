@@ -1,24 +1,6 @@
 {
   "plugins": [
     "@semantic-release/commit-analyzer",
-    "@semantic-release/release-notes-generator",
-    ["@semantic-release/github", {
-      "assets": [
-        {"path": "BlobForwarder/index.js", name: 'index-BlobForwarder-${nextRelease.gitTag}.js', "label": "BlobForwarder Azure Function"},
-        {"path": "EventHubForwarder/index.js", name: 'index-EventHubForwarder-${nextRelease.gitTag}.js', "label": "EventHubForwarder Azure Function"},
-        {"path": "EventHubForwarder-${nextRelease.gitTag}.zip", "label": "EventHubForwarder Azure ZipDeploy package"},
-        {"path": "armTemplates/azuredeploy.json","label": "Azure Resource Manager (ARM) Template for the EventHubForwarder function"}
-      ]
-    }],
-    ["@semantic-release/changelog", {
-      "changelogFile": "docs/CHANGELOG.md",
-    }],
-    ["@semantic-release/npm", {
-      "npmPublish": false
-    }],
-    ["@semantic-release/git", {
-      "assets": ["docs/CHANGELOG.md", "package.json", "package-lock.json"],
-    }],
     ["semantic-release-plugin-update-version-in-files", {
       "files": [
         "BlobForwarder/index.js",
@@ -29,6 +11,14 @@
     }],
     ["@semantic-release/exec", {
       "prepareCmd": "zip -r EventHubForwarder-${nextRelease.gitTag}.zip EventHubForwarder/function.json EventHubForwarder/index.js host.json package.json"
+    }],
+    ["@semantic-release/github", {
+      "assets": [
+        {"path": "BlobForwarder/index.js", name: 'index-BlobForwarder-${nextRelease.gitTag}.js', "label": "BlobForwarder Azure Function"},
+        {"path": "EventHubForwarder/index.js", name: 'index-EventHubForwarder-${nextRelease.gitTag}.js', "label": "EventHubForwarder Azure Function"},
+        {"path": "EventHubForwarder-${nextRelease.gitTag}.zip", "label": "EventHubForwarder Azure ZipDeploy package"},
+        {"path": "armTemplates/azuredeploy.json","label": "Azure Resource Manager (ARM) Template for the EventHubForwarder function"}
+      ]
     }]
   ]
 }

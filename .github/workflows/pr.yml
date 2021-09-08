@@ -20,3 +20,8 @@ jobs:
       run: npm ci
     - name: Run Linting
       run: npm run lint
+
+    - name: Run semantic-release
+      env:
+        GITHUB_TOKEN: ${{ secrets.OPENSOURCE_BOT_TOKEN }}
+      run: npx semantic-release
