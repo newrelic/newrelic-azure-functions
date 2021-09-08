@@ -1,4 +1,5 @@
 {
+  "branches: ["LOGGING-6037_define_azure_template"],
   "plugins": [
     "@semantic-release/commit-analyzer",
     ["semantic-release-plugin-update-version-in-files", {
