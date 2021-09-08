@@ -1,6 +1,9 @@
 name: New Relic Azure Functions - Pull Request
 
-on: [pull_request]
+on:
+  push:
+      branches:
+        - LOGGING-6037_define_azure_template
 
 jobs:
   lint:
