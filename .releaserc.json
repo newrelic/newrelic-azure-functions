@@ -11,13 +11,13 @@
       "placeholder": "0.0.0-development"
     }],
     ["@semantic-release/exec", {
-      "prepareCmd": "zip -r EventHubForwarder-${nextRelease.gitTag}.zip EventHubForwarder/function.json EventHubForwarder/index.js host.json package.json"
+      "prepareCmd": "zip -r EventHubForwarder.zip EventHubForwarder/function.json EventHubForwarder/index.js host.json package.json"
     }],
     ["@semantic-release/github", {
       "assets": [
         {"path": "BlobForwarder/index.js", "name": "index-BlobForwarder-${nextRelease.gitTag}.js", "label": "BlobForwarder Azure Function"},
         {"path": "EventHubForwarder/index.js", "name": "index-EventHubForwarder-${nextRelease.gitTag}.js", "label": "EventHubForwarder Azure Function"},
-        {"path": "EventHubForwarder-${nextRelease.gitTag}.zip", "label": "EventHubForwarder Azure ZipDeploy package"},
+        {"path": "EventHubForwarder.zip", "name": "EventHubForwarder-${nextRelease.gitTag}.zip","label": "EventHubForwarder Azure ZipDeploy package"},
         {"path": "armTemplates/azuredeploy.json","label": "Azure Resource Manager (ARM) Template for the EventHubForwarder function"}
       ]
     }]
