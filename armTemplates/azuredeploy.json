@@ -265,10 +265,6 @@
                             "value": "[parameters('retryInterval')]"
                         },
                         {
-                            "name": "PLUGIN_VERSION",
-                            "value": "[variables('pluginVersion')]"
-                        },
-                        {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
                             "value": "~3"
                         },
