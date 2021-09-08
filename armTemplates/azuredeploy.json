@@ -134,9 +134,7 @@
         "functionAppName": "[concat('nrlogs-eventhubforwarder-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
         "activityLogsDiagnosticSettingName": "[concat('nrlogs-activity-log-diagnostic-setting-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
         "createActivityLogsDiagnosticSetting": "[or(parameters('forwardAdministrativeAzureActivityLogs'), parameters('forwardAlertAzureActivityLogs'), parameters('forwardAutoscaleAzureActivityLogs'), parameters('forwardPolicyAzureActivityLogs'), parameters('forwardRecommendationAzureActivityLogs'), parameters('forwardResourceHealthAzureActivityLogs'), parameters('forwardSecurityAzureActivityLogs'), parameters('forwardServiceHealthAzureActivityLogs'))]",
-        
-        "pluginVersion": "0.0.0-development",
-        "eventHubForwarderFunctionArtifact": "[concat('https://github.com/newrelic/newrelic-azure-functions/releases/download/v', variables('pluginVersion'), '/EventHubForwarder-v', variables('pluginVersion'), '.zip')]"
+        "eventHubForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/EventHubForwarder.zip"
     },
     "resources": [
         {
