@@ -118,18 +118,16 @@
     },
     "variables": {
         "location": "[if(equals(parameters('location'), ''), resourceGroup().location, parameters('location'))]",
-
         "onePerResourceGroupUniqueSuffix": "[uniqueString(resourceGroup().id)]",
         "createNewEventHubNamespace": "[equals(parameters('eventHubNamespace'), '')]",
         "eventHubNamespaceName": "[if(variables('createNewEventHubNamespace'), concat('nrlogs-eventhub-namespace-', variables('onePerResourceGroupUniqueSuffix')), parameters('eventHubNamespace'))]",
         "createNewEventHub": "[equals(parameters('eventHubName'), '')]",
         "eventHubName": "[if(variables('createNewEventHub'), 'nrlogs-eventhub', parameters('eventHubName'))]",
+        "eventHubConsumerGroupName": "nrlogs-consumergroup",
         "logConsumerAuthorizationRuleName": "nrlogs-consumer-policy",
         "logProducerAuthorizationRuleName": "nrlogs-producer-policy",
-
         "storageAccountName": "[concat('nrlogs', variables('onePerResourceGroupUniqueSuffix'))]",
         "servicePlanName": "[concat('nrlogs-serviceplan-', variables('onePerResourceGroupUniqueSuffix'))]",
-        
         "onePerResourceGroupAndEventHubUniqueSuffix": "[uniqueString(resourceGroup().id, variables('eventHubNamespaceName'), variables('eventHubName'))]",
         "functionAppName": "[concat('nrlogs-eventhubforwarder-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
         "activityLogsDiagnosticSettingName": "[concat('nrlogs-activity-log-diagnostic-setting-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
@@ -162,6 +160,15 @@
             "properties": {
                 "messageRetentionInDays": 1
             }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups",
+            "name": "[concat(variables('eventHubNamespaceName'), '/', variables('eventHubName'), '/', variables('eventHubConsumerGroupName'))]",
+            "apiVersion": "2017-04-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHubName'))]"
+            ],
+            "properties": {}
         },
         {
             "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
