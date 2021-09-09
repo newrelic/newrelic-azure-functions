@@ -251,6 +251,10 @@
                             "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName')),'2017-04-01').primaryConnectionString]"
                         },
                         {
+                            "name": "EVENTHUB_CONSUMER_GROUP",
+                            "value": "[variables('eventHubConsumerGroupName')]"
+                        },
+                        {
                             "name": "NR_LICENSE_KEY",
                             "value": "[parameters('newRelicLicenseKey')]"
                         },
