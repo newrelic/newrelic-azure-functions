@@ -1,16 +1,7 @@
 {
+  "branches": ["LOGGING-6037_define_azure_template"],
   "plugins": [
     "@semantic-release/commit-analyzer",
-    "@semantic-release/release-notes-generator",
-    ["@semantic-release/changelog", {
-      "changelogFile": "docs/CHANGELOG.md"
-    }],
-    ["@semantic-release/npm", {
-      "npmPublish": false
-    }],
-    ["@semantic-release/git", {
-      "assets": ["docs/CHANGELOG.md", "package.json", "package-lock.json"],
-    }],
     ["semantic-release-plugin-update-version-in-files", {
       "files": [
         "BlobForwarder/index.js",
