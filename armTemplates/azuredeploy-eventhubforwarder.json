@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "0.0.0.1",
+    "contentVersion": "1.0.0.0",
     "parameters": {
         "newRelicLicenseKey": {
             "type": "string",
@@ -148,10 +148,7 @@
                 "tier": "Standard",
                 "capacity": 1
             },
-            "properties": {},
-            "tags": {
-                "NewRelicProduct": "Logs"
-            }
+            "properties": {}
         },
         {
             "type": "Microsoft.EventHub/namespaces/eventhubs",
@@ -184,6 +181,7 @@
             "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
             "apiVersion": "2017-04-01",
             "name": "[concat(variables('eventHubNamespaceName'), '/', variables('logProducerAuthorizationRuleName'))]",
+            "condition": "[variables('createActivityLogsDiagnosticSetting')]",
             "location": "[variables('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
@@ -230,7 +228,8 @@
             "location": "[variables('location')]",
             "kind": "functionapp",
             "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
             ],
             "properties": {
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
