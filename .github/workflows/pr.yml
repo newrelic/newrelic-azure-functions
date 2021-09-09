@@ -1,9 +1,6 @@
 name: New Relic Azure Functions - Pull Request
 
-on:
-  push:
-      branches:
-        - LOGGING-6037_define_azure_template
+on: [pull_request]
 
 jobs:
   lint:
@@ -23,8 +20,3 @@ jobs:
       run: npm ci
     - name: Run Linting
       run: npm run lint
-
-    - name: Run semantic-release
-      env:
-        GITHUB_TOKEN: ${{ secrets.OPENSOURCE_BOT_TOKEN }}
-      run: npx semantic-release
