@@ -9,7 +9,7 @@
       "npmPublish": false
     }],
     ["@semantic-release/git", {
-      "assets": ["docs/CHANGELOG.md", "package.json", "package-lock.json"],
+      "assets": ["docs/CHANGELOG.md", "package.json", "package-lock.json"]
     }],
     ["semantic-release-plugin-update-version-in-files", {
       "files": [
