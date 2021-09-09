@@ -1,0 +1,378 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "newRelicLicenseKey": {
+            "type": "string",
+            "metadata": {
+                "description": "New Relic License Key"
+            }
+        },
+        "eventHubNamespace": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Event Hub Namespace where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with 'nrlogs-')."
+            }
+        },
+        "eventHubName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Event Hub where all the Azure Platform logs are being sent to in order to be forwarded to New Relic. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrlogs')."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group."
+            }
+        },
+        "newRelicEndpoint": {
+            "type": "string",
+            "defaultValue": "https://log-api.newrelic.com/log/v1",
+            "metadata": {
+                "description": "The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
+            }
+        },
+        "logCustomAttributes": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "List of semicolon-separated custom attributes that you would like to enrich the forwarded logs with. This can be useful, for example, if you want to indicate common attributes shared by all the logs collected in this account, such as: 'environment:production;department:sales;country:Germany'"
+            }
+        },
+        "maxRetriesToResendLogs": {
+            "type": "int",
+            "defaultValue": 3,
+            "minValue": 1,
+            "metadata": {
+                "description": "Maximum number of attempts the forwarder function will perform in the event of a failure while sending your data."
+            }
+        },
+        "retryInterval": {
+            "type": "int",
+            "defaultValue": 2000,
+            "minValue": 100,
+            "metadata": {
+                "description": "Number of milliseconds to wait between consecutive retries to send the logs."
+            }
+        },
+        "forwardAdministrativeAzureActivityLogs": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription."
+            }
+        },
+        "forwardAlertAzureActivityLogs": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Contains the record of activations for Azure alerts. An example of an Alert event is CPU % on myVM has been over 80 for the past 5 minutes."
+            }
+        },
+        "forwardAutoscaleAzureActivityLogs": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Contains the record of any events related to the operation of the autoscale engine based on any autoscale settings you have defined in your subscription. An example of an Autoscale event is Autoscale scale up action failed."
+            }
+        },
+        "forwardPolicyAzureActivityLogs": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Contains records of all effect action operations performed by Azure Policy. Examples of Policy events include Audit and Deny. Every action taken by Policy is modeled as an operation on a resource."
+            }
+        },
+        "forwardRecommendationAzureActivityLogs": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Contains recommendation events from Azure Advisor."
+            }
+        },
+        "forwardResourceHealthAzureActivityLogs": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Contains the record of any resource health events that have occurred to your Azure resources. An example of a Resource Health event is Virtual Machine health status changed to unavailable. Resource Health events can represent one of four health statuses: Available, Unavailable, Degraded, and Unknown. Additionally, Resource Health events can be categorized as being Platform Initiated or User Initiated."
+            }
+        },
+        "forwardSecurityAzureActivityLogs": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Contains the record of any alerts generated by Azure Security Center. An example of a Security event is Suspicious double extension file executed."
+            }
+        },
+        "forwardServiceHealthAzureActivityLogs": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Contains the record of any service health incidents that have occurred in Azure. An example of a Service Health event SQL Azure in East US is experiencing downtime. Service Health events come in Six varieties: Action Required, Assisted Recovery, Incident, Maintenance, Information, or Security. These events are only created if you have a resource in the subscription that would be impacted by the event."
+            }
+        }
+    },
+    "variables": {
+        "location": "[if(equals(parameters('location'), ''), resourceGroup().location, parameters('location'))]",
+        "onePerResourceGroupUniqueSuffix": "[uniqueString(resourceGroup().id)]",
+        "createNewEventHubNamespace": "[equals(parameters('eventHubNamespace'), '')]",
+        "eventHubNamespaceName": "[if(variables('createNewEventHubNamespace'), concat('nrlogs-eventhub-namespace-', variables('onePerResourceGroupUniqueSuffix')), parameters('eventHubNamespace'))]",
+        "createNewEventHub": "[equals(parameters('eventHubName'), '')]",
+        "eventHubName": "[if(variables('createNewEventHub'), 'nrlogs-eventhub', parameters('eventHubName'))]",
+        "eventHubConsumerGroupName": "nrlogs-consumergroup",
+        "logConsumerAuthorizationRuleName": "nrlogs-consumer-policy",
+        "logProducerAuthorizationRuleName": "nrlogs-producer-policy",
+        "storageAccountName": "[concat('nrlogs', variables('onePerResourceGroupUniqueSuffix'))]",
+        "servicePlanName": "[concat('nrlogs-serviceplan-', variables('onePerResourceGroupUniqueSuffix'))]",
+        "onePerResourceGroupAndEventHubUniqueSuffix": "[uniqueString(resourceGroup().id, variables('eventHubNamespaceName'), variables('eventHubName'))]",
+        "functionAppName": "[concat('nrlogs-eventhubforwarder-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
+        "activityLogsDiagnosticSettingName": "[concat('nrlogs-activity-log-diagnostic-setting-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
+        "createActivityLogsDiagnosticSetting": "[or(parameters('forwardAdministrativeAzureActivityLogs'), parameters('forwardAlertAzureActivityLogs'), parameters('forwardAutoscaleAzureActivityLogs'), parameters('forwardPolicyAzureActivityLogs'), parameters('forwardRecommendationAzureActivityLogs'), parameters('forwardResourceHealthAzureActivityLogs'), parameters('forwardSecurityAzureActivityLogs'), parameters('forwardServiceHealthAzureActivityLogs'))]",
+        "eventHubForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/EventHubForwarder.zip"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.EventHub/namespaces",
+            "apiVersion": "2017-04-01",
+            "name": "[variables('eventHubNamespaceName')]",
+            "condition": "[variables('createNewEventHubNamespace')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard",
+                "capacity": 1
+            },
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/eventhubs",
+            "apiVersion": "2017-04-01",
+            "name": "[concat(variables('eventHubNamespaceName'), '/', variables('eventHubName'))]",
+            "condition": "[variables('createNewEventHub')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces/', variables('eventHubNamespaceName'))]"
+            ],
+            "properties": {
+                "messageRetentionInDays": 1
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups",
+            "name": "[concat(variables('eventHubNamespaceName'), '/', variables('eventHubName'), '/', variables('eventHubConsumerGroupName'))]",
+            "apiVersion": "2017-04-01",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHubName'))]"
+            ],
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
+            "apiVersion": "2017-04-01",
+            "name": "[concat(variables('eventHubNamespaceName'), '/', variables('logConsumerAuthorizationRuleName'))]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Listen"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
+            "apiVersion": "2017-04-01",
+            "name": "[concat(variables('eventHubNamespaceName'), '/', variables('logProducerAuthorizationRuleName'))]",
+            "condition": "[variables('createActivityLogsDiagnosticSetting')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
+            ],
+            "properties": {
+                "rights": [
+                    "Send"
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-04-01",
+            "name": "[variables('storageAccountName')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2"
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2020-06-01",
+            "kind": "functionapp",
+            "location": "[variables('location')]",
+            "name": "[variables('servicePlanName')]",
+            "properties": {
+                "name": "[variables('servicePlanName')]",
+                "targetWorkerCount": 1,
+                "targetWorkerSizeId": 1,
+                "workerSize": "1",
+                "numberOfWorkers": 1,
+                "computeMode": "Dynamic"
+            },
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2020-12-01",
+            "name": "[variables('functionAppName')]",
+            "location": "[variables('location')]",
+            "kind": "functionapp",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
+            ],
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "EVENTHUB_NAME",
+                            "value": "[variables('eventHubName')]"
+                        },
+                        {
+                            "name": "EVENTHUB_CONSUMER_CONNECTION",
+                            "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName')),'2017-04-01').primaryConnectionString]"
+                        },
+                        {
+                            "name": "EVENTHUB_CONSUMER_GROUP",
+                            "value": "[variables('eventHubConsumerGroupName')]"
+                        },
+                        {
+                            "name": "NR_LICENSE_KEY",
+                            "value": "[parameters('newRelicLicenseKey')]"
+                        },
+                        {
+                            "name": "NR_ENDPOINT",
+                            "value": "[parameters('newRelicEndpoint')]"
+                        },
+                        {
+                            "name": "NR_TAGS",
+                            "value": "[parameters('logCustomAttributes')]"
+                        },
+                        {
+                            "name": "NR_MAX_RETRIES",
+                            "value": "[parameters('maxRetriesToResendLogs')]"
+                        },
+                        {
+                            "name": "NR_RETRY_INTERVAL",
+                            "value": "[parameters('retryInterval')]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~3"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "node"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "~14"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=core.windows.net')]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=core.windows.net')]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/extensions",
+            "name": "[concat(variables('functionAppName'), '/ZipDeploy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+            ],
+            "apiVersion": "2020-12-01",
+            "properties": {
+                "packageUri": "[variables('eventHubForwarderFunctionArtifact')]"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-06-01",
+            "name": "activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment",
+            "condition": "[variables('createActivityLogsDiagnosticSetting')]",
+            "location": "[variables('location')]",
+            "subscriptionId": "[subscription().subscriptionId]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+                "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHubName'))]",
+                "[resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logProducerAuthorizationRuleName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": [
+                        {
+                            "type": "Microsoft.Insights/diagnosticSettings",
+                            "apiVersion": "2017-05-01-preview",
+                            "name": "[variables('activityLogsDiagnosticSettingName')]",
+                            "properties": {
+                                "eventHubAuthorizationRuleId": "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logProducerAuthorizationRuleName'))]",
+                                "eventHubName": "[variables('eventHubName')]",
+                                "logs": [
+                                    {
+                                        "category": "Administrative",
+                                        "enabled": "[parameters('forwardAdministrativeAzureActivityLogs')]"
+                                    },
+                                    {
+                                        "category": "Security",
+                                        "enabled": "[parameters('forwardSecurityAzureActivityLogs')]"
+                                    },
+                                    {
+                                        "category": "ServiceHealth",
+                                        "enabled": "[parameters('forwardServiceHealthAzureActivityLogs')]"
+                                    },
+                                    {
+                                        "category": "Alert",
+                                        "enabled": "[parameters('forwardAlertAzureActivityLogs')]"
+                                    },
+                                    {
+                                        "category": "Recommendation",
+                                        "enabled": "[parameters('forwardRecommendationAzureActivityLogs')]"
+                                    },
+                                    {
+                                        "category": "Policy",
+                                        "enabled": "[parameters('forwardPolicyAzureActivityLogs')]"
+                                    },
+                                    {
+                                        "category": "Autoscale",
+                                        "enabled": "[parameters('forwardAutoscaleAzureActivityLogs')]"
+                                    },
+                                    {
+                                        "category": "ResourceHealth",
+                                        "enabled": "[parameters('forwardResourceHealthAzureActivityLogs')]"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
