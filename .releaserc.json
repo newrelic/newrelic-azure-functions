@@ -10,7 +10,7 @@
       "placeholder": "0.0.0-development"
     }],
     ["@semantic-release/exec", {
-      "prepareCmd": "zip -r EventHubForwarder.zip EventHubForwarder/function.json EventHubForwarder/index.js host.json package.json"
+      "prepareCmd": "npm run package:eventhubforwarder"
     }],
     ["@semantic-release/github", {
       "assets": [
