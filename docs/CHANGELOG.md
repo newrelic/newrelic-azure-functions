@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.0.0...v1.0.1) (2021-09-09)
+
+
+### Bug Fixes
+
+* Fix colon ([#44](https://github.com/newrelic-experimental/newrelic-azure-functions/issues/44)) ([56a3e44](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/56a3e44680370417fbbedd190c5d38d6ff672951))
+
 # 1.0.0 (2020-07-09)
 
 
