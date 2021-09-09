@@ -4,7 +4,7 @@
   "description": "This repository contains functions to collect and forward logs from Microsoft Azure Blob Storage and Event Hubs.",
   "scripts": {
     "lint": "eslint ./**/*.js",
-    "package:eventhubforwarder": "zip -r EventHubForwarder.zip EventHubForwarder/function.json EventHubForwarder/index.js host.json package.json"
+    "package:eventhubforwarder": "zip -r EventHubForwarder.zip EventHubForwarder/function.json EventHubForwarder/index.js package.json"
   },
   "repository": {
     "type": "git",
