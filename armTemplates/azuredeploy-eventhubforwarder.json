@@ -374,5 +374,15 @@
                 }
             }
         }
-    ]
+    ],
+    "outputs": {
+        "connectionString": {
+            "type": "String",
+            "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName')),'2017-04-01').primaryConnectionString]"
+        },
+        "eventHubName": {
+            "type": "string",
+            "value": "[variables('eventHubName')]"
+        }
+    }
 }
