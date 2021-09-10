@@ -1,6 +1,6 @@
 {
   "name": "newrelic-azure-functions",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "This repository contains functions to collect and forward logs from Microsoft Azure Blob Storage and Event Hubs.",
   "scripts": {
     "lint": "eslint ./**/*.js",

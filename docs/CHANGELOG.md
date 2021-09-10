@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.0.1...v1.1.0) (2021-09-10)
+
+
+### Features
+
+* update EventHubForwarder ARM template and Function App configuration to read Event Hubs from the end and add template outputs for the Event Hub connection. ([050777e](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/050777e916dce4bbb2af75c42f52a183b27cae75))
+
 ## [1.0.1](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.0.0...v1.0.1) (2021-09-09)
 
 
