@@ -10,7 +10,7 @@ Currently, this integration allows you to create resources to targets Azure Acti
 This integration requires both a New Relic and Azure account.
 
 ### Install Using Azure Portal
-Retrieve your [New Relic Insights Insert Key](https://docs.newrelic.com/docs/apis/get-started/intro-apis/new-relic-api-keys/#insights-insert-key).
+Retrieve your [New Relic License Key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#ingest-license-key).
 Then click the button below to start the installation process via the Azure Portal.
 
 [![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fmaster%2FarmTemplates%2Fazuredeploy-eventhubforwarder.json)
@@ -84,9 +84,3 @@ Parameters to be configured in your Azure function's [application settings](http
 | NR_TAGS | Optional | `none` | Attributes to be added to all logs forwarded to New Relic. Semicolon delimited (e.g. `env:prod;team:myTeam`) |
 | NR_MAX_RETRIES | Optional | `3` | Number of times the function will attempt to resend data |
 | NR_RETRY_INTERVAL | Optional | `2000` | Interval between retry attempts in milliseconds |
-
-
-## Finding your Insert Key
-
-* Your New Relic Insights [insert keys](https://docs.newrelic.com/docs/insights/insights-api/get-data/query-insights-event-data-api#register) can be found here:
-`https://insights.newrelic.com/accounts/<ACCOUNT_ID>/manage/api_keys`
