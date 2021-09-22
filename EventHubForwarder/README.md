@@ -2,9 +2,9 @@ An Azure Resource Manager template to export Azure Platform logs to New Relic.
 
 ## How Does It Work?
 This integration creates and configures the Azure resources necessary to efficiently forwards logs from an Azure Event Hub to New Relic. 
-It relies on events managed by Azure Event Hub, this Event Hub subsequently batches and triggers an Azure Function to handle the transport to New Relic.
+It relies on events managed by Azure Event Hub, Event Hub subsequently batches and triggers an Azure Function to handle the transport to New Relic.
 
-Currently, this integration allows you to create resources to targets Azure Activity logs. If you have other log events that you would like to see exported using Event hub trigger, [tell us about your use case](https://github.com/newrelic/newrelic-azure-functions/issues).
+Currently, this integration allows you to create resources to targets Azure Activity logs. If you have other log events that you would like to see shipped using Event hub trigger, [tell us about your use case](https://github.com/newrelic/newrelic-azure-functions/issues).
 
 ## Installation
 This integration requires both a New Relic and Azure account.
