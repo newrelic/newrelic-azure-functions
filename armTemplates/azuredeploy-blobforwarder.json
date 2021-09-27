@@ -15,6 +15,22 @@
         "description": "The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
       }
     },
+    "maxRetriesToResendLogs": {
+      "type": "int",
+      "defaultValue": 3,
+      "minValue": 1,
+      "metadata": {
+        "description": "Maximum number of attempts the forwarder function will perform in the event of a failure while sending your data."
+      }
+    },
+    "retryInterval": {
+      "type": "int",
+      "defaultValue": 2000,
+      "minValue": 100,
+      "metadata": {
+        "description": "Number of milliseconds to wait between consecutive retries to send the logs."
+      }
+    },
     "storageAccountName": {
       "type": "string",
       "metadata": {
@@ -23,7 +39,7 @@
       "minLength": 3,
       "maxLength": 24
     },
-    "storageAccountSku": {
+    "storageAccountRedundancy": {
       "type": "string",
       "defaultValue": "Standard_LRS",
       "allowedValues": [
@@ -37,7 +53,7 @@
         "Standard_RAGZRS"
       ],
       "metadata": {
-        "description": "Sku on which to run the Azure Storage account."
+        "description": "The data in your Azure storage account is always replicated to ensure durability and high availability. Choose a replication strategy that matches your existing storage account or a new one to be created."
       }
     },
     "storageAccountKind": {
@@ -82,7 +98,7 @@
       "name": "[parameters('storageAccountName')]",
       "location": "[parameters('storageAccountLocation')]",
       "sku": {
-        "name": "[parameters('storageAccountSku')]"
+        "name": "[parameters('storageAccountRedundancy')]"
       },
       "kind": "[parameters('storageAccountKind')]",
       "properties": {
@@ -109,6 +125,14 @@
             {
               "name": "NR_ENDPOINT",
               "value": "[parameters('newRelicEndpoint')]"
+            },
+            {
+              "name": "NR_MAX_RETRIES",
+              "value": "[parameters('maxRetriesToResendLogs')]"
+            },
+            {
+              "name": "NR_RETRY_INTERVAL",
+              "value": "[parameters('retryInterval')]"
             },
             {
               "name": "AzureWebJobsStorage",
