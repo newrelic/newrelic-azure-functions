@@ -1,0 +1,178 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newRelicLicenseKey": {
+      "type": "string",
+      "metadata": {
+        "description": "New Relic License Key"
+      }
+    },
+    "newRelicEndpoint": {
+      "type": "string",
+      "defaultValue": "https://log-api.newrelic.com/log/v1",
+      "metadata": {
+        "description": "The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
+      }
+    },
+    "maxRetriesToResendLogs": {
+      "type": "int",
+      "defaultValue": 3,
+      "minValue": 1,
+      "metadata": {
+        "description": "Maximum number of attempts the forwarder function will perform in the event of a failure while sending your data."
+      }
+    },
+    "retryInterval": {
+      "type": "int",
+      "defaultValue": 2000,
+      "minValue": 100,
+      "metadata": {
+        "description": "Number of milliseconds to wait between consecutive retries to send the logs."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure Storage account."
+      },
+      "minLength": 3,
+      "maxLength": 24
+    },
+    "storageAccountRedundancy": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Standard_ZRS",
+        "Premium_LRS",
+        "Premium_ZRS",
+        "Standard_GZRS",
+        "Standard_RAGZRS"
+      ],
+      "metadata": {
+        "description": "The data in your Azure storage account is always replicated to ensure durability and high availability. Choose a replication strategy that matches your existing storage account or a new one to be created."
+      }
+    },
+    "storageAccountKind": {
+      "type": "string",
+      "defaultValue": "StorageV2",
+      "allowedValues": [
+        "Storage",
+        "StorageV2",
+        "BlobStorage",
+        "FileStorage",
+        "BlockBlobStorage"
+      ],
+      "metadata": {
+        "description": "Indicates the type of storage account. Each type supports different features and has its own pricing model. Consider these differences before you create a storage account to determine the type of account that's best for your applications or choose one that match your existing storage account."
+      }
+    },
+    "storageAccountLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where the storage account reside. (eg. Central US)"
+      }
+    },
+    "storageAccountContainer": {
+      "type": "string",
+      "metadata": {
+        "description": "A container in the storage account"
+      },
+      "minLength": 3,
+      "maxLength": 63
+    }
+  },
+  "variables": {
+    "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+    "blobForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/BlobForwarder.zip",
+    "onePerResourceGroupAndStorageAccountAndContainer": "[uniqueString(resourceGroup().id, parameters('storageAccountName'), parameters('storageAccountContainer'))]",
+    "functionAppName": "[concat('nrlogs-blobforwarder-', variables('onePerResourceGroupAndStorageAccountAndContainer'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-04-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('storageAccountLocation')]",
+      "sku": {
+        "name": "[parameters('storageAccountRedundancy')]"
+      },
+      "kind": "[parameters('storageAccountKind')]",
+      "properties": {
+        "accessTier": "Hot",
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "name": "[variables('functionAppName')]",
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-12-01",
+      "location": "[parameters('storageAccountLocation')]",
+      "kind": "functionapp",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ],
+      "properties": {
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "NR_LICENSE_KEY",
+              "value": "[parameters('newRelicLicenseKey')]"
+            },
+            {
+              "name": "NR_ENDPOINT",
+              "value": "[parameters('newRelicEndpoint')]"
+            },
+            {
+              "name": "NR_MAX_RETRIES",
+              "value": "[parameters('maxRetriesToResendLogs')]"
+            },
+            {
+              "name": "NR_RETRY_INTERVAL",
+              "value": "[parameters('retryInterval')]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountId'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountId'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "node"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "10.14.1"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "CONTAINER_NAME",
+              "value": "[parameters('storageAccountContainer')]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites/extensions",
+      "name": "[concat(variables('functionAppName'), '/ZipDeploy')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ],
+      "apiVersion": "2020-12-01",
+      "properties": {
+        "packageUri": "[variables('blobForwarderFunctionArtifact')]"
+      }
+    }
+  ],
+  "outputs": {}
+}
