@@ -4,8 +4,8 @@
       "name": "myBlob",
       "type": "blobTrigger",
       "direction": "in",
-      "path": "<PathToStorage>/{name}"
-      "connection": "<AzureStorageAccountConnection>"
+      "path": "%CONTAINER_NAME%/{name}",
+      "connection": "AzureWebJobsStorage"
     }
   ]
 }
