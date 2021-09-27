@@ -67,7 +67,7 @@
         "BlockBlobStorage"
       ],
       "metadata": {
-        "description": "Indicates the type of storage account."
+        "description": "Indicates the type of storage account. Each type supports different features and has its own pricing model. Consider these differences before you create a storage account to determine the type of account that's best for your applications or choose one that match your existing storage account."
       }
     },
     "storageAccountLocation": {
