@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.1.0...v1.2.0) (2021-09-27)
+
+
+### Features
+
+* Introduces new Azure ARM template to deploy BlobForwarder ([fa8c6b4](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/fa8c6b4a12c524aedac8734527530f71581e1e07))
+
 # [1.1.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.0.1...v1.1.0) (2021-09-10)
 
 
