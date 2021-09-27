@@ -47,4 +47,3 @@ Parameters to be configured in your Azure function's [application settings](http
 
 * Your New Relic Insights [insert keys](https://docs.newrelic.com/docs/insights/insights-api/get-data/query-insights-event-data-api#register) can be found here:
 `https://insights.newrelic.com/accounts/<ACCOUNT_ID>/manage/api_keys`
-
