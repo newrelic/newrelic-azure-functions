@@ -34,3 +34,4 @@ If you would like to contribute to this project, review [these guidelines](https
 
 ## License
 newrelic-azure-functions is licensed under the [Apache 2.0](http://apache.org/licenses/LICENSE-2.0.txt) License.
+
