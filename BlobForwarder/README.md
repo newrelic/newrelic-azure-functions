@@ -19,14 +19,17 @@ Parameters that can be configured in your Azure Resource Manager Template
 | Parameter  | Required | Default Value | Description
 |---|---|---|---|
 | New Relic License Key  | yes | `none` | Your New Relic Insights [insert key](https://docs.newrelic.com/docs/insights/insights-api/get-data/query-insights-event-data-api#register) |
-| New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/new-relic-logs/log-api/introduction-log-api#endpoint) |
-| Max Retries To Resend Logs  | no | `3` | Number of times the function will attempt to resend data |
-| Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds |
 | Storage Account Name | yes | `none` | Storage Account Name in which the Blobs are allocated. If a new name is provided, a new Storage Account will be created. More information about Storage Account in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/). |
 | Storage Account Redundancy | yes | `Standard_LRS` | The data in your Azure storage account is always replicated to ensure durability and high availability. Choose a replication strategy that matches your existing storage account or a new one to be created. More information about Storage Account Redundancy in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/common/storage-redundancy). |
 | Storage Account Kind | yes | `StorageV2` | Indicates the type of storage account. Each type supports different features and has its own pricing model. Consider these differences before you create a storage account to determine the type of account that's best for your applications or choose one that match your existing storage account. More information about Storage Account Kind in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview#types-of-storage-accounts). |
 | Storage Account Location | yes | `none` | Location where the storage account resides. |
 | Storage Account Container | yes | `none` | Container name inside the Storage Account. More information about Blob storages in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-introduction). |
+| New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/new-relic-logs/log-api/introduction-log-api#endpoint) |
+| Max Retries To Resend Logs  | no | `3` | Number of times the function will attempt to resend data |
+| Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds |
+
+### Architecture
+![blob-template-diagram](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/BlobForwarder/blob4.png?raw=true)
 
 ## Manually create an Azure Function App
 
@@ -57,7 +60,7 @@ Parameters that can be configured in your Azure Resource Manager Template
 6. Navigate to the **Integrate** tab and verify **Blob parameter name** is set to `myBlob`.
 7. Configure your function's [Application settings](https://docs.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings) and define the desired application settings. `NR_INSERT_KEY` must be configured here.
 
-## Azure Application Settings
+## NewRelic Azure Application Settings
 
 Parameters to be configured in your Azure function's [application settings](https://docs.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings). 
 
