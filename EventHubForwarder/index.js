@@ -178,7 +178,7 @@ function transformData(logs, context) {
     return buffer;
   }
 
-  if (typeof parsedLogs[0] === 'object') {
+  if (typeof parsedLogs[0] === 'object' && parsedLogs[0] !== null) {
     // type JSON records
     if (parsedLogs[0].records !== undefined) {
       context.log('Type of logs: records Array');
@@ -193,12 +193,14 @@ function transformData(logs, context) {
     // Our API can parse the data in "log" to a JSON and ignore "message", so we are good!
     return buffer;
   }
+
   if (typeof parsedLogs[0] === 'string') {
     // type string array
     context.log('Type of logs: string Array');
     parsedLogs.forEach((logString) => buffer.push({ message: logString }));
     return buffer;
   }
+
   return buffer;
 }
 
