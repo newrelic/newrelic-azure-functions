@@ -184,7 +184,7 @@ function transformData(logs, context) {
     return buffer;
   }
 
-  if (typeof parsedLogs[0] === 'object') {
+  if (typeof parsedLogs[0] === 'object' && parsedLogs[0] !== null) {
     // type JSON records
     if (parsedLogs[0].records !== undefined) {
       context.log('Type of logs: records Array');
