@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.2.0...v1.2.1) (2022-02-02)
+
+
+### Bug Fixes
+
+* add null check for parsedLogs[0] ([c44c62d](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/c44c62dab4a60ab8ed23710605ec954c0d5f7162))
+
 # [1.2.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.1.0...v1.2.0) (2021-09-27)
 
 
