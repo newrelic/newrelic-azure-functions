@@ -8,29 +8,6 @@
         "description": "New Relic License Key"
       }
     },
-    "newRelicEndpoint": {
-      "type": "string",
-      "defaultValue": "https://log-api.newrelic.com/log/v1",
-      "metadata": {
-        "description": "The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
-      }
-    },
-    "maxRetriesToResendLogs": {
-      "type": "int",
-      "defaultValue": 3,
-      "minValue": 1,
-      "metadata": {
-        "description": "Maximum number of attempts the forwarder function will perform in the event of a failure while sending your data."
-      }
-    },
-    "retryInterval": {
-      "type": "int",
-      "defaultValue": 2000,
-      "minValue": 100,
-      "metadata": {
-        "description": "Number of milliseconds to wait between consecutive retries to send the logs."
-      }
-    },
     "storageAccountName": {
       "type": "string",
       "metadata": {
@@ -38,6 +15,21 @@
       },
       "minLength": 3,
       "maxLength": 24
+    },
+    "containerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the container that will be created within the storage account. Any log file placed inside this container will be automatically sent to New Relic"
+      },
+      "minLength": 3,
+      "maxLength": 63
+    },
+    "location": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+            "description": "Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group."
+        }
     },
     "storageAccountRedundancy": {
       "type": "string",
@@ -70,28 +62,36 @@
         "description": "Indicates the type of storage account. Each type supports different features and has its own pricing model. Consider these differences before you create a storage account to determine the type of account that's best for your applications or choose one that match your existing storage account."
       }
     },
-    "storageAccountLocation": {
+    "newRelicEndpoint": {
       "type": "string",
-      "defaultValue": "",
+      "defaultValue": "https://log-api.newrelic.com/log/v1",
       "metadata": {
-        "description": "Region where the Storage Account will be deployed. Leave this blank to use the same region as the one of the resource group."
+        "description": "The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
       }
     },
-    "storageAccountContainer": {
-      "type": "string",
+    "maxRetriesToResendLogs": {
+      "type": "int",
+      "defaultValue": 3,
+      "minValue": 1,
       "metadata": {
-        "description": "A container in the storage account"
-      },
-      "minLength": 3,
-      "maxLength": 63
+        "description": "Maximum number of attempts the forwarder function will perform in the event of a failure while sending your data."
+      }
+    },
+    "retryInterval": {
+      "type": "int",
+      "defaultValue": 2000,
+      "minValue": 100,
+      "metadata": {
+        "description": "Number of milliseconds to wait between consecutive retries to send the logs."
+      }
     }
   },
   "variables": {
     "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
     "blobForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/BlobForwarder.zip",
-    "onePerResourceGroupAndStorageAccountAndContainer": "[uniqueString(resourceGroup().id, parameters('storageAccountName'), parameters('storageAccountContainer'))]",
+    "onePerResourceGroupAndStorageAccountAndContainer": "[uniqueString(resourceGroup().id, parameters('storageAccountName'), parameters('containerName'))]",
     "functionAppName": "[concat('nrlogs-blobforwarder-', variables('onePerResourceGroupAndStorageAccountAndContainer'))]",
-    "location": "[if(equals(parameters('storageAccountLocation'), ''), resourceGroup().location, parameters('storageAccountLocation'))]"
+    "location": "[if(equals(parameters('location'), ''), resourceGroup().location, parameters('location'))]"
   },
   "resources": [
     {
@@ -111,7 +111,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2021-06-01",
-      "name": "[concat(parameters('storageAccountName'), '/default/', parameters('storageAccountContainer'))]",
+      "name": "[concat(parameters('storageAccountName'), '/default/', parameters('containerName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
       ],
@@ -167,7 +167,7 @@
             },
             {
               "name": "CONTAINER_NAME",
-              "value": "[parameters('storageAccountContainer')]"
+              "value": "[parameters('containerName')]"
             }
           ]
         }
