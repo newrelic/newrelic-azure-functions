@@ -19,7 +19,7 @@
     "targetContainerName": {
       "type": "string",
       "metadata": {
-        "description": "Name of the container that contains the logs you want to forward.,"
+        "description": "Name of the container that contains the logs you want to forward."
       },
       "minLength": 3,
       "maxLength": 63
