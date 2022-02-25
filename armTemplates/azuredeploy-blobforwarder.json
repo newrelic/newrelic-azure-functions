@@ -81,8 +81,7 @@
       "location": "[variables('location')]",
       "kind": "functionapp",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('targetStorageAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName'))]"
       ],
       "properties": {
         "siteConfig": {
