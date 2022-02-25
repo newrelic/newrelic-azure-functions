@@ -57,7 +57,7 @@
   },
   "variables": {
     "targetStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('targetStorageAccountName'))]",
-    "blobForwarderFunctionArtifactTest": "https://github.com/newrelic/newrelic-azure-functions/raw/LOGGING-6270_improve_blobstorage_template/BlobForwarder/BlobForwarder.zip",
+    "blobForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/BlobForwarder.zip",
     "onePerResourceGroupAndStorageAccountAndContainer": "[uniqueString(resourceGroup().id, parameters('targetStorageAccountName'), parameters('targetContainerName'))]",
     "functionAppName": "[concat('nrlogs-blobforwarder-', variables('onePerResourceGroupAndStorageAccountAndContainer'))]",
     "location": "[if(equals(parameters('location'), ''), resourceGroup().location, parameters('location'))]",
@@ -142,7 +142,7 @@
       ],
       "apiVersion": "2020-12-01",
       "properties": {
-        "packageUri": "[variables('blobForwarderFunctionArtifactTest')]"
+        "packageUri": "[variables('blobForwarderFunctionArtifact')]"
       }
     }
   ],
