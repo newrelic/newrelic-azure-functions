@@ -8,6 +8,29 @@
         "description": "New Relic License Key"
       }
     },
+    "targetStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure Storage Account that you want to capture the log blobs from."
+      },
+      "minLength": 3,
+      "maxLength": 24
+    },
+    "targetContainerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the container that contains the logs you want to forward."
+      },
+      "minLength": 3,
+      "maxLength": 63
+    },
+    "location": {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+            "description": "Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group."
+        }
+    },
     "newRelicEndpoint": {
       "type": "string",
       "defaultValue": "https://log-api.newrelic.com/log/v1",
@@ -30,94 +53,47 @@
       "metadata": {
         "description": "Number of milliseconds to wait between consecutive retries to send the logs."
       }
-    },
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Azure Storage account."
-      },
-      "minLength": 3,
-      "maxLength": 24
-    },
-    "storageAccountRedundancy": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Standard_ZRS",
-        "Premium_LRS",
-        "Premium_ZRS",
-        "Standard_GZRS",
-        "Standard_RAGZRS"
-      ],
-      "metadata": {
-        "description": "The data in your Azure storage account is always replicated to ensure durability and high availability. Choose a replication strategy that matches your existing storage account or a new one to be created."
-      }
-    },
-    "storageAccountKind": {
-      "type": "string",
-      "defaultValue": "StorageV2",
-      "allowedValues": [
-        "Storage",
-        "StorageV2",
-        "BlobStorage",
-        "FileStorage",
-        "BlockBlobStorage"
-      ],
-      "metadata": {
-        "description": "Indicates the type of storage account. Each type supports different features and has its own pricing model. Consider these differences before you create a storage account to determine the type of account that's best for your applications or choose one that match your existing storage account."
-      }
-    },
-    "storageAccountLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "Location where the storage account reside. (eg. Central US)"
-      }
-    },
-    "storageAccountContainer": {
-      "type": "string",
-      "metadata": {
-        "description": "A container in the storage account"
-      },
-      "minLength": 3,
-      "maxLength": 63
     }
   },
   "variables": {
-    "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+    "targetStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('targetStorageAccountName'))]",
     "blobForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/BlobForwarder.zip",
-    "onePerResourceGroupAndStorageAccountAndContainer": "[uniqueString(resourceGroup().id, parameters('storageAccountName'), parameters('storageAccountContainer'))]",
-    "functionAppName": "[concat('nrlogs-blobforwarder-', variables('onePerResourceGroupAndStorageAccountAndContainer'))]"
+    "onePerResourceGroupAndStorageAccountAndContainer": "[uniqueString(resourceGroup().id, parameters('targetStorageAccountName'), parameters('targetContainerName'))]",
+    "functionAppName": "[concat('nrlogs-blobforwarder-', variables('onePerResourceGroupAndStorageAccountAndContainer'))]",
+    "location": "[if(equals(parameters('location'), ''), resourceGroup().location, parameters('location'))]",
+    "internalStorageAccountName": "[concat('nrlogs', variables('onePerResourceGroupAndStorageAccountAndContainer'))]"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "apiVersion": "2021-04-01",
-      "name": "[parameters('storageAccountName')]",
-      "location": "[parameters('storageAccountLocation')]",
-      "sku": {
-        "name": "[parameters('storageAccountRedundancy')]"
-      },
-      "kind": "[parameters('storageAccountKind')]",
-      "properties": {
-        "accessTier": "Hot",
-        "supportsHttpsTrafficOnly": true
-      }
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2021-04-01",
+        "name": "[variables('internalStorageAccountName')]",
+        "location": "[variables('location')]",
+        "sku": {
+            "name": "Standard_LRS"
+        },
+        "kind": "StorageV2"
     },
     {
       "name": "[variables('functionAppName')]",
       "type": "Microsoft.Web/sites",
       "apiVersion": "2020-12-01",
-      "location": "[parameters('storageAccountLocation')]",
+      "location": "[variables('location')]",
       "kind": "functionapp",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName'))]"
       ],
       "properties": {
         "siteConfig": {
           "appSettings": [
+            {
+              "name": "TargetAccountConnection",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('targetStorageAccountName'), ';AccountKey=', listKeys(variables('targetStorageAccountId'),'2015-05-01-preview').key1)]"
+            },
+            {
+              "name": "CONTAINER_NAME",
+              "value": "[parameters('targetContainerName')]"
+            },
             {
               "name": "NR_LICENSE_KEY",
               "value": "[parameters('newRelicLicenseKey')]"
@@ -136,11 +112,11 @@
             },
             {
               "name": "AzureWebJobsStorage",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountId'),'2015-05-01-preview').key1)]"
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('internalStorageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=core.windows.net')]"
             },
             {
               "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountId'),'2015-05-01-preview').key1)]"
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('internalStorageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=core.windows.net')]"
             },
             {
               "name": "FUNCTIONS_WORKER_RUNTIME",
@@ -153,10 +129,6 @@
             {
               "name": "FUNCTIONS_EXTENSION_VERSION",
               "value": "~3"
-            },
-            {
-              "name": "CONTAINER_NAME",
-              "value": "[parameters('storageAccountContainer')]"
             }
           ]
         }
