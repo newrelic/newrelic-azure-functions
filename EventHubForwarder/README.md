@@ -20,7 +20,7 @@ Parameters that can be configured in your Azure Resource Manager Template
 
 | Parameter  | Required | Default Value | Description
 |---|---|---|---|
-| New Relic License Key  | yes | `none` | Your New Relic Insights [insert key](https://docs.newrelic.com/docs/insights/insights-api/get-data/query-insights-event-data-api#register) |
+| New Relic License Key  | yes | `none` | Your New Relic [License_key](https://docs.newrelic.com/docs/logs/forward-logs/azure-log-forwarding/#azure-eventhub) can be created via ARM template. |
 | Event Hub Namespace | no | `none` | In case you already have a Event hub namespace configured |
 | New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/new-relic-logs/log-api/introduction-log-api#endpoint) |
 | Log Custom Attributes  | no | `none` | Attributes to be added to all logs forwarded to New Relic. Semicolon delimited (e.g. `env:prod;team:myTeam`) |
