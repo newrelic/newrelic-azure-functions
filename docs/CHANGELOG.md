@@ -1,3 +1,17 @@
+# [2.0.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.2.1...v2.0.0) (2022-12-05)
+
+
+### Features
+
+* upgrade to azure functions 4 ([#63](https://github.com/newrelic-experimental/newrelic-azure-functions/issues/63)) ([8bf1ff0](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/8bf1ff090eba4bcd1176839ae923399f0c0e331f))
+
+
+### BREAKING CHANGES
+
+* The azure functions library and node versions
+are upgraded, this could include breaking changes, and if not,
+we want to treat it as a new major anyway.
+
 ## [1.2.1](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.2.0...v1.2.1) (2022-02-02)
 
 
