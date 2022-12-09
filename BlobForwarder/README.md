@@ -1,19 +1,30 @@
 This function collects logs from Azure Blob Storage and forwards the contents to [New Relic Logs](https://docs.newrelic.com/docs/logs).
 
 ## How Does It Work?
+
 This integration creates and configures the Azure resources necessary to efficiently forwards logs from an Azure Blob Storage to New Relic.
 It relies on Azure Blob Storage trigger, which will trigger an Azure Function to handle the transport to New Relic.
 
 ## Installation
+
 This integration requires both a New Relic and Azure account.
 
+### Install through New Relic Marketplace
+
+1. Visit the New Relic Marketplace \[[US](https://one.newrelic.com/marketplace)|[EU](https://one.newrelic.com/marketplace)\]
+2. Search for "Microsoft Azure Blob Storage"
+3. Click on the "Microsoft Azure Blob Storage" tile and follow the steps.
+
 ### Install Using Azure Portal
+
 Retrieve your [New Relic License Key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#ingest-license-key).
 Then click the button below to start the installation process via the Azure Portal.
 
-[![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fmaster%2FarmTemplates%2Fazuredeploy-blobforwarder.json)
+[Deploy to Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fmaster%2FarmTemplates%2Fazuredeploy-blobforwarder.json)
+using the [Azure ARM template](../armTemplates/azuredeploy-blobforwarder.json).
 
 ### Azure Application Settings
+
 Parameters that can be configured in your Azure Resource Manager Template
 
 | Parameter  | Required | Default Value | Description
@@ -29,6 +40,7 @@ Parameters that can be configured in your Azure Resource Manager Template
 | Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds |
 
 ### Architecture
+
 ![blob-template-diagram](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/BlobForwarder/blob4.png?raw=true)
 
 ## Manually create an Azure Function App
@@ -72,8 +84,7 @@ Parameters to be configured in your Azure function's [application settings](http
 | NR_MAX_RETRIES | Optional | `3` | Number of times the function will attempt to resend data |
 | NR_RETRY_INTERVAL | Optional | `2000` | Interval between retry attempts in milliseconds |
 
-
 ### Finding your NR_LICENSE_KEY Key
 
 * Your New Relic Licence Key [license keys](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/) can be found here:
-`https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher`
+\[[US](https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher)|[EU](https://one.eu.newrelic.com/launcher/api-keys-ui.api-keys-launcher)\]

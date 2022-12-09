@@ -1,21 +1,32 @@
 An Azure Resource Manager template to export Azure Platform logs to New Relic.
 
 ## How Does It Work?
+
 This integration creates and configures the Azure resources necessary to efficiently forwards logs from an Azure Event Hub to New Relic. 
 It relies on events managed by Azure Event Hub, Event Hub subsequently batches and triggers an Azure Function to handle the transport to New Relic.
 
 Currently, this integration allows you to create resources to targets Azure Activity logs. If you have other log events that you would like to see shipped using Event hub trigger, [tell us about your use case](https://github.com/newrelic/newrelic-azure-functions/issues).
 
 ## Installation
+
 This integration requires both a New Relic and Azure account.
 
+### Install through New Relic Marketplace
+
+1. Visit the New Relic Marketplace \[[US](https://one.newrelic.com/marketplace)|[EU](https://one.newrelic.com/marketplace)\]
+2. Search for "Microsoft Azure Event Hub"
+3. Click on the "Microsoft Azure Event Hub" tile and follow the steps.
+
 ### Install Using Azure Portal
+
 Retrieve your [New Relic License Key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#ingest-license-key).
 Then click the button below to start the installation process via the Azure Portal.
 
-[![Deploy to Azure](https://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fmaster%2FarmTemplates%2Fazuredeploy-eventhubforwarder.json)
+[Deploy to Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fmaster%2FarmTemplates%2Fazuredeploy-eventhubforwarder.json)
+using the [Azure ARM template](../armTemplates/azuredeploy-eventhubforwarder.json).
 
 ### Azure Application Settings
+
 Parameters that can be configured in your Azure Resource Manager Template
 
 | Parameter  | Required | Default Value | Description
@@ -40,6 +51,7 @@ Parameters that can be configured in your Azure Resource Manager Template
 Alternatively you can configure this template that will automatically create the resource, deployed them and configure Activity Logs to forward them to New Relic.
 
 ### Architecture 
+
 ![ehub-template-diagram](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub-template-diagram.png?raw=true)
 
 ## Manually create an Azure Function App

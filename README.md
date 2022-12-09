@@ -1,15 +1,17 @@
 [![Community header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Community_Project.png)](https://opensource.newrelic.com/oss-category/#community-project)
 
-# newrelic-azure-functions 
+# New Relic Azure Functions
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/newrelic/newrelic-azure-functions?include_prereleases) [![Known Vulnerabilities](https://snyk.io/test/github/newrelic-experimental/newrelic-azure-functions/badge.svg?targetFile=package.json)](https://snyk.io/test/github/newrelic-experimental/newrelic-azure-functions?targetFile=package.json)
 
-This repository contains functions to collect and forward logs from Microsoft Azure Blob Storage and Event Hubs.
+This repository contains functions to collect and forward logs from Microsoft
+Azure Blob Storage and Event Hubs and [Azure ARM templates](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) 
+to automate the deployment of those.
 
 ## Configuration
 
 For setup instructions, click on the name of the function you wish to configure below.
 
- | Function | Description | Data Sources |
+| Function | Description | Data Sources |
 | -------------| ----------- | -------------- |
 |[New Relic Event Hub Function](EventHubForwarder)| Collects and forwards log data from Azure Event Hubs to New Relic Logs. | <ul><li>[Azure Activity and Resource Logs](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/resource-logs-stream-event-hubs)</li><li>[Azure Active Directory](https://docs.microsoft.com/en-us/azure/active-directory/reports-monitoring/tutorial-azure-monitor-stream-logs-to-event-hub)</li></ul>|
 |[New Relic Azure Blob Storage Function](BlobForwarder) | Collects and forwards log data from Azure Blob Storage to New Relic Logs.| <ul><li>[Azure App Service](https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs#enable-application-logging-windows)</li><li>[Azure Web Server](https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs#enable-web-server-logging)</li></ul> |
@@ -18,7 +20,6 @@ For setup instructions, click on the name of the function you wish to configure 
 
 Contributions to improve newrelic-azure-functions are encouraged! Keep in mind when you submit your pull request, you'll need to sign the CLA via the click-through using CLA-Assistant. You only have to sign the CLA one time per project.
 To execute our corporate CLA, which is required if your contribution is on behalf of a company, or if you have any questions, please drop us an email at open-source@newrelic.com.
-
 
 ## Community
 
