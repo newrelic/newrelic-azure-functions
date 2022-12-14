@@ -191,7 +191,7 @@
             "condition": "[variables('createActivityLogsDiagnosticSetting')]",
             "location": "[variables('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
+                "[resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName'))]"
             ],
             "properties": {
                 "rights": [
