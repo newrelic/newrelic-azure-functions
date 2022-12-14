@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.0.0...v2.0.1) (2022-12-14)
+
+
+### Bug Fixes
+
+* producer policy should depend on consumer policy ([#72](https://github.com/newrelic-experimental/newrelic-azure-functions/issues/72)) ([5deeef5](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/5deeef50872523706984c2b3ed7f4b58bbcbf575))
+
 # [2.0.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v1.2.1...v2.0.0) (2022-12-05)
 
 
