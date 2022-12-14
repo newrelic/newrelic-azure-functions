@@ -29,7 +29,7 @@ Parameters that can be configured in your Azure Resource Manager Template
 
 | Parameter  | Required | Default Value | Description
 |---|---|---|---|
-| New Relic License Key  | yes | `none` | Your New Relic Insights [insert key](https://docs.newrelic.com/docs/insights/insights-api/get-data/query-insights-event-data-api#register) |
+| New Relic License Key  | yes | `none` | Your New Relic [License key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/). |
 | Storage Account Name | yes | `none` | Storage Account Name in which the Blobs are allocated. If a new name is provided, a new Storage Account will be created. More information about Storage Account in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/). |
 | Storage Account Redundancy | yes | `Standard_LRS` | The data in your Azure storage account is always replicated to ensure durability and high availability. Choose a replication strategy that matches your existing storage account or a new one to be created. More information about Storage Account Redundancy in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/common/storage-redundancy). |
 | Storage Account Kind | yes | `StorageV2` | Indicates the type of storage account. Each type supports different features and has its own pricing model. Consider these differences before you create a storage account to determine the type of account that's best for your applications or choose one that match your existing storage account. More information about Storage Account Kind in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview#types-of-storage-accounts). |
