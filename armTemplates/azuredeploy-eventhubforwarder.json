@@ -207,7 +207,11 @@
             "sku": {
                 "name": "Standard_LRS"
             },
-            "kind": "StorageV2"
+            "kind": "StorageV2",
+            "properties": {
+                "publicNetworkAccess": "Disabled",
+                "allowBlobPublicAccess": false
+            }
         },
         {
             "type": "Microsoft.Web/serverfarms",
@@ -294,8 +298,11 @@
                             "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=core.windows.net')]"
                         }
-                    ]
-                }
+                    ],
+                    "ftpsState": "Disabled",
+                    "publicNetworkAccess": "Disabled"
+                },
+                "httpsOnly": true
             }
         },
         {
