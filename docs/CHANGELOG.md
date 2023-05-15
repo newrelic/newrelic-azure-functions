@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.0.1...v2.1.0) (2023-05-15)
+
+
+### Features
+
+* Trigger new version ([bd01120](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/bd01120f82e3e6b030a6eef7be2bd769de5b1a3e))
+
 ## [2.0.1](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.0.0...v2.0.1) (2022-12-14)
 
 
