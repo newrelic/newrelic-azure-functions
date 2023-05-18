@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.1.0...v2.2.0) (2023-05-18)
+
+
+### Features
+
+* Extends BlobForwarder ARM template to use secured settings for Azure resources ([#83](https://github.com/newrelic-experimental/newrelic-azure-functions/issues/83)) ([e42d040](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/e42d04094749ff908f3f93ec6ed36f079718721a))
+
 # [2.1.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.0.1...v2.1.0) (2023-05-15)
 
 
