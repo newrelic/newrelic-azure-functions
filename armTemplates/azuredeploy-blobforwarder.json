@@ -458,7 +458,7 @@
         "kind": "[if(parameters('disablePublicAccessToStorageAccount'), 'app', 'functionapp')]",
         "location": "[variables('location')]",
         "name": "[variables('servicePlanName')]",
-        "sku": "[if(parameters('disablePublicAccessToStorageAccount'), json('{ \"name\":\"B1\", \"tier\": \"Basic\", \"capacity\": 1 }'), json('{ \"name\": \"Y1\", \"tier\": \"Dynamic\" }'))]",
+        "sku": "[json('{ \"name\":\"B1\", \"tier\": \"Basic\", \"capacity\": 1 }')]",
         "properties": "[ if(parameters('disablePublicAccessToStorageAccount'), json('{ \"maximumElasticWorkerCount\": 1 }'), json(concat('{ \"name\": \"', variables('servicePlanName'), '\", \"targetWorkerCount\": 1, \"targetWorkerSizeId\": 1, \"workerSize\": \"1\", \"numberOfWorkers\": 1, \"computeMode\": \"Dynamic\" }'))) ]"
     },
     {
@@ -541,7 +541,7 @@
                 "value": "[if(parameters('disablePublicAccessToStorageAccount'), variables('blobForwarderFunctionArtifact'),'0')]"
               }
             ],
-            "alwaysOn": "[parameters('disablePublicAccessToStorageAccount')]",
+            "alwaysOn": true,
             "ftpsState": "Disabled",
             "publicNetworkAccess": "[if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')]"
         },

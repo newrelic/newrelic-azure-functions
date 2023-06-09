@@ -20,7 +20,7 @@ This integration requires both a New Relic and Azure account.
 Retrieve your [New Relic License Key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#ingest-license-key).
 Then click the button below to start the installation process via the Azure Portal.
 
-[Deploy to Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fmaster%2FarmTemplates%2Fazuredeploy-blobforwarder.json)
+[Deploy to Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fbasic-dedicated-plan%2FarmTemplates%2Fazuredeploy-blobforwarder.json)
 using the [Azure ARM template](../armTemplates/azuredeploy-blobforwarder.json).
 
 ### Azure Application Settings
