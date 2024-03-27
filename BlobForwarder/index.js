@@ -42,29 +42,45 @@ module.exports = async function main(context, myBlob) {
     context.log.warn('logs format is invalid');
     return;
   }
-  let compressedPayload;
-  let payloads = generatePayloads(buffer, context);
-  for (const payload of payloads) {
-    try {
-      compressedPayload = await compressData(JSON.stringify(payload));
-      try {
-        await retryMax(httpSend, NR_MAX_RETRIES, NR_RETRY_INTERVAL, [
+
+  let logLines = appendMetaDataToAllLogLines(buffer, context);
+  await compressAndSend(logLines, context);
+};
+
+function compressAndSend(data, context) {
+  return compressData(JSON.stringify(getPayload(data, context)))
+    .then((compressedPayload) => {
+      if (JSON.stringify(compressedPayload).length > NR_MAX_PAYLOAD_SIZE) {
+        let halfwayThrough = Math.floor(data.length / 2);
+
+        let arrayFirstHalf = data.slice(0, halfwayThrough);
+        let arraySecondHalf = data.slice(halfwayThrough, data.length);
+
+        return Promise.all([
+          compressAndSend(arrayFirstHalf, context),
+          compressAndSend(arraySecondHalf, context),
+        ]);
+      } else {
+        retryMax(httpSend, NR_MAX_RETRIES, NR_RETRY_INTERVAL, [
           compressedPayload,
           context,
-        ]);
-        context.log('Logs payload successfully sent to New Relic.');
-      } catch (e) {
-        context.log.error(
-          'Max retries reached: failed to send logs payload to New Relic'
-        );
-        context.log.error('Exception: ', JSON.stringify(e));
+        ])
+          .then(() =>
+            context.log('Logs payload successfully sent to New Relic.')
+          )
+          .catch((e) => {
+            context.log.error(
+              'Max retries reached: failed to send logs payload to New Relic'
+            );
+            context.log.error('Exception: ', JSON.stringify(e));
+          });
       }
-    } catch (e) {
+    })
+    .catch((e) => {
       context.log.error('Error during payload compression.');
       context.log.error('Exception: ', JSON.stringify(e));
-    }
-  }
-};
+    });
+}
 
 function compressData(data) {
   return new Promise((resolve, reject) => {
@@ -78,7 +94,22 @@ function compressData(data) {
   });
 }
 
-function generatePayloads(logs, context) {
+function appendMetaDataToAllLogLines(logs) {
+  let processedLogs = [];
+  logs.forEach((logLine) => processedLogs.push(addMetadata(logLine)));
+  return processedLogs;
+}
+
+function getPayload(logs, context) {
+  return [
+    {
+      common: getCommonAttributes(context),
+      logs: logs,
+    },
+  ];
+}
+
+function getCommonAttributes(context) {
   const common = {
     attributes: {
       plugin: {
@@ -92,34 +123,7 @@ function generatePayloads(logs, context) {
       tags: getTags(),
     },
   };
-  let payload = [
-    {
-      common: common,
-      logs: [],
-    },
-  ];
-  let payloads = [];
-
-  logs.forEach((logLine) => {
-    const log = addMetadata(logLine);
-    if (
-      JSON.stringify(payload).length + JSON.stringify(log).length <
-      NR_MAX_PAYLOAD_SIZE
-    ) {
-      payload[0].logs.push(log);
-    } else {
-      payloads.push(payload);
-      payload = [
-        {
-          common: common,
-          logs: [],
-        },
-      ];
-      payload[0].logs.push(log);
-    }
-  });
-  payloads.push(payload);
-  return payloads;
+  return common;
 }
 
 function getTags() {
