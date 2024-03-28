@@ -42,15 +42,21 @@ module.exports = async function main(context, myBlob) {
     context.log.warn('logs format is invalid');
     return;
   }
-
-  let logLines = appendMetaDataToAllLogLines(buffer, context);
+  let logLines = appendMetaDataToAllLogLines(buffer);
   await compressAndSend(logLines, context);
 };
 
 function compressAndSend(data, context) {
   return compressData(JSON.stringify(getPayload(data, context)))
     .then((compressedPayload) => {
-      if (JSON.stringify(compressedPayload).length > NR_MAX_PAYLOAD_SIZE) {
+      if (compressedPayload.length > NR_MAX_PAYLOAD_SIZE) {
+        if (data.length === 1) {
+          context.log.error(
+            'Cannot send the payload as the size of single line exceeds the limit'
+          );
+          return;
+        }
+
         let halfwayThrough = Math.floor(data.length / 2);
 
         let arrayFirstHalf = data.slice(0, halfwayThrough);
@@ -95,9 +101,7 @@ function compressData(data) {
 }
 
 function appendMetaDataToAllLogLines(logs) {
-  let processedLogs = [];
-  logs.forEach((logLine) => processedLogs.push(addMetadata(logLine)));
-  return processedLogs;
+  return logs.map((log) => addMetadata(log));
 }
 
 function getPayload(logs, context) {
@@ -110,7 +114,7 @@ function getPayload(logs, context) {
 }
 
 function getCommonAttributes(context) {
-  const common = {
+  return {
     attributes: {
       plugin: {
         type: NR_LOGS_SOURCE,
@@ -123,7 +127,6 @@ function getCommonAttributes(context) {
       tags: getTags(),
     },
   };
-  return common;
 }
 
 function getTags() {
@@ -213,25 +216,16 @@ function transformData(logs, context) {
 }
 
 function parseData(logs, context) {
-  let newLogs = logs;
-
   if (!Array.isArray(logs)) {
     try {
-      newLogs = JSON.parse(logs); // for strings let's see if we can parse it into Object
+      return JSON.parse(logs); // for strings let's see if we can parse it into Object
     } catch {
       context.log.warn('cannot parse logs to JSON');
     }
-  } else {
-    newLogs = logs.map((log) => {
-      // for arrays let's see if we can parse it into array of Objects
-      try {
-        return JSON.parse(log);
-      } catch {
-        return log;
-      }
-    });
+  } else if (typeof logs[0] === 'object' && logs[0] !== null) {
+    return logs.map((log) => JSON.parse(log));
   }
-  return newLogs;
+  return logs;
 }
 
 function httpSend(data, context) {
