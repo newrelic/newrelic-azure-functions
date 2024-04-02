@@ -46,6 +46,13 @@ module.exports = async function main(context, myBlob) {
   await compressAndSend(logLines, context);
 };
 
+/**
+ * Compress and send logs with Promise
+ * @param {Object[]} data - array of JSON object containing log message and meta data
+ * @param {Object} context - context object passed while invoking this function
+ * @returns {Promise} A promise that resolves when logs are successfully sent.
+ */
+
 function compressAndSend(data, context) {
   return compressData(JSON.stringify(getPayload(data, context)))
     .then((compressedPayload) => {
@@ -67,7 +74,7 @@ function compressAndSend(data, context) {
           compressAndSend(arraySecondHalf, context),
         ]);
       } else {
-        retryMax(httpSend, NR_MAX_RETRIES, NR_RETRY_INTERVAL, [
+        return retryMax(httpSend, NR_MAX_RETRIES, NR_RETRY_INTERVAL, [
           compressedPayload,
           context,
         ])
