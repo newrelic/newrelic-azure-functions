@@ -42,29 +42,58 @@ module.exports = async function main(context, myBlob) {
     context.log.warn('logs format is invalid');
     return;
   }
-  let compressedPayload;
-  let payloads = generatePayloads(buffer, context);
-  for (const payload of payloads) {
-    try {
-      compressedPayload = await compressData(JSON.stringify(payload));
-      try {
-        await retryMax(httpSend, NR_MAX_RETRIES, NR_RETRY_INTERVAL, [
+  let logLines = appendMetaDataToAllLogLines(buffer);
+  await compressAndSend(logLines, context);
+};
+
+/**
+ * Compress and send logs with Promise
+ * @param {Object[]} data - array of JSON object containing log message and meta data
+ * @param {Object} context - context object passed while invoking this function
+ * @returns {Promise} A promise that resolves when logs are successfully sent.
+ */
+
+function compressAndSend(data, context) {
+  return compressData(JSON.stringify(getPayload(data, context)))
+    .then((compressedPayload) => {
+      if (compressedPayload.length > NR_MAX_PAYLOAD_SIZE) {
+        if (data.length === 1) {
+          context.log.error(
+            'Cannot send the payload as the size of single line exceeds the limit'
+          );
+          return;
+        }
+
+        let halfwayThrough = Math.floor(data.length / 2);
+
+        let arrayFirstHalf = data.slice(0, halfwayThrough);
+        let arraySecondHalf = data.slice(halfwayThrough, data.length);
+
+        return Promise.all([
+          compressAndSend(arrayFirstHalf, context),
+          compressAndSend(arraySecondHalf, context),
+        ]);
+      } else {
+        return retryMax(httpSend, NR_MAX_RETRIES, NR_RETRY_INTERVAL, [
           compressedPayload,
           context,
-        ]);
-        context.log('Logs payload successfully sent to New Relic.');
-      } catch (e) {
-        context.log.error(
-          'Max retries reached: failed to send logs payload to New Relic'
-        );
-        context.log.error('Exception: ', JSON.stringify(e));
+        ])
+          .then(() =>
+            context.log('Logs payload successfully sent to New Relic.')
+          )
+          .catch((e) => {
+            context.log.error(
+              'Max retries reached: failed to send logs payload to New Relic'
+            );
+            context.log.error('Exception: ', JSON.stringify(e));
+          });
       }
-    } catch (e) {
+    })
+    .catch((e) => {
       context.log.error('Error during payload compression.');
       context.log.error('Exception: ', JSON.stringify(e));
-    }
-  }
-};
+    });
+}
 
 function compressData(data) {
   return new Promise((resolve, reject) => {
@@ -78,8 +107,21 @@ function compressData(data) {
   });
 }
 
-function generatePayloads(logs, context) {
-  const common = {
+function appendMetaDataToAllLogLines(logs) {
+  return logs.map((log) => addMetadata(log));
+}
+
+function getPayload(logs, context) {
+  return [
+    {
+      common: getCommonAttributes(context),
+      logs: logs,
+    },
+  ];
+}
+
+function getCommonAttributes(context) {
+  return {
     attributes: {
       plugin: {
         type: NR_LOGS_SOURCE,
@@ -92,34 +134,6 @@ function generatePayloads(logs, context) {
       tags: getTags(),
     },
   };
-  let payload = [
-    {
-      common: common,
-      logs: [],
-    },
-  ];
-  let payloads = [];
-
-  logs.forEach((logLine) => {
-    const log = addMetadata(logLine);
-    if (
-      JSON.stringify(payload).length + JSON.stringify(log).length <
-      NR_MAX_PAYLOAD_SIZE
-    ) {
-      payload[0].logs.push(log);
-    } else {
-      payloads.push(payload);
-      payload = [
-        {
-          common: common,
-          logs: [],
-        },
-      ];
-      payload[0].logs.push(log);
-    }
-  });
-  payloads.push(payload);
-  return payloads;
 }
 
 function getTags() {
@@ -209,25 +223,16 @@ function transformData(logs, context) {
 }
 
 function parseData(logs, context) {
-  let newLogs = logs;
-
   if (!Array.isArray(logs)) {
     try {
-      newLogs = JSON.parse(logs); // for strings let's see if we can parse it into Object
+      return JSON.parse(logs); // for strings let's see if we can parse it into Object
     } catch {
       context.log.warn('cannot parse logs to JSON');
     }
-  } else {
-    newLogs = logs.map((log) => {
-      // for arrays let's see if we can parse it into array of Objects
-      try {
-        return JSON.parse(log);
-      } catch {
-        return log;
-      }
-    });
+  } else if (typeof logs[0] === 'object' && logs[0] !== null) {
+    return logs.map((log) => JSON.parse(log));
   }
-  return newLogs;
+  return logs;
 }
 
 function httpSend(data, context) {
