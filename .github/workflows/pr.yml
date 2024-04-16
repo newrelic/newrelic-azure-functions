@@ -3,7 +3,7 @@ name: New Relic Azure Functions - Pull Request
 on: [pull_request]
 
 jobs:
-  lint:
+  lintAndUnitTest:
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,3 +20,12 @@ jobs:
       run: npm ci
     - name: Run Linting
       run: npm run lint
+    - name: Run Unit test cases
+      run: npm test
+      env:
+        ACCOUNT_ID: ${{ secrets.ACCOUNT_ID }}
+        API_KEY: ${{ secrets.API_KEY }}
+        NERD_GRAPH_URL: ${{ secrets.NG_URL }}
+        LICENSE_KEY: ${{ secrets.LICENSE_KEY}}
+        LOGS_API: ${{secrets.LOGS_API}}
+
