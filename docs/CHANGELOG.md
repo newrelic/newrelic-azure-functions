@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.2.0...v2.3.0) (2024-04-19)
+
+
+### Features
+
+* Update readme and gitignore ([8bf03d0](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/8bf03d050ec2d04e6d77ce8d44d35930bd12ee0d))
+
 # [2.2.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.1.0...v2.2.0) (2023-05-18)
 
 
