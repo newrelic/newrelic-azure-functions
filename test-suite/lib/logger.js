@@ -17,7 +17,7 @@ const logger = createLogger({
     // won't get stack traces), this is only for passing directly to a logger
     errors({ stack: true })
   ),
-  defaultMeta: { service: 'fluent-bit-tests' },
+  defaultMeta: { service: 'newrelic-azure-functions-tests' },
   transports: [consoleTransport],
 });
 

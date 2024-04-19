@@ -7,10 +7,10 @@ const logAxiosError = (context, error) => {
     // All error types _should_ have this field
     message: error.message,
     // Axios errors will have this field
-    ...(error.config?.url) && {url: error.config?.url}, // Crazy ES6 stuff: https://stackoverflow.com/a/40560953
+    ...(error.config?.url && { url: error.config?.url }), // Crazy ES6 stuff: https://stackoverflow.com/a/40560953
   };
 
   console.error(details);
-}
+};
 
-module.exports = { logAxiosError }
+module.exports = { logAxiosError };

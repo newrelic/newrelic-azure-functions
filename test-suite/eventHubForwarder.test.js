@@ -65,20 +65,25 @@ describe('Event Hub message Forwader tests', () => {
     const uuid = uuidv4();
 
     let nLine = 5;
-    let lines = [];
-
-    while (nLine--) {
-      lines.push(
-        `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`
-      );
-    }
+    let lines = generateNLines(
+      `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
+      nLine
+    );
 
     await eventHubForwarder(context, lines);
     // Wait for that log line to show up in NRDB
     await countAll(
       nrdb,
       `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
-      5
+      nLine
     );
   }, 20000);
 });
+
+const generateNLines = (content, nLine) => {
+  let lines = [];
+  while (nLine--) {
+    lines.push(content + nLine);
+  }
+  return lines;
+};

@@ -7,13 +7,14 @@ const {
   DEFAULT_SINCE,
   NRQL_QUERY_TIMEOUT_IN_SECONDS,
 } = require('./waitTimes');
-const { logAxiosError } = require("./errors");
+const { logAxiosError } = require('./errors');
 const { option } = require('yargs');
 
 const _messageComparer = (message1, message2) => {
   // Sort first by batch index, and then by segment ID
   return (
-    message1['newrelic.logs.batchIndex'] - message2['newrelic.logs.batchIndex'] ||
+    message1['newrelic.logs.batchIndex'] -
+      message2['newrelic.logs.batchIndex'] ||
     _getSafeSegmentId(message1) - _getSafeSegmentId(message2)
   );
 };
@@ -102,13 +103,18 @@ const _findAll = async (account, options) => {
       'API-Key': account.apiKey,
     };
 
-    const response = await retryingGraphQlCall(url, payload, { headers: headers });
+    const response = await retryingGraphQlCall(url, payload, {
+      headers: headers,
+    });
 
     const nrdbData = _getResults(response);
 
     return nrdbData.sort(_messageComparer);
   } catch (error) {
-    logAxiosError(`Error querying NRQL for account ${account}: ${query}`, error);
+    logAxiosError(
+      `Error querying NRQL for account ${account}: ${query}`,
+      error
+    );
     throw error;
   }
 };
@@ -131,7 +137,9 @@ const _waitForeverToFindAll = async (account, options, expectedCount) => {
 
   let timeoutHandle = setTimeout(() => {
     requestTimedOut = true;
-    logger.debug(`Timed out while fetching logs for query ${options.where} in NRDB`);
+    logger.debug(
+      `Timed out while fetching logs for query ${options.where} in NRDB`
+    );
   }, options.wait);
 
   const foundAll = (results) => {
@@ -188,7 +196,11 @@ function Nrdb(account) {
      * Messages will get returned sorted first by batch index, and then by segment ID.
      */
     waitToFindAll: (options, expectedCount) => {
-      return _waitToFindAll(account, { ...defaultOptions, ...options }, expectedCount);
+      return _waitToFindAll(
+        account,
+        { ...defaultOptions, ...options },
+        expectedCount
+      );
     },
   };
 }

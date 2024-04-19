@@ -67,11 +67,10 @@ describe('Blob Forwader tests', () => {
     const uuid = uuidv4();
 
     let nLine = 5;
-    let line = '';
-
-    while (nLine--) {
-      line += `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}\n`;
-    }
+    let line = generateNLines(
+      `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
+      nLine
+    );
     let buffer = Buffer.from(line);
 
     await blobForwader(context, buffer);
@@ -79,7 +78,7 @@ describe('Blob Forwader tests', () => {
     await countAll(
       nrdb,
       `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
-      5
+      nLine
     );
   }, 20000);
 
@@ -90,11 +89,11 @@ describe('Blob Forwader tests', () => {
       const uuid = uuidv4();
 
       let nLine = 500000;
-      let line = '';
+      let line = generateNLines(
+        `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
+        nLine
+      );
 
-      while (nLine--) {
-        line += `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid} - ${nLine} \n`;
-      }
       let buffer = Buffer.from(line);
 
       await blobForwader(context, buffer);
@@ -102,7 +101,7 @@ describe('Blob Forwader tests', () => {
       await countAll(
         nrdb,
         `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
-        500000
+        nLine
       );
     },
     10 * ONE_MINUTE
@@ -116,10 +115,12 @@ describe('Blob Forwader tests', () => {
 
       let nLine = 500000;
       let line = '';
-
       while (nLine--) {
-        line += `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid} - ${nLine}`;
+        line +=
+          `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid} - ` +
+          nLine;
       }
+
       let buffer = Buffer.from(line);
 
       try {
@@ -133,3 +134,11 @@ describe('Blob Forwader tests', () => {
     10 * ONE_MINUTE
   );
 });
+
+const generateNLines = (content, nLine) => {
+  let lines = '';
+  while (nLine--) {
+    lines += content + nLine + '\n';
+  }
+  return lines;
+};

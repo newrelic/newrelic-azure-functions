@@ -1,4 +1,5 @@
-const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+const sleep = (milliseconds) =>
+  new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 const currentTimeAsIso8601 = () => new Date().toISOString();
 
