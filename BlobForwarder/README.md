@@ -2,8 +2,8 @@ This function collects logs from Azure Blob Storage and forwards the contents to
 
 ## How Does It Work?
 
-This integration creates and configures the Azure resources necessary to efficiently forwards logs from an Azure Blob Storage to New Relic.
-It relies on Azure Blob Storage trigger, which will trigger an Azure Function to handle the transport to New Relic.
+This integration creates and configures the Azure resources necessary to efficiently forwards logs from an Azure Blob Storage to New Relic. 
+It relies on Azure Blob Storage trigger, which will trigger an Azure Function to handle the log transport to New Relic.
 
 ## Installation
 
@@ -71,6 +71,7 @@ Parameters that can be configured in your Azure Resource Manager Template
 5. Paste the New Relic [function code](index.js?raw=true) in the function's existing `index.js` and click **Save**.
 6. Navigate to the **Integrate** tab and verify **Blob parameter name** is set to `myBlob`.
 7. Configure your function's [Application settings](https://docs.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings) and define the desired application settings. `NR_INSERT_KEY` must be configured here.
+
 
 ## NewRelic Azure Application Settings
 
