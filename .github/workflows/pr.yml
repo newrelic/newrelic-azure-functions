@@ -6,17 +6,34 @@ jobs:
   lint:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [16.x]
-
     steps:
     - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js 16.x
       uses: actions/setup-node@v1
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: 16.x
     - name: Install Dependencies
       run: npm ci
     - name: Run Linting
       run: npm run lint
+  unit-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js 16.x
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16.x
+    - name: Install Dependencies
+      run: npm ci
+    - name: Run Unit test cases
+      run: npm test
+      env:
+        ACCOUNT_ID: ${{ secrets.ACCOUNT_ID }}
+        API_KEY: ${{ secrets.API_KEY }}
+        NERD_GRAPH_URL: ${{ secrets.NG_URL }}
+        LICENSE_KEY: ${{ secrets.LICENSE_KEY}}
+        LOGS_API: ${{secrets.LOGS_API}}
+
+
