@@ -21,7 +21,7 @@ const NR_MAX_PAYLOAD_SIZE = 1000 * 1024;
 const NR_MAX_RETRIES = process.env.NR_MAX_RETRIES || 3;
 const NR_RETRY_INTERVAL = process.env.NR_RETRY_INTERVAL || 2000; // default: 2 seconds
 
-module.exports = async function main(context, myBlob) {
+module.exports = async function main(context, logMessages) {
   if (!NR_LICENSE_KEY && !NR_INSERT_KEY) {
     context.log.error(
       'You have to configure either your LICENSE key or insights insert key. ' +
@@ -30,12 +30,14 @@ module.exports = async function main(context, myBlob) {
     return;
   }
   let logs;
-  if (typeof myBlob === 'string') {
-    logs = myBlob.trim().split('\n');
-  } else if (Buffer.isBuffer(myBlob)) {
-    logs = myBlob.toString('utf8').trim().split('\n');
+  if (typeof logMessages === 'string') {
+    logs = logMessages.trim().split('\n');
+  } else if (Buffer.isBuffer(logMessages)) {
+    logs = logMessages.toString('utf8').trim().split('\n');
+  } else if (!Array.isArray(logMessages)) {
+    logs = JSON.stringify(logMessages).trim().split('\n');
   } else {
-    logs = JSON.stringify(myBlob).trim().split('\n');
+    logs = logMessages;
   }
   let buffer = transformData(logs, context);
   if (buffer.length === 0) {
@@ -228,11 +230,17 @@ function parseData(logs, context) {
       return JSON.parse(logs); // for strings let's see if we can parse it into Object
     } catch {
       context.log.warn('cannot parse logs to JSON');
+      return logs;
     }
-  } else if (typeof logs[0] === 'object' && logs[0] !== null) {
-    return logs.map((log) => JSON.parse(log));
   }
-  return logs;
+  try {
+    // if there is any exception during JSON.parse,
+    // it would be either due to logs in object format itself or log strings in non-json format.
+    return logs.map((log) => JSON.parse(log));
+  } catch (e) {
+    // for both of the above exception cases, return logs would be fine.
+    return logs;
+  }
 }
 
 function httpSend(data, context) {

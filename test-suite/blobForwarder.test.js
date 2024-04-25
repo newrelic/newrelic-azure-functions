@@ -9,7 +9,7 @@ const { ONE_MINUTE } = require('./lib/time');
 process.env.NR_LICENSE_KEY = requireEnvironmentVariable('LICENSE_KEY');
 process.env.NR_ENDPOINT = requireEnvironmentVariable('LOGS_API');
 process.env.NR_TAGS = 'test:azureUnit;test2:success';
-const blobForwader = require('../BlobForwarder/index');
+const blobForwader = require('../LogForwarder/index');
 
 /**
  * This tests all things directly configurable from the Infrastructure Agent.

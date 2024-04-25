@@ -2,7 +2,7 @@
   "bindings": [
     {
       "type": "eventHubTrigger",
-      "name": "eventHubMessages",
+      "name": "logMessages",
       "direction": "in",
       "eventHubName": "%EVENTHUB_NAME%",
       "connection": "EVENTHUB_CONSUMER_CONNECTION",
