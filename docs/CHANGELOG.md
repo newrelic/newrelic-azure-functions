@@ -1,3 +1,10 @@
+## [2.4.1](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.4.0...v2.4.1) (2024-05-14)
+
+
+### Bug Fixes
+
+* semantic release fix ([d8175d3](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/d8175d3a1ad8347e2e9b6efa46df42ff2bab0157))
+
 # [2.4.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.3.0...v2.4.0) (2024-05-14)
 
 
