@@ -4,6 +4,14 @@
 ### Features
 
 * Code unified for Blob forwarder and EventHub forwarder functions ([7ce3d1b](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/7ce3d1b748fcd327009f9b240fdf4eb72b441cf9))
+* releaserc updated for new release with code unification ([dbb0a72](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/dbb0a72ed6b58d91eb89e0af462c44ce6bd08644))
+
+# [2.4.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.3.0...v2.4.0) (2024-05-14)
+
+
+### Features
+
+* Code unified for Blob forwarder and EventHub forwarder functions ([7ce3d1b](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/7ce3d1b748fcd327009f9b240fdf4eb72b441cf9))
 
 # [2.3.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.2.0...v2.3.0) (2024-04-19)
 
