@@ -8,7 +8,7 @@ const { beforeEach } = require('node:test');
 process.env.NR_LICENSE_KEY = requireEnvironmentVariable('LICENSE_KEY');
 process.env.NR_ENDPOINT = requireEnvironmentVariable('LOGS_API');
 process.env.NR_TAGS = 'test:azureUnit;test2:success';
-const eventHubForwarder = require('../EventHubForwarder/index');
+const eventHubForwarder = require('../LogForwarder/index');
 
 /**
  * This tests all things directly configurable from the Infrastructure Agent.

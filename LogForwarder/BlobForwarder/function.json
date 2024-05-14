@@ -1,7 +1,7 @@
 {
   "bindings": [
     {
-      "name": "myBlob",
+      "name": "logMessages",
       "type": "blobTrigger",
       "direction": "in",
       "path": "%CONTAINER_NAME%/{name}",
