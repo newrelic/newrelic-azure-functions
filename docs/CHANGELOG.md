@@ -1,3 +1,10 @@
+# [2.5.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.4.1...v2.5.0) (2024-05-27)
+
+
+### Features
+
+* update Node version for blobforwarder and github workflows ([cf8e6e4](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/cf8e6e42afc7400daf098112df4d914ce735a7a7))
+
 ## [2.4.1](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.4.0...v2.4.1) (2024-05-14)
 
 
