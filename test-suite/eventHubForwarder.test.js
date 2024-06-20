@@ -1,11 +1,15 @@
 const { v4: uuidv4 } = require('uuid');
 const { beforeEach } = require('node:test');
 
+const lib = require('logging-integrations-test-lib')({
+  serviceName: 'newrelic-azure-functions-tests',
+});
+
 const {
-  nrdb,
+  NRDB,
   requireEnvironmentVariable,
   testUtils: { waitForLogMessageContaining, countAll },
-} = require('logging-integrations-test-lib');
+} = lib;
 
 process.env.NR_LICENSE_KEY = requireEnvironmentVariable('LICENSE_KEY');
 process.env.NR_ENDPOINT = requireEnvironmentVariable('LOGS_API');
@@ -37,7 +41,7 @@ describe('Event Hub message Forwader tests', () => {
     const nerdGraphUrl = requireEnvironmentVariable('NERD_GRAPH_URL');
 
     // Read configuration
-    nrdb_instance = new nrdb({
+    nrdb_instance = new NRDB({
       accountId,
       apiKey,
       nerdGraphUrl,
@@ -77,7 +81,12 @@ describe('Event Hub message Forwader tests', () => {
     await countAll(
       nrdb_instance,
       `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
-      nLine
+      nLine,
+      'azure',
+      {
+        test: 'azureUnit',
+        test2: 'success',
+      }
     );
   }, 20000);
 });
