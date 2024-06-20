@@ -39,6 +39,7 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "jest": "^29.7.0",
+    "logging-integrations-test-lib": "github:newrelic/logging-integrations-test-lib",
     "prettier": "2.8.1",
     "semantic-release-plugin-update-version-in-files": "^1.1.0",
     "uuid": "^9.0.1",

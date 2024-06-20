@@ -1,10 +1,11 @@
-const Nrdb = require('./lib/nrdb');
 const { v4: uuidv4 } = require('uuid');
-const { requireEnvironmentVariable } = require('./lib/environmentVariables');
-const { waitForLogMessageContaining, countAll } = require('./lib/test-util');
-
 const { beforeEach } = require('node:test');
-const { ONE_MINUTE } = require('./lib/time');
+
+const {
+  nrdb,
+  requireEnvironmentVariable,
+  testUtils: { waitForLogMessageContaining, countAll },
+} = require('logging-integrations-test-lib');
 
 process.env.NR_LICENSE_KEY = requireEnvironmentVariable('LICENSE_KEY');
 process.env.NR_ENDPOINT = requireEnvironmentVariable('LOGS_API');
@@ -17,7 +18,7 @@ const blobForwader = require('../LogForwarder/index');
  * See https://docs.newrelic.com/docs/logs/forward-logs/forward-your-logs-using-infrastructure-agent.
  */
 describe('Blob Forwader tests', () => {
-  let nrdb;
+  let nrdb_instance;
   let context = {};
   const OLD_ENV = process.env;
 
@@ -36,7 +37,7 @@ describe('Blob Forwader tests', () => {
     const nerdGraphUrl = requireEnvironmentVariable('NERD_GRAPH_URL');
 
     // Read configuration
-    nrdb = new Nrdb({
+    nrdb_instance = new nrdb({
       accountId,
       apiKey,
       nerdGraphUrl,
@@ -59,7 +60,7 @@ describe('Blob Forwader tests', () => {
 
     await blobForwader(context, buffer);
     // Wait for that log line to show up in NRDB
-    await waitForLogMessageContaining(nrdb, line);
+    await waitForLogMessageContaining(nrdb_instance, line, 'azure');
   }, 20000);
 
   test('a simple blob forwarding count test', async () => {
@@ -76,7 +77,7 @@ describe('Blob Forwader tests', () => {
     await blobForwader(context, buffer);
     // Wait for that log line to show up in NRDB
     await countAll(
-      nrdb,
+      nrdb_instance,
       `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
       nLine
     );
@@ -99,12 +100,12 @@ describe('Blob Forwader tests', () => {
       await blobForwader(context, buffer);
       // Wait for that log line to show up in NRDB
       await countAll(
-        nrdb,
+        nrdb_instance,
         `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
         nLine
       );
     },
-    10 * ONE_MINUTE
+    10 * 60 * 1000 // 10 minutes
   );
 
   test(
@@ -131,7 +132,7 @@ describe('Blob Forwader tests', () => {
         );
       }
     },
-    10 * ONE_MINUTE
+    10 * 60 * 1000 // 10 minutes
   );
 });
 
