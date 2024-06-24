@@ -1,9 +1,15 @@
-const Nrdb = require('./lib/nrdb');
 const { v4: uuidv4 } = require('uuid');
-const { requireEnvironmentVariable } = require('./lib/environmentVariables');
-const { waitForLogMessageContaining, countAll } = require('./lib/test-util');
-
 const { beforeEach } = require('node:test');
+
+const lib = require('logging-integrations-test-lib')({
+  serviceName: 'newrelic-azure-functions-tests',
+});
+
+const {
+  NRDB,
+  requireEnvironmentVariable,
+  testUtils: { waitForLogMessageContaining, countAll },
+} = lib;
 
 process.env.NR_LICENSE_KEY = requireEnvironmentVariable('LICENSE_KEY');
 process.env.NR_ENDPOINT = requireEnvironmentVariable('LOGS_API');
@@ -16,7 +22,7 @@ const eventHubForwarder = require('../LogForwarder/index');
  * See https://docs.newrelic.com/docs/logs/forward-logs/forward-your-logs-using-infrastructure-agent.
  */
 describe('Event Hub message Forwader tests', () => {
-  let nrdb;
+  let nrdb_instance;
   let context = {};
   const OLD_ENV = process.env;
 
@@ -35,7 +41,7 @@ describe('Event Hub message Forwader tests', () => {
     const nerdGraphUrl = requireEnvironmentVariable('NERD_GRAPH_URL');
 
     // Read configuration
-    nrdb = new Nrdb({
+    nrdb_instance = new NRDB({
       accountId,
       apiKey,
       nerdGraphUrl,
@@ -57,7 +63,7 @@ describe('Event Hub message Forwader tests', () => {
 
     await eventHubForwarder(context, [line]);
     // Wait for that log line to show up in NRDB
-    await waitForLogMessageContaining(nrdb, line);
+    await waitForLogMessageContaining(nrdb_instance, line, 'azure');
   }, 20000);
 
   test('a simple event hub forwarding count test', async () => {
@@ -73,9 +79,14 @@ describe('Event Hub message Forwader tests', () => {
     await eventHubForwarder(context, lines);
     // Wait for that log line to show up in NRDB
     await countAll(
-      nrdb,
+      nrdb_instance,
       `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
-      nLine
+      nLine,
+      'azure',
+      {
+        test: 'azureUnit',
+        test2: 'success',
+      }
     );
   }, 20000);
 });
