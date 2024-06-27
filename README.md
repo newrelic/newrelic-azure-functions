@@ -13,8 +13,8 @@ For setup instructions, click on the name of the function you wish to configure 
 
 | Function | Description | Data Sources |
 | -------------| ----------- | -------------- |
-|[New Relic Event Hub Function](EventHubForwarder)| Collects and forwards log data from Azure Event Hubs to New Relic Logs. | <ul><li>[Azure Activity and Resource Logs](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/resource-logs-stream-event-hubs)</li><li>[Azure Active Directory](https://docs.microsoft.com/en-us/azure/active-directory/reports-monitoring/tutorial-azure-monitor-stream-logs-to-event-hub)</li></ul>|
-|[New Relic Azure Blob Storage Function](BlobForwarder) | Collects and forwards log data from Azure Blob Storage to New Relic Logs.| <ul><li>[Azure App Service](https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs#enable-application-logging-windows)</li><li>[Azure Web Server](https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs#enable-web-server-logging)</li></ul> |
+|[New Relic Event Hub Function](LogForwarder/EventHubForwarder)| Collects and forwards log data from Azure Event Hubs to New Relic Logs. | <ul><li>[Azure Activity and Resource Logs](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/resource-logs-stream-event-hubs)</li><li>[Azure Active Directory](https://docs.microsoft.com/en-us/azure/active-directory/reports-monitoring/tutorial-azure-monitor-stream-logs-to-event-hub)</li></ul>|
+|[New Relic Azure Blob Storage Function](LogForwarder/BlobForwarder) | Collects and forwards log data from Azure Blob Storage to New Relic Logs.| <ul><li>[Azure App Service](https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs#enable-application-logging-windows)</li><li>[Azure Web Server](https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs#enable-web-server-logging)</li></ul> |
 
 ## Contributing
 
