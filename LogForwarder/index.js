@@ -179,7 +179,7 @@ function transformData(logs, context) {
 
   let parsedLogs = parseData(logs, context);
 
-  // type JSON object
+  // type is JSON object
   if (
     !Array.isArray(parsedLogs) &&
     typeof parsedLogs === 'object' &&
