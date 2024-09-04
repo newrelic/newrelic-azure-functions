@@ -98,9 +98,6 @@
     "privateEndpointPrivateDnsZoneGroupsStorageTableName": "[format('{0}/{1}', variables('privateEndpointStorageTableName'), 'tablePrivateDnsZoneGroup')]",
     "privateEndpointPrivateDnsZoneGroupsStorageQueueName": "[format('{0}/{1}', variables('privateEndpointStorageQueueName'), 'queuePrivateDnsZoneGroup')]",
 
-    "functionContentShareName": "[format('{0}-content-share', variables('functionAppName'))]",
-    "storageAccountFileShareName": "[format('{0}/default/{1}', variables('internalStorageAccountName'), variables('functionContentShareName'))]",
-
     "functionNetworkConfigName": "[format('{0}/{1}', variables('functionAppName'), 'virtualNetwork')]"
   },
   "resources": [
@@ -444,15 +441,6 @@
         }
     },
     {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
-        "apiVersion": "2022-05-01",
-        "name": "[variables('storageAccountFileShareName')]",
-        "dependsOn": [
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName'))]"
-        ]
-    },
-    {
         "type": "Microsoft.Web/serverfarms",
         "apiVersion": "2022-09-01",
         "kind": "[if(parameters('disablePublicAccessToStorageAccount'), 'app', 'functionapp')]",
@@ -477,8 +465,7 @@
             "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageBlobDnsZoneName'), format('{0}-link', variables('virtualNetworkName')))]",
             "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageFileDnsZoneName'), format('{0}-link', variables('virtualNetworkName')))]",
             "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageQueueDnsZoneName'), format('{0}-link', variables('virtualNetworkName')))]",
-            "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageTableDnsZoneName'), format('{0}-link', variables('virtualNetworkName')))]",
-            "[resourceId('Microsoft.Storage/storageAccounts/fileServices/shares', variables('internalStorageAccountName'), 'default', variables('functionContentShareName'))]"
+            "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageTableDnsZoneName'), format('{0}-link', variables('virtualNetworkName')))]"
         ],
         "properties": {
           "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
@@ -513,10 +500,6 @@
                 "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('internalStorageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=',environment().suffixes.storage)]"
               },
               {
-                "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-                "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('internalStorageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=',environment().suffixes.storage)]"
-              },
-              {
                 "name": "FUNCTIONS_WORKER_RUNTIME",
                 "value": "node"
               },
@@ -527,14 +510,6 @@
               {
                 "name": "FUNCTIONS_EXTENSION_VERSION",
                 "value": "~4"
-              },
-              {
-                "name": "WEBSITE_CONTENTSHARE",
-                "value": "[variables('functionContentShareName')]"
-              },
-              {
-                "name": "WEBSITE_CONTENTOVERVNET",
-                "value": "[if(parameters('disablePublicAccessToStorageAccount'), '1', '0')]"
               },
               {
                 "name": "WEBSITE_RUN_FROM_PACKAGE",
