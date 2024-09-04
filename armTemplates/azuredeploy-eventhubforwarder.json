@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "contentVersion": "1.1.0.0",
     "parameters": {
         "newRelicLicenseKey": {
             "type": "string",
@@ -12,7 +12,7 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Event Hub Namespace where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with 'nrlogs-')."
+                "description": "Event Hub Namespace https://docs.newrelic.com/docs/logs/forward-logs/azure-log-forwarding/where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with 'nrlogs-')."
             }
         },
         "eventHubName": {
