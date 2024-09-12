@@ -12,7 +12,7 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Event Hub Namespace https://docs.newrelic.com/docs/logs/forward-logs/azure-log-forwarding/where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with 'nrlogs-')."
+                "description": "Event Hub Namespace where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with 'nrlogs-')."
             }
         },
         "eventHubName": {
