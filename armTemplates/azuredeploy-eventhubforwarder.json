@@ -1,6 +1,6 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
+    "contentVersion": "1.1.0.0",
     "parameters": {
         "newRelicLicenseKey": {
             "type": "string",
@@ -165,9 +165,6 @@
         "privateEndpointPrivateDnsZoneGroupsStorageBlobName": "[format('{0}/{1}', variables('privateEndpointStorageBlobName'), 'blobPrivateDnsZoneGroup')]",
         "privateEndpointPrivateDnsZoneGroupsStorageTableName": "[format('{0}/{1}', variables('privateEndpointStorageTableName'), 'tablePrivateDnsZoneGroup')]",
         "privateEndpointPrivateDnsZoneGroupsStorageQueueName": "[format('{0}/{1}', variables('privateEndpointStorageQueueName'), 'queuePrivateDnsZoneGroup')]",
-
-        "functionContentShareName": "[format('{0}-content-share', variables('functionAppName'))]",
-        "storageAccountFileShareName": "[format('{0}/default/{1}', variables('storageAccountName'), variables('functionContentShareName'))]",
 
         "functionNetworkConfigName": "[format('{0}/{1}', variables('functionAppName'), 'virtualNetwork')]"
     },
@@ -576,15 +573,6 @@
             }
         },
         {
-            "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-            "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
-            "apiVersion": "2022-05-01",
-            "name": "[variables('storageAccountFileShareName')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-            ]
-        },
-        {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2022-09-01",
             "kind": "[if(parameters('disablePublicAccessToStorageAccount'), 'app', 'functionapp')]",
@@ -609,8 +597,7 @@
                 "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageBlobDnsZoneName'), format('{0}-link', variables('virtualNetworkName')))]",
                 "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageFileDnsZoneName'), format('{0}-link', variables('virtualNetworkName')))]",
                 "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageQueueDnsZoneName'), format('{0}-link', variables('virtualNetworkName')))]",
-                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageTableDnsZoneName'), format('{0}-link', variables('virtualNetworkName')))]",
-                "[resourceId('Microsoft.Storage/storageAccounts/fileServices/shares', variables('storageAccountName'), 'default', variables('functionContentShareName'))]"
+                "[resourceId('Microsoft.Network/privateDnsZones/virtualNetworkLinks', variables('privateStorageTableDnsZoneName'), format('{0}-link', variables('virtualNetworkName')))]"
             ],
             "properties": {
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
@@ -663,18 +650,6 @@
                         {
                             "name": "AzureWebJobsStorage",
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=',environment().suffixes.storage)]"
-                        },
-                        {
-                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=',environment().suffixes.storage)]"
-                        },
-                        {
-                            "name": "WEBSITE_CONTENTSHARE",
-                            "value": "[variables('functionContentShareName')]"
-                        },
-                        {
-                            "name": "WEBSITE_CONTENTOVERVNET",
-                            "value": "[if(parameters('disablePublicAccessToStorageAccount'), '1', '0')]"
                         },
                         {
                             "name": "WEBSITE_RUN_FROM_PACKAGE",
