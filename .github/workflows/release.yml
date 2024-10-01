@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          # Avoid using GITHUB_TOKEN, instead of the Open Source Bot personal access token.
+          # Avoids using GITHUB_TOKEN and uses the Open Source Bot personal access token instead.
           persist-credentials: false
 
       # Probably not necessary since the ubuntu-latest image would have latest Node LTS release
@@ -91,7 +91,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          # Avoid using GITHUB_TOKEN, instead of the Open Source Bot personal access token.
+          # Avoids using GITHUB_TOKEN and uses the Open Source Bot personal access token instead.
           persist-credentials: false
           # Checkout ref: master because previous job committed third_party_notices and
           # we need to checkout master to pick up that commit
