@@ -1,3 +1,11 @@
+## [2.5.1](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.5.0...v2.5.1) (2024-10-01)
+
+
+### Bug Fixes
+
+* removes accidentally pasted link ([ff77c00](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/ff77c00fdd45b7da85fe4cc21a28ce3481959b9a))
+* removes Content Share when using private Storage Account connectivity ([2bbc01b](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/2bbc01b39a7c16d57a6a0cadec4db8971d650ce1))
+
 # [2.5.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.4.1...v2.5.0) (2024-05-27)
 
 
