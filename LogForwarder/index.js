@@ -45,6 +45,7 @@ module.exports = async function main(context, logMessages) {
     return;
   }
   let logLines = appendMetaDataToAllLogLines(buffer);
+  logLines = appendTimestampToAllLogLines(logLines);
   await compressAndSend(logLines, context);
 };
 
@@ -113,6 +114,10 @@ function appendMetaDataToAllLogLines(logs) {
   return logs.map((log) => addMetadata(log));
 }
 
+function appendTimestampToAllLogLines(logs) {
+  return logs.map((log) => addTimestamp(log));
+}
+
 function getPayload(logs, context) {
   return [
     {
@@ -170,6 +175,25 @@ function addMetadata(logEntry) {
       logEntry.metadata.source = resourceId[6].replace('microsoft.', 'azure.');
     }
   }
+  return logEntry;
+}
+
+// Add log generation time as a timestamp
+function addTimestamp(logEntry) {
+  if (
+    logEntry.time !== undefined &&
+    typeof logEntry.time === 'string' &&
+    !isNaN(Date.parse(logEntry.time))
+  ) {
+    logEntry.timestamp = Date.parse(logEntry.time);
+  }else if (
+    logEntry.timeStamp !== undefined &&
+    typeof logEntry.timeStamp === 'string' &&
+    !isNaN(Date.parse(logEntry.timeStamp))
+  ) {
+    logEntry.timestamp = Date.parse(logEntry.timeStamp);
+  }
+
   return logEntry;
 }
 
