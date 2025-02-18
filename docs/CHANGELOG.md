@@ -1,3 +1,10 @@
+# [2.6.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.5.1...v2.6.0) (2025-02-18)
+
+
+### Features
+
+* time to timestamp mapping ([#117](https://github.com/newrelic-experimental/newrelic-azure-functions/issues/117)) ([f1667e2](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/f1667e23ac7ca0f0d33a55fcf59c1e23cbef9874))
+
 ## [2.5.1](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.5.0...v2.5.1) (2024-10-01)
 
 
