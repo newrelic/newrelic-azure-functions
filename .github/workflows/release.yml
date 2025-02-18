@@ -91,7 +91,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          # Avoids using GITHUB_TOKEN and uses the Open Source Bot personal access token instead.
+          # Avoid using GITHUB_TOKEN, instead use the Open Source Bot personal access token.
           persist-credentials: false
           # Checkout ref: master because previous job committed third_party_notices and
           # we need to checkout master to pick up that commit
