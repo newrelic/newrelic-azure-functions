@@ -186,7 +186,7 @@ function addTimestamp(logEntry) {
     !isNaN(Date.parse(logEntry.time))
   ) {
     logEntry.timestamp = Date.parse(logEntry.time);
-  }else if (
+  } else if (
     logEntry.timeStamp !== undefined &&
     typeof logEntry.timeStamp === 'string' &&
     !isNaN(Date.parse(logEntry.timeStamp))
