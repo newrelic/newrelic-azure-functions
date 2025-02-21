@@ -1,4 +1,4 @@
-@description('Required. New Relic License Key')
+@description('Required. A New Relic License Key for the New Relic account where the logs will be published to.')
 param newRelicLicenseKey string
 
 @description('Optional. Event Hub Namespace where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with \'nrlogs-\').')
@@ -14,8 +14,11 @@ param location string
   'devtest'
   'production'
 ])
-@description('Optional. Used to determine if the Azure resources will be provisioned in a High Availability mode. Zone Redundancy is an immutable field on App Service Plans. So this will require a redeploy if you toggle between.')
+@description('Optional. Used to determine if the Azure resources will be provisioned in a High Availability mode. Zone Redundancy is an immutable field on App Service Plans. So this will require a redeploy if you toggle between. Note this will incur additional costs. There is an optional parameter for `disableHighAvailability`.')
 param deploymentMode string = 'devtest'
+
+@description('Optional. Only works if deploymentMode is set to "production" - this parameter will disable High Availability, which is a cost reduction option that allows customers to opt-out to reduce the App Service Plan costs.')
+param disableHighAvailability bool = false
 
 @description('Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you\'re in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1')
 @allowed([
@@ -37,10 +40,10 @@ param maxRetriesToResendLogs int = 3
 param retryInterval int = 2000
 
 @description('Optional. Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription.')
-param forwardAdministrativeAzureActivityLogs bool = false
+param forwardAdministrativeAzureActivityLogs bool = true
 
 @description('Optional. Contains the record of activations for Azure alerts. An example of an Alert event is CPU % on myVM has been over 80 for the past 5 minutes.')
-param forwardAlertAzureActivityLogs bool = false
+param forwardAlertAzureActivityLogs bool = true
 
 @description('Optional. Contains the record of any events related to the operation of the autoscale engine based on any autoscale settings you have defined in your subscription. An example of an Autoscale event is Autoscale scale up action failed.')
 param forwardAutoscaleAzureActivityLogs bool = false
@@ -61,13 +64,18 @@ param forwardSecurityAzureActivityLogs bool = false
 param forwardServiceHealthAzureActivityLogs bool = false
 
 @description('Optional. Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to \'Basic\', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share.')
-param disablePublicAccessToStorageAccount bool = true
+param disablePublicAccessToStorageAccount bool = false
+
+@allowed([
+  'Standard'
+  'Premium'
+])
+@description('Optional. Specify the SKU of the EventHub log forwarder where required for scalability.')
+param eventHubSku string = 'Standard'
 
 var onePerResourceGroupUniqueSuffix = uniqueString(resourceGroup().id)
 var createNewEventHubNamespace = (eventHubNamespace == '')
-var eventHubNamespaceName = (createNewEventHubNamespace
-  ? 'nrlogs-eventhub-namespace-${onePerResourceGroupUniqueSuffix}'
-  : eventHubNamespace)
+var eventHubNamespaceName = (createNewEventHubNamespace ? 'nrlogs-eventhub-namespace-${onePerResourceGroupUniqueSuffix}' : eventHubNamespace)
 var createNewEventHub = (eventHubName == '')
 var eventHub_name = (createNewEventHub ? 'nrlogs-eventhub' : eventHubName)
 var eventHubConsumerGroupName = 'nrlogs-consumergroup'
@@ -105,21 +113,21 @@ var privateEndpointPrivateDnsZoneGroupsStorageBlobName = '${privateEndpointStora
 var privateEndpointPrivateDnsZoneGroupsStorageTableName = '${privateEndpointStorageTableName}/tablePrivateDnsZoneGroup'
 var privateEndpointPrivateDnsZoneGroupsStorageQueueName = '${privateEndpointStorageQueueName}/queuePrivateDnsZoneGroup'
 var functionNetworkConfigName = '${functionAppName}/virtualNetwork'
-var enableHa = (deploymentMode == 'production' ? true : false) 
+var production = (deploymentMode == 'production' ? true : false)
 
 resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2024-01-01' = if (createNewEventHubNamespace) {
   name: eventHubNamespaceName
   location: location
   sku: {
-    name: 'Standard'
-    tier: 'Standard'
+    name: eventHubSku
+    tier: eventHubSku
     capacity: 1
   }
   properties: {
     minimumTlsVersion: '1.2'
-    zoneRedundant: (enableHa ? true : null) 
-    isAutoInflateEnabled: true
-    maximumThroughputUnits: 20
+    zoneRedundant: (disableHighAvailability ? null : true)
+    isAutoInflateEnabled: (production ? true : false)
+    maximumThroughputUnits: (production ? 20 : 0)
   }
 }
 
@@ -144,7 +152,7 @@ resource eventHubNamespaceName_logConsumerAuthorizationRule 'Microsoft.EventHub/
     rights: [
       'Listen'
       'Send'
-      // 'Manage'
+      'Manage'
     ]
   }
 }
@@ -450,7 +458,10 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   properties: {
     allowBlobPublicAccess: false
     minimumTlsVersion: 'TLS1_2'
-    networkAcls: (disablePublicAccessToStorageAccount ? json('{"bypass": "None", "defaultAction": "Deny"}') : null)
+    networkAcls: (disablePublicAccessToStorageAccount ? { 
+      bypass: 'None'
+      defaultAction: 'Deny'
+    } : null )
   }
 }
 
@@ -461,14 +472,14 @@ var prdASP = {
     perSiteScaling: true
     elasticScaleEnabled: true
     maximumElasticWorkerCount: 20
-    zoneRedundant: true
+    zoneRedundant: (disableHighAvailability ? false :  true)
   }
   sku: {
     name: 'EP1'
     tier: 'ElasticPremium'
     size: 'EP1'
     family: 'EP'
-    capacity: 1
+    capacity: 3
   }
 }
 
@@ -481,7 +492,7 @@ var devASP = {
     workerSize: 1
     numberOfWorkers: 1
     computeMode: 'Dynamic' 
-    zoneRedundant: false
+    zoneRedundant: false // Only works for Premium App Service Plans
   } 
   sku: {
     name: 'B1'
@@ -490,14 +501,30 @@ var devASP = {
   }
 }
 
-var aspConfig = (enableHa ? prdASP : devASP)
+var defaultASP = {
+  kind: 'functionapp'
+  properties: {
+      name: servicePlanName
+      targetWorkerCount: 1
+      targetWorkerSizeId: 1
+      workerSize: '1'
+      numberOfWorkers: 1
+      computeMode: 'Dynamic'
+  } 
+  sku: {
+    name: 'Y1'
+    tier: 'Dynamic'
+  }
+}
+var devTestConfig = (deploymentMode == 'devtest' &&  disablePublicAccessToStorageAccount ? devASP : defaultASP)
+var aspConfig = (production ? prdASP : devTestConfig)
 
 resource servicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
-  kind: (disablePublicAccessToStorageAccount ? aspConfig.kind : 'functionapp')
+  kind: aspConfig.kind
   location: location
   name: servicePlanName
-  sku: (disablePublicAccessToStorageAccount ? aspConfig.sku : json('{ "name": "Y1", "tier": "Dynamic" }'))
-  properties: (disablePublicAccessToStorageAccount ? aspConfig.properties: json('{ "name": "${servicePlanName}", "targetWorkerCount": 1, "targetWorkerSizeId": 1, "workerSize": "1", "numberOfWorkers": 1, "computeMode": "Dynamic" }'))
+  sku: aspConfig.sku
+  properties: aspConfig.properties
 }
 
 
@@ -553,6 +580,19 @@ resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
           name: 'WEBSITE_NODE_DEFAULT_VERSION'
           value: '~20'
         }
+        // Future State - Enable New Relic Serverless Monitoring
+        // {
+        //   name: 'NEW_RELIC_APP_NAME'
+        //   value: 'nr-azure-logforwarder'
+        // }
+        // {
+        //   name: 'NEW_RELIC_AZURE_FUNCTION_MODE_ENABLED'
+        //   value: '1'
+        // }
+        // {
+        //   name: 'NEW_RELIC_LICENSE_KEY'
+        //   value: newRelicLicenseKey
+        // }
         {
           name: 'AzureWebJobsStorage'
           value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageAccount.listkeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
@@ -562,13 +602,19 @@ resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
           value: (disablePublicAccessToStorageAccount ? eventHubForwarderFunctionArtifact : '0')
         }
       ]
-      alwaysOn: (disablePublicAccessToStorageAccount && !(enableHa)? true : false )
+      alwaysOn: (disablePublicAccessToStorageAccount && !(production)? true : false )
       ftpsState: 'Disabled'
       publicNetworkAccess: (disablePublicAccessToStorageAccount ? 'Disabled' : 'Enabled')
     }
     httpsOnly: true
   }
 }
+
+// Future State - Enable New Relic Serverless Monitoring
+// resource siteExtension 'Microsoft.Web/sites/siteextensions@2024-04-01' = {
+//   name: 'NewRelic.Azure.WebSites.Extension.NodeAgent'
+//   parent: functionApp
+// }
 
 resource functionAppName_ZipDeploy 'Microsoft.Web/sites/extensions@2020-12-01' = if (!disablePublicAccessToStorageAccount) {
   parent: functionApp

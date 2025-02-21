@@ -1,909 +1,943 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "metadata": {
-      "_generator": {
-        "name": "bicep",
-        "version": "0.33.93.31351",
-        "templateHash": "16187063886260488990"
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.33.93.31351",
+      "templateHash": "13586877909760034207"
+    }
+  },
+  "parameters": {
+    "newRelicLicenseKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Required. A New Relic License Key for the New Relic account where the logs will be published to."
       }
     },
-    "parameters": {
-      "newRelicLicenseKey": {
-        "type": "string",
-        "defaultValue": "",
-        "metadata": {
-          "description": "Required. New Relic License Key"
-        }
-      },
-      "eventHubNamespace": {
-        "type": "string",
-        "defaultValue": "",
-        "metadata": {
-          "description": "Optional. Event Hub Namespace where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with 'nrlogs-')."
-        }
-      },
-      "eventHubName": {
-        "type": "string",
-        "defaultValue": "",
-        "metadata": {
-          "description": "Optional. Event Hub where all the Azure Platform logs are being sent to in order to be forwarded to New Relic. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrlogs')."
-        }
-      },
-      "location": {
-        "type": "string",
-        "metadata": {
-          "description": "Required. Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group."
-        }
-      },
-      "deploymentMode": {
-        "type": "string",
-        "defaultValue": "devtest",
-        "allowedValues": [
-          "devtest",
-          "production"
-        ],
-        "metadata": {
-          "description": "Optional. Used to determine if the Azure resources will be provisioned in a High Availability mode. Zone Redundancy is an immutable field on App Service Plans. So this will require a redeploy if you toggle between."
-        }
-      },
-      "newRelicEndpoint": {
-        "type": "string",
-        "defaultValue": "https://log-api.newrelic.com/log/v1",
-        "allowedValues": [
-          "https://log-api.newrelic.com/log/v1",
-          "https://log-api.eu.newrelic.com/log/v1"
-        ],
-        "metadata": {
-          "description": "Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
-        }
-      },
-      "logCustomAttributes": {
-        "type": "string",
-        "defaultValue": "azure-forwarded",
-        "metadata": {
-          "description": "Optional. List of semicolon-separated custom attributes that you would like to enrich the forwarded logs with. This can be useful, for example, if you want to indicate common attributes shared by all the logs collected in this account, such as: 'environment:production;department:sales;country:Germany'"
-        }
-      },
-      "maxRetriesToResendLogs": {
-        "type": "int",
-        "defaultValue": 3,
-        "minValue": 1,
-        "metadata": {
-          "description": "Optional. Maximum number of attempts the forwarder function will perform in the event of a failure while sending your data."
-        }
-      },
-      "retryInterval": {
-        "type": "int",
-        "defaultValue": 2000,
-        "minValue": 100,
-        "metadata": {
-          "description": "Optional. Number of milliseconds to wait between consecutive retries to send the logs."
-        }
-      },
-      "forwardAdministrativeAzureActivityLogs": {
-        "type": "bool",
-        "defaultValue": false,
-        "metadata": {
-          "description": "Optional. Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription."
-        }
-      },
-      "forwardAlertAzureActivityLogs": {
-        "type": "bool",
-        "defaultValue": false,
-        "metadata": {
-          "description": "Optional. Contains the record of activations for Azure alerts. An example of an Alert event is CPU % on myVM has been over 80 for the past 5 minutes."
-        }
-      },
-      "forwardAutoscaleAzureActivityLogs": {
-        "type": "bool",
-        "defaultValue": false,
-        "metadata": {
-          "description": "Optional. Contains the record of any events related to the operation of the autoscale engine based on any autoscale settings you have defined in your subscription. An example of an Autoscale event is Autoscale scale up action failed."
-        }
-      },
-      "forwardPolicyAzureActivityLogs": {
-        "type": "bool",
-        "defaultValue": false,
-        "metadata": {
-          "description": "Optional. Contains records of all effect action operations performed by Azure Policy. Examples of Policy events include Audit and Deny. Every action taken by Policy is modeled as an operation on a resource."
-        }
-      },
-      "forwardRecommendationAzureActivityLogs": {
-        "type": "bool",
-        "defaultValue": false,
-        "metadata": {
-          "description": "Optional. Contains recommendation events from Azure Advisor."
-        }
-      },
-      "forwardResourceHealthAzureActivityLogs": {
-        "type": "bool",
-        "defaultValue": false,
-        "metadata": {
-          "description": "Optional. Contains the record of any resource health events that have occurred to your Azure resources. An example of a Resource Health event is Virtual Machine health status changed to unavailable. Resource Health events can represent one of four health statuses: Available, Unavailable, Degraded, and Unknown. Additionally, Resource Health events can be categorized as being Platform Initiated or User Initiated."
-        }
-      },
-      "forwardSecurityAzureActivityLogs": {
-        "type": "bool",
-        "defaultValue": false,
-        "metadata": {
-          "description": "Optional. Contains the record of any alerts generated by Azure Security Center. An example of a Security event is Suspicious double extension file executed."
-        }
-      },
-      "forwardServiceHealthAzureActivityLogs": {
-        "type": "bool",
-        "defaultValue": false,
-        "metadata": {
-          "description": "Optional. Contains the record of any service health incidents that have occurred in Azure. An example of a Service Health event SQL Azure in East US is experiencing downtime. Service Health events come in Six varieties: Action Required, Assisted Recovery, Incident, Maintenance, Information, or Security. These events are only created if you have a resource in the subscription that would be impacted by the event."
-        }
-      },
-      "disablePublicAccessToStorageAccount": {
-        "type": "bool",
-        "defaultValue": true,
-        "metadata": {
-          "description": "Optional. Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to 'Basic', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share."
-        }
+    "eventHubNamespace": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional. Event Hub Namespace where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with 'nrlogs-')."
       }
     },
-    "variables": {
-      "onePerResourceGroupUniqueSuffix": "[uniqueString(resourceGroup().id)]",
-      "createNewEventHubNamespace": "[equals(parameters('eventHubNamespace'), '')]",
-      "eventHubNamespaceName": "[if(variables('createNewEventHubNamespace'), format('nrlogs-eventhub-namespace-{0}', variables('onePerResourceGroupUniqueSuffix')), parameters('eventHubNamespace'))]",
-      "createNewEventHub": "[equals(parameters('eventHubName'), '')]",
-      "eventHub_name": "[if(variables('createNewEventHub'), 'nrlogs-eventhub', parameters('eventHubName'))]",
-      "eventHubConsumerGroupName": "nrlogs-consumergroup",
-      "logConsumerAuthorizationRuleName": "nrlogs-consumer-policy",
-      "logProducerAuthorizationRuleName": "nrlogs-producer-policy",
-      "storageAccountName": "[format('nrlogs{0}', variables('onePerResourceGroupUniqueSuffix'))]",
-      "servicePlanName": "[format('nrlogs-serviceplan-{0}', variables('onePerResourceGroupUniqueSuffix'))]",
-      "onePerResourceGroupAndEventHubUniqueSuffix": "[uniqueString(resourceGroup().id, variables('eventHubNamespaceName'), variables('eventHub_name'))]",
-      "functionAppName": "[format('nrlogs-eventhubforwarder-{0}', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
-      "activityLogsDiagnosticSettingName": "[format('nrlogs-activity-log-diagnostic-setting-{0}', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
-      "createActivityLogsDiagnosticSetting": "[or(or(or(or(or(or(or(parameters('forwardAdministrativeAzureActivityLogs'), parameters('forwardAlertAzureActivityLogs')), parameters('forwardAutoscaleAzureActivityLogs')), parameters('forwardPolicyAzureActivityLogs')), parameters('forwardRecommendationAzureActivityLogs')), parameters('forwardResourceHealthAzureActivityLogs')), parameters('forwardSecurityAzureActivityLogs')), parameters('forwardServiceHealthAzureActivityLogs'))]",
-      "eventHubForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/EventHubForwarder.zip",
-      "virtualNetworkName": "[format('nrlogs{0}-virtual-network', variables('onePerResourceGroupUniqueSuffix'))]",
-      "functionSubnetName": "[format('{0}-internal-functions-subnet', variables('virtualNetworkName'))]",
-      "privateEndpointsSubnetName": "[format('{0}-private-endpoints-subnet', variables('virtualNetworkName'))]",
-      "dnsSuffix": "[environment().suffixes.storage]",
-      "privateStorageFileDnsZoneName": "[format('privatelink.file.{0}', variables('dnsSuffix'))]",
-      "privateStorageBlobDnsZoneName": "[format('privatelink.blob.{0}', variables('dnsSuffix'))]",
-      "privateStorageQueueDnsZoneName": "[format('privatelink.queue.{0}', variables('dnsSuffix'))]",
-      "privateStorageTableDnsZoneName": "[format('privatelink.table.{0}', variables('dnsSuffix'))]",
-      "privateStorageFileDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageFileDnsZoneName'), variables('virtualNetworkName'))]",
-      "privateStorageBlobDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageBlobDnsZoneName'), variables('virtualNetworkName'))]",
-      "privateStorageQueueDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageQueueDnsZoneName'), variables('virtualNetworkName'))]",
-      "privateStorageTableDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageTableDnsZoneName'), variables('virtualNetworkName'))]",
-      "privateEndpointStorageFileName": "[format('{0}-file-private-endpoint', variables('storageAccountName'))]",
-      "privateEndpointStorageTableName": "[format('{0}-table-private-endpoint', variables('storageAccountName'))]",
-      "privateEndpointStorageBlobName": "[format('{0}-blob-private-endpoint', variables('storageAccountName'))]",
-      "privateEndpointStorageQueueName": "[format('{0}-queue-private-endpoint', variables('storageAccountName'))]",
-      "privateEndpointPrivateDnsZoneGroupsStorageFileName": "[format('{0}/filePrivateDnsZoneGroup', variables('privateEndpointStorageFileName'))]",
-      "privateEndpointPrivateDnsZoneGroupsStorageBlobName": "[format('{0}/blobPrivateDnsZoneGroup', variables('privateEndpointStorageBlobName'))]",
-      "privateEndpointPrivateDnsZoneGroupsStorageTableName": "[format('{0}/tablePrivateDnsZoneGroup', variables('privateEndpointStorageTableName'))]",
-      "privateEndpointPrivateDnsZoneGroupsStorageQueueName": "[format('{0}/queuePrivateDnsZoneGroup', variables('privateEndpointStorageQueueName'))]",
-      "functionNetworkConfigName": "[format('{0}/virtualNetwork', variables('functionAppName'))]",
-      "enableHa": "[if(equals(parameters('deploymentMode'), 'production'), true(), false())]",
-      "prdASP": {
-        "kind": "elastic",
-        "properties": {
-          "perSiteScaling": true,
-          "elasticScaleEnabled": true,
-          "maximumElasticWorkerCount": 20,
-          "zoneRedundant": true
-        },
-        "sku": {
-          "name": "EP1",
-          "tier": "ElasticPremium",
-          "size": "EP1",
-          "family": "EP",
-          "capacity": 1
-        }
-      },
-      "devASP": {
-        "kind": "app",
-        "properties": {
-          "name": "[variables('servicePlanName')]",
-          "targetWorkerCount": 1,
-          "targetWorkerSizeId": 1,
-          "workerSize": 1,
-          "numberOfWorkers": 1,
-          "computeMode": "Dynamic",
-          "zoneRedundant": false
-        },
-        "sku": {
-          "name": "B1",
-          "tier": "Basic",
-          "capacity": 1
-        }
-      },
-      "aspConfig": "[if(variables('enableHa'), variables('prdASP'), variables('devASP'))]"
+    "eventHubName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional. Event Hub where all the Azure Platform logs are being sent to in order to be forwarded to New Relic. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrlogs')."
+      }
     },
-    "resources": [
-      {
-        "condition": "[variables('createNewEventHubNamespace')]",
-        "type": "Microsoft.EventHub/namespaces",
-        "apiVersion": "2024-01-01",
-        "name": "[variables('eventHubNamespaceName')]",
-        "location": "[parameters('location')]",
-        "sku": {
-          "name": "Standard",
-          "tier": "Standard",
-          "capacity": 1
-        },
-        "properties": {
-          "minimumTlsVersion": "1.2",
-          "zoneRedundant": "[if(variables('enableHa'), true(), null())]",
-          "isAutoInflateEnabled": true,
-          "maximumThroughputUnits": 20
-        }
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Required. Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group."
+      }
+    },
+    "deploymentMode": {
+      "type": "string",
+      "defaultValue": "devtest",
+      "allowedValues": [
+        "devtest",
+        "production"
+      ],
+      "metadata": {
+        "description": "Optional. Used to determine if the Azure resources will be provisioned in a High Availability mode. Zone Redundancy is an immutable field on App Service Plans. So this will require a redeploy if you toggle between. Note this will incur additional costs. There is an optional parameter for `disableHighAvailability`."
+      }
+    },
+    "disableHighAvailability": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Only works if deploymentMode is set to \"production\" - this parameter will disable High Availability, which is a cost reduction option that allows customers to opt-out to reduce the App Service Plan costs."
+      }
+    },
+    "newRelicEndpoint": {
+      "type": "string",
+      "defaultValue": "https://log-api.newrelic.com/log/v1",
+      "allowedValues": [
+        "https://log-api.newrelic.com/log/v1",
+        "https://log-api.eu.newrelic.com/log/v1"
+      ],
+      "metadata": {
+        "description": "Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
+      }
+    },
+    "logCustomAttributes": {
+      "type": "string",
+      "defaultValue": "azure-forwarded",
+      "metadata": {
+        "description": "Optional. List of semicolon-separated custom attributes that you would like to enrich the forwarded logs with. This can be useful, for example, if you want to indicate common attributes shared by all the logs collected in this account, such as: 'environment:production;department:sales;country:Germany'"
+      }
+    },
+    "maxRetriesToResendLogs": {
+      "type": "int",
+      "defaultValue": 3,
+      "minValue": 1,
+      "metadata": {
+        "description": "Optional. Maximum number of attempts the forwarder function will perform in the event of a failure while sending your data."
+      }
+    },
+    "retryInterval": {
+      "type": "int",
+      "defaultValue": 2000,
+      "minValue": 100,
+      "metadata": {
+        "description": "Optional. Number of milliseconds to wait between consecutive retries to send the logs."
+      }
+    },
+    "forwardAdministrativeAzureActivityLogs": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Optional. Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription."
+      }
+    },
+    "forwardAlertAzureActivityLogs": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Optional. Contains the record of activations for Azure alerts. An example of an Alert event is CPU % on myVM has been over 80 for the past 5 minutes."
+      }
+    },
+    "forwardAutoscaleAzureActivityLogs": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Contains the record of any events related to the operation of the autoscale engine based on any autoscale settings you have defined in your subscription. An example of an Autoscale event is Autoscale scale up action failed."
+      }
+    },
+    "forwardPolicyAzureActivityLogs": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Contains records of all effect action operations performed by Azure Policy. Examples of Policy events include Audit and Deny. Every action taken by Policy is modeled as an operation on a resource."
+      }
+    },
+    "forwardRecommendationAzureActivityLogs": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Contains recommendation events from Azure Advisor."
+      }
+    },
+    "forwardResourceHealthAzureActivityLogs": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Contains the record of any resource health events that have occurred to your Azure resources. An example of a Resource Health event is Virtual Machine health status changed to unavailable. Resource Health events can represent one of four health statuses: Available, Unavailable, Degraded, and Unknown. Additionally, Resource Health events can be categorized as being Platform Initiated or User Initiated."
+      }
+    },
+    "forwardSecurityAzureActivityLogs": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Contains the record of any alerts generated by Azure Security Center. An example of a Security event is Suspicious double extension file executed."
+      }
+    },
+    "forwardServiceHealthAzureActivityLogs": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Contains the record of any service health incidents that have occurred in Azure. An example of a Service Health event SQL Azure in East US is experiencing downtime. Service Health events come in Six varieties: Action Required, Assisted Recovery, Incident, Maintenance, Information, or Security. These events are only created if you have a resource in the subscription that would be impacted by the event."
+      }
+    },
+    "disablePublicAccessToStorageAccount": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to 'Basic', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share."
+      }
+    },
+    "eventHubSku": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "Optional. Specify the SKU of the EventHub log forwarder where required for scalability."
+      }
+    }
+  },
+  "variables": {
+    "onePerResourceGroupUniqueSuffix": "[uniqueString(resourceGroup().id)]",
+    "createNewEventHubNamespace": "[equals(parameters('eventHubNamespace'), '')]",
+    "eventHubNamespaceName": "[if(variables('createNewEventHubNamespace'), format('nrlogs-eventhub-namespace-{0}', variables('onePerResourceGroupUniqueSuffix')), parameters('eventHubNamespace'))]",
+    "createNewEventHub": "[equals(parameters('eventHubName'), '')]",
+    "eventHub_name": "[if(variables('createNewEventHub'), 'nrlogs-eventhub', parameters('eventHubName'))]",
+    "eventHubConsumerGroupName": "nrlogs-consumergroup",
+    "logConsumerAuthorizationRuleName": "nrlogs-consumer-policy",
+    "logProducerAuthorizationRuleName": "nrlogs-producer-policy",
+    "storageAccountName": "[format('nrlogs{0}', variables('onePerResourceGroupUniqueSuffix'))]",
+    "servicePlanName": "[format('nrlogs-serviceplan-{0}', variables('onePerResourceGroupUniqueSuffix'))]",
+    "onePerResourceGroupAndEventHubUniqueSuffix": "[uniqueString(resourceGroup().id, variables('eventHubNamespaceName'), variables('eventHub_name'))]",
+    "functionAppName": "[format('nrlogs-eventhubforwarder-{0}', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
+    "activityLogsDiagnosticSettingName": "[format('nrlogs-activity-log-diagnostic-setting-{0}', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
+    "createActivityLogsDiagnosticSetting": "[or(or(or(or(or(or(or(parameters('forwardAdministrativeAzureActivityLogs'), parameters('forwardAlertAzureActivityLogs')), parameters('forwardAutoscaleAzureActivityLogs')), parameters('forwardPolicyAzureActivityLogs')), parameters('forwardRecommendationAzureActivityLogs')), parameters('forwardResourceHealthAzureActivityLogs')), parameters('forwardSecurityAzureActivityLogs')), parameters('forwardServiceHealthAzureActivityLogs'))]",
+    "eventHubForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/EventHubForwarder.zip",
+    "virtualNetworkName": "[format('nrlogs{0}-virtual-network', variables('onePerResourceGroupUniqueSuffix'))]",
+    "functionSubnetName": "[format('{0}-internal-functions-subnet', variables('virtualNetworkName'))]",
+    "privateEndpointsSubnetName": "[format('{0}-private-endpoints-subnet', variables('virtualNetworkName'))]",
+    "dnsSuffix": "[environment().suffixes.storage]",
+    "privateStorageFileDnsZoneName": "[format('privatelink.file.{0}', variables('dnsSuffix'))]",
+    "privateStorageBlobDnsZoneName": "[format('privatelink.blob.{0}', variables('dnsSuffix'))]",
+    "privateStorageQueueDnsZoneName": "[format('privatelink.queue.{0}', variables('dnsSuffix'))]",
+    "privateStorageTableDnsZoneName": "[format('privatelink.table.{0}', variables('dnsSuffix'))]",
+    "privateStorageFileDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageFileDnsZoneName'), variables('virtualNetworkName'))]",
+    "privateStorageBlobDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageBlobDnsZoneName'), variables('virtualNetworkName'))]",
+    "privateStorageQueueDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageQueueDnsZoneName'), variables('virtualNetworkName'))]",
+    "privateStorageTableDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageTableDnsZoneName'), variables('virtualNetworkName'))]",
+    "privateEndpointStorageFileName": "[format('{0}-file-private-endpoint', variables('storageAccountName'))]",
+    "privateEndpointStorageTableName": "[format('{0}-table-private-endpoint', variables('storageAccountName'))]",
+    "privateEndpointStorageBlobName": "[format('{0}-blob-private-endpoint', variables('storageAccountName'))]",
+    "privateEndpointStorageQueueName": "[format('{0}-queue-private-endpoint', variables('storageAccountName'))]",
+    "privateEndpointPrivateDnsZoneGroupsStorageFileName": "[format('{0}/filePrivateDnsZoneGroup', variables('privateEndpointStorageFileName'))]",
+    "privateEndpointPrivateDnsZoneGroupsStorageBlobName": "[format('{0}/blobPrivateDnsZoneGroup', variables('privateEndpointStorageBlobName'))]",
+    "privateEndpointPrivateDnsZoneGroupsStorageTableName": "[format('{0}/tablePrivateDnsZoneGroup', variables('privateEndpointStorageTableName'))]",
+    "privateEndpointPrivateDnsZoneGroupsStorageQueueName": "[format('{0}/queuePrivateDnsZoneGroup', variables('privateEndpointStorageQueueName'))]",
+    "functionNetworkConfigName": "[format('{0}/virtualNetwork', variables('functionAppName'))]",
+    "production": "[if(equals(parameters('deploymentMode'), 'production'), true(), false())]",
+    "prdASP": {
+      "kind": "elastic",
+      "properties": {
+        "perSiteScaling": true,
+        "elasticScaleEnabled": true,
+        "maximumElasticWorkerCount": 20,
+        "zoneRedundant": "[if(parameters('disableHighAvailability'), false(), true())]"
       },
-      {
-        "condition": "[variables('createNewEventHub')]",
-        "type": "Microsoft.EventHub/namespaces/eventhubs",
-        "apiVersion": "2024-01-01",
-        "name": "[format('{0}/{1}', variables('eventHubNamespaceName'), variables('eventHub_name'))]",
-        "properties": {
-          "messageRetentionInDays": 1
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
-        ]
-      },
-      {
-        "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups",
-        "apiVersion": "2024-01-01",
-        "name": "[format('{0}/{1}/{2}', variables('eventHubNamespaceName'), variables('eventHub_name'), variables('eventHubConsumerGroupName'))]",
-        "properties": {},
-        "dependsOn": [
-          "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHub_name'))]"
-        ]
-      },
-      {
-        "type": "Microsoft.EventHub/namespaces/authorizationRules",
-        "apiVersion": "2024-01-01",
-        "name": "[format('{0}/{1}', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName'))]",
-        "properties": {
-          "rights": [
-            "Listen",
-            "Send"
-          ]
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
-        ]
-      },
-      {
-        "condition": "[variables('createActivityLogsDiagnosticSetting')]",
-        "type": "Microsoft.EventHub/namespaces/authorizationRules",
-        "apiVersion": "2024-01-01",
-        "name": "[format('{0}/{1}', variables('eventHubNamespaceName'), variables('logProducerAuthorizationRuleName'))]",
-        "properties": {
-          "rights": [
-            "Send"
-          ]
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]",
-          "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/virtualNetworks",
-        "apiVersion": "2022-09-01",
-        "name": "[variables('virtualNetworkName')]",
-        "location": "[parameters('location')]",
-        "properties": {
-          "addressSpace": {
-            "addressPrefixes": [
-              "10.2.0.0/16"
-            ]
-          },
-          "subnets": [
-            {
-              "name": "[variables('functionSubnetName')]",
-              "properties": {
-                "privateEndpointNetworkPolicies": "Enabled",
-                "privateLinkServiceNetworkPolicies": "Enabled",
-                "delegations": [
-                  {
-                    "name": "webapp",
-                    "properties": {
-                      "serviceName": "Microsoft.Web/serverFarms"
-                    }
-                  }
-                ],
-                "addressPrefix": "10.2.0.0/24"
-              }
-            },
-            {
-              "name": "[variables('privateEndpointsSubnetName')]",
-              "properties": {
-                "privateEndpointNetworkPolicies": "Disabled",
-                "privateLinkServiceNetworkPolicies": "Enabled",
-                "addressPrefix": "10.2.1.0/24"
-              }
-            }
-          ]
-        }
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateDnsZones",
-        "apiVersion": "2020-06-01",
-        "name": "[variables('privateStorageFileDnsZoneName')]",
-        "location": "global"
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateDnsZones",
-        "apiVersion": "2020-06-01",
-        "name": "[variables('privateStorageBlobDnsZoneName')]",
-        "location": "global"
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateDnsZones",
-        "apiVersion": "2020-06-01",
-        "name": "[variables('privateStorageQueueDnsZoneName')]",
-        "location": "global"
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateDnsZones",
-        "apiVersion": "2020-06-01",
-        "name": "[variables('privateStorageTableDnsZoneName')]",
-        "location": "global"
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-        "apiVersion": "2020-06-01",
-        "name": "[variables('privateStorageFileDnsZoneVirtualNetworkLinkName')]",
-        "location": "global",
-        "properties": {
-          "registrationEnabled": false,
-          "virtualNetwork": {
-            "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-          }
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageFileDnsZoneName'))]",
-          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-        "apiVersion": "2020-06-01",
-        "name": "[variables('privateStorageBlobDnsZoneVirtualNetworkLinkName')]",
-        "location": "global",
-        "properties": {
-          "registrationEnabled": false,
-          "virtualNetwork": {
-            "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-          }
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageBlobDnsZoneName'))]",
-          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-        "apiVersion": "2020-06-01",
-        "name": "[variables('privateStorageQueueDnsZoneVirtualNetworkLinkName')]",
-        "location": "global",
-        "properties": {
-          "registrationEnabled": false,
-          "virtualNetwork": {
-            "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-          }
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageQueueDnsZoneName'))]",
-          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
-        "apiVersion": "2020-06-01",
-        "name": "[variables('privateStorageTableDnsZoneVirtualNetworkLinkName')]",
-        "location": "global",
-        "properties": {
-          "registrationEnabled": false,
-          "virtualNetwork": {
-            "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-          }
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageTableDnsZoneName'))]",
-          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateEndpoints",
-        "apiVersion": "2022-05-01",
-        "name": "[variables('privateEndpointStorageFileName')]",
-        "location": "[parameters('location')]",
-        "properties": {
-          "subnet": {
-            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('privateEndpointsSubnetName'))]"
-          },
-          "privateLinkServiceConnections": [
-            {
-              "name": "MyStorageFilePrivateLinkConnection",
-              "properties": {
-                "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-                "groupIds": [
-                  "file"
-                ]
-              }
-            }
-          ]
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateEndpoints",
-        "apiVersion": "2022-05-01",
-        "name": "[variables('privateEndpointStorageBlobName')]",
-        "location": "[parameters('location')]",
-        "properties": {
-          "subnet": {
-            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('privateEndpointsSubnetName'))]"
-          },
-          "privateLinkServiceConnections": [
-            {
-              "name": "MyStorageBlobPrivateLinkConnection",
-              "properties": {
-                "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-                "groupIds": [
-                  "blob"
-                ]
-              }
-            }
-          ]
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateEndpoints",
-        "apiVersion": "2022-05-01",
-        "name": "[variables('privateEndpointStorageTableName')]",
-        "location": "[parameters('location')]",
-        "properties": {
-          "subnet": {
-            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('privateEndpointsSubnetName'))]"
-          },
-          "privateLinkServiceConnections": [
-            {
-              "name": "MyStorageTablePrivateLinkConnection",
-              "properties": {
-                "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-                "groupIds": [
-                  "table"
-                ]
-              }
-            }
-          ]
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateEndpoints",
-        "apiVersion": "2022-05-01",
-        "name": "[variables('privateEndpointStorageQueueName')]",
-        "location": "[parameters('location')]",
-        "properties": {
-          "subnet": {
-            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('privateEndpointsSubnetName'))]"
-          },
-          "privateLinkServiceConnections": [
-            {
-              "name": "MyStorageQueuePrivateLinkConnection",
-              "properties": {
-                "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-                "groupIds": [
-                  "queue"
-                ]
-              }
-            }
-          ]
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-        "apiVersion": "2022-05-01",
-        "name": "[variables('privateEndpointPrivateDnsZoneGroupsStorageFileName')]",
-        "properties": {
-          "privateDnsZoneConfigs": [
-            {
-              "name": "config",
-              "properties": {
-                "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageFileDnsZoneName'))]"
-              }
-            }
-          ]
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageFileName'))]",
-          "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageFileDnsZoneName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-        "apiVersion": "2022-05-01",
-        "name": "[variables('privateEndpointPrivateDnsZoneGroupsStorageBlobName')]",
-        "properties": {
-          "privateDnsZoneConfigs": [
-            {
-              "name": "config",
-              "properties": {
-                "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageBlobDnsZoneName'))]"
-              }
-            }
-          ]
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageBlobName'))]",
-          "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageBlobDnsZoneName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-        "apiVersion": "2022-05-01",
-        "name": "[variables('privateEndpointPrivateDnsZoneGroupsStorageTableName')]",
-        "properties": {
-          "privateDnsZoneConfigs": [
-            {
-              "name": "config",
-              "properties": {
-                "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageTableDnsZoneName'))]"
-              }
-            }
-          ]
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageTableName'))]",
-          "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageTableDnsZoneName'))]"
-        ]
-      },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
-        "apiVersion": "2022-05-01",
-        "name": "[variables('privateEndpointPrivateDnsZoneGroupsStorageQueueName')]",
-        "properties": {
-          "privateDnsZoneConfigs": [
-            {
-              "name": "config",
-              "properties": {
-                "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageQueueDnsZoneName'))]"
-              }
-            }
-          ]
-        },
-        "dependsOn": [
-          "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageQueueName'))]",
-          "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageQueueDnsZoneName'))]"
-        ]
-      },
-      {
-        "type": "Microsoft.Storage/storageAccounts",
-        "apiVersion": "2024-01-01",
-        "name": "[variables('storageAccountName')]",
-        "location": "[parameters('location')]",
-        "sku": {
-          "name": "Standard_LRS"
-        },
-        "kind": "StorageV2",
-        "properties": {
-          "allowBlobPublicAccess": false,
-          "minimumTlsVersion": "TLS1_2",
-          "networkAcls": "[if(parameters('disablePublicAccessToStorageAccount'), json('{\"bypass\": \"None\", \"defaultAction\": \"Deny\"}'), null())]"
-        }
-      },
-      {
-        "type": "Microsoft.Web/serverfarms",
-        "apiVersion": "2022-09-01",
+      "sku": {
+        "name": "EP1",
+        "tier": "ElasticPremium",
+        "size": "EP1",
+        "family": "EP",
+        "capacity": 3
+      }
+    },
+    "devASP": {
+      "kind": "app",
+      "properties": {
         "name": "[variables('servicePlanName')]",
-        "kind": "[if(parameters('disablePublicAccessToStorageAccount'), variables('aspConfig').kind, 'functionapp')]",
-        "location": "[parameters('location')]",
-        "sku": "[if(parameters('disablePublicAccessToStorageAccount'), variables('aspConfig').sku, json('{ \"name\": \"Y1\", \"tier\": \"Dynamic\" }'))]",
-        "properties": "[if(parameters('disablePublicAccessToStorageAccount'), variables('aspConfig').properties, json(format('{{ \"name\": \"{0}\", \"targetWorkerCount\": 1, \"targetWorkerSizeId\": 1, \"workerSize\": \"1\", \"numberOfWorkers\": 1, \"computeMode\": \"Dynamic\" }}', variables('servicePlanName'))))]"
+        "targetWorkerCount": 1,
+        "targetWorkerSizeId": 1,
+        "workerSize": 1,
+        "numberOfWorkers": 1,
+        "computeMode": "Dynamic",
+        "zoneRedundant": false
       },
-      {
-        "type": "Microsoft.Web/sites",
-        "apiVersion": "2020-12-01",
-        "name": "[variables('functionAppName')]",
-        "location": "[parameters('location')]",
-        "kind": "functionapp",
-        "properties": {
-          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
-          "siteConfig": {
-            "appSettings": [
-              {
-                "name": "EVENTHUB_NAME",
-                "value": "[variables('eventHub_name')]"
-              },
-              {
-                "name": "EVENTHUB_CONSUMER_CONNECTION",
-                "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName')), '2024-01-01').primaryConnectionString]"
-              },
-              {
-                "name": "EVENTHUB_CONSUMER_GROUP",
-                "value": "[variables('eventHubConsumerGroupName')]"
-              },
-              {
-                "name": "NR_LICENSE_KEY",
-                "value": "[parameters('newRelicLicenseKey')]"
-              },
-              {
-                "name": "NR_ENDPOINT",
-                "value": "[parameters('newRelicEndpoint')]"
-              },
-              {
-                "name": "NR_TAGS",
-                "value": "[parameters('logCustomAttributes')]"
-              },
-              {
-                "name": "NR_MAX_RETRIES",
-                "value": "[format('{0}', parameters('maxRetriesToResendLogs'))]"
-              },
-              {
-                "name": "NR_RETRY_INTERVAL",
-                "value": "[format('{0}', parameters('retryInterval'))]"
-              },
-              {
-                "name": "FUNCTIONS_EXTENSION_VERSION",
-                "value": "~4"
-              },
-              {
-                "name": "FUNCTIONS_WORKER_RUNTIME",
-                "value": "node"
-              },
-              {
-                "name": "WEBSITE_NODE_DEFAULT_VERSION",
-                "value": "~20"
-              },
-              {
-                "name": "AzureWebJobsStorage",
-                "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', variables('storageAccountName'), listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2024-01-01').keys[0].value, environment().suffixes.storage)]"
-              },
-              {
-                "name": "WEBSITE_RUN_FROM_PACKAGE",
-                "value": "[if(parameters('disablePublicAccessToStorageAccount'), variables('eventHubForwarderFunctionArtifact'), '0')]"
-              }
-            ],
-            "alwaysOn": "[if(and(parameters('disablePublicAccessToStorageAccount'), not(variables('enableHa'))), true(), false())]",
-            "ftpsState": "Disabled",
-            "publicNetworkAccess": "[if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')]"
+      "sku": {
+        "name": "B1",
+        "tier": "Basic",
+        "capacity": 1
+      }
+    },
+    "defaultASP": {
+      "kind": "functionapp",
+      "properties": {
+        "name": "[variables('servicePlanName')]",
+        "targetWorkerCount": 1,
+        "targetWorkerSizeId": 1,
+        "workerSize": "1",
+        "numberOfWorkers": 1,
+        "computeMode": "Dynamic"
+      },
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      }
+    },
+    "devTestConfig": "[if(and(equals(parameters('deploymentMode'), 'devtest'), parameters('disablePublicAccessToStorageAccount')), variables('devASP'), variables('defaultASP'))]",
+    "aspConfig": "[if(variables('production'), variables('prdASP'), variables('devTestConfig'))]"
+  },
+  "resources": [
+    {
+      "condition": "[variables('createNewEventHubNamespace')]",
+      "type": "Microsoft.EventHub/namespaces",
+      "apiVersion": "2024-01-01",
+      "name": "[variables('eventHubNamespaceName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('eventHubSku')]",
+        "tier": "[parameters('eventHubSku')]",
+        "capacity": 1
+      },
+      "properties": {
+        "minimumTlsVersion": "1.2",
+        "zoneRedundant": "[if(parameters('disableHighAvailability'), null(), true())]",
+        "isAutoInflateEnabled": "[if(variables('production'), true(), false())]",
+        "maximumThroughputUnits": "[if(variables('production'), 20, 0)]"
+      }
+    },
+    {
+      "condition": "[variables('createNewEventHub')]",
+      "type": "Microsoft.EventHub/namespaces/eventhubs",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', variables('eventHubNamespaceName'), variables('eventHub_name'))]",
+      "properties": {
+        "messageRetentionInDays": 1
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces/eventhubs/consumergroups",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}/{2}', variables('eventHubNamespaceName'), variables('eventHub_name'), variables('eventHubConsumerGroupName'))]",
+      "properties": {},
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHub_name'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventHub/namespaces/authorizationRules",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName'))]",
+      "properties": {
+        "rights": [
+          "Listen",
+          "Send",
+          "Manage"
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
+      ]
+    },
+    {
+      "condition": "[variables('createActivityLogsDiagnosticSetting')]",
+      "type": "Microsoft.EventHub/namespaces/authorizationRules",
+      "apiVersion": "2024-01-01",
+      "name": "[format('{0}/{1}', variables('eventHubNamespaceName'), variables('logProducerAuthorizationRuleName'))]",
+      "properties": {
+        "rights": [
+          "Send"
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.2.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('functionSubnetName')]",
+            "properties": {
+              "privateEndpointNetworkPolicies": "Enabled",
+              "privateLinkServiceNetworkPolicies": "Enabled",
+              "delegations": [
+                {
+                  "name": "webapp",
+                  "properties": {
+                    "serviceName": "Microsoft.Web/serverFarms"
+                  }
+                }
+              ],
+              "addressPrefix": "10.2.0.0/24"
+            }
           },
-          "httpsOnly": true
+          {
+            "name": "[variables('privateEndpointsSubnetName')]",
+            "properties": {
+              "privateEndpointNetworkPolicies": "Disabled",
+              "privateLinkServiceNetworkPolicies": "Enabled",
+              "addressPrefix": "10.2.1.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageFileDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageBlobDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageQueueDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateDnsZones",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageTableDnsZoneName')]",
+      "location": "global"
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageFileDnsZoneVirtualNetworkLinkName')]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageFileDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageBlobDnsZoneVirtualNetworkLinkName')]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageBlobDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageQueueDnsZoneVirtualNetworkLinkName')]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageQueueDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+      "apiVersion": "2020-06-01",
+      "name": "[variables('privateStorageTableDnsZoneVirtualNetworkLinkName')]",
+      "location": "global",
+      "properties": {
+        "registrationEnabled": false,
+        "virtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageTableDnsZoneName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('privateEndpointStorageFileName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('privateEndpointsSubnetName'))]"
         },
-        "dependsOn": [
-          "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName'))]",
-          "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
-          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        "privateLinkServiceConnections": [
+          {
+            "name": "MyStorageFilePrivateLinkConnection",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+              "groupIds": [
+                "file"
+              ]
+            }
+          }
         ]
       },
-      {
-        "condition": "[not(parameters('disablePublicAccessToStorageAccount'))]",
-        "type": "Microsoft.Web/sites/extensions",
-        "apiVersion": "2020-12-01",
-        "name": "[format('{0}/{1}', variables('functionAppName'), 'MSDeploy')]",
-        "properties": {
-          "packageUri": "[variables('eventHubForwarderFunctionArtifact')]"
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('privateEndpointStorageBlobName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('privateEndpointsSubnetName'))]"
         },
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+        "privateLinkServiceConnections": [
+          {
+            "name": "MyStorageBlobPrivateLinkConnection",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+              "groupIds": [
+                "blob"
+              ]
+            }
+          }
         ]
       },
-      {
-        "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-        "type": "Microsoft.Web/sites/networkConfig",
-        "apiVersion": "2022-03-01",
-        "name": "[variables('functionNetworkConfigName')]",
-        "properties": {
-          "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('functionSubnetName'))]",
-          "swiftSupported": true
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('privateEndpointStorageTableName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('privateEndpointsSubnetName'))]"
         },
-        "dependsOn": [
-          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
-          "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+        "privateLinkServiceConnections": [
+          {
+            "name": "MyStorageTablePrivateLinkConnection",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+              "groupIds": [
+                "table"
+              ]
+            }
+          }
         ]
       },
-      {
-        "condition": "[variables('createActivityLogsDiagnosticSetting')]",
-        "type": "Microsoft.Resources/deployments",
-        "apiVersion": "2022-09-01",
-        "name": "activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment",
-        "subscriptionId": "[subscription().subscriptionId]",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "expressionEvaluationOptions": {
-            "scope": "inner"
-          },
-          "mode": "Incremental",
-          "parameters": {
-            "resourceId_subscription_subscriptionId_resourceGroup_name_Microsoft_EventHub_namespaces_AuthorizationRules_variables_eventHubNamespaceName_variables_logProducerAuthorizationRuleName": {
-              "value": "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logProducerAuthorizationRuleName'))]"
-            },
-            "variables_activityLogsDiagnosticSettingName": {
-              "value": "[variables('activityLogsDiagnosticSettingName')]"
-            },
-            "variables_eventHubName": {
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('privateEndpointStorageQueueName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "subnet": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('privateEndpointsSubnetName'))]"
+        },
+        "privateLinkServiceConnections": [
+          {
+            "name": "MyStorageQueuePrivateLinkConnection",
+            "properties": {
+              "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+              "groupIds": [
+                "queue"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('privateEndpointPrivateDnsZoneGroupsStorageFileName')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageFileDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageFileName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageFileDnsZoneName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('privateEndpointPrivateDnsZoneGroupsStorageBlobName')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageBlobDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageBlobName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageBlobDnsZoneName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('privateEndpointPrivateDnsZoneGroupsStorageTableName')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageTableDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageTableName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageTableDnsZoneName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+      "apiVersion": "2022-05-01",
+      "name": "[variables('privateEndpointPrivateDnsZoneGroupsStorageQueueName')]",
+      "properties": {
+        "privateDnsZoneConfigs": [
+          {
+            "name": "config",
+            "properties": {
+              "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageQueueDnsZoneName'))]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/privateEndpoints', variables('privateEndpointStorageQueueName'))]",
+        "[resourceId('Microsoft.Network/privateDnsZones', variables('privateStorageQueueDnsZoneName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2024-01-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "allowBlobPublicAccess": false,
+        "minimumTlsVersion": "TLS1_2",
+        "networkAcls": "[if(parameters('disablePublicAccessToStorageAccount'), createObject('bypass', 'None', 'defaultAction', 'Deny'), null())]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('servicePlanName')]",
+      "kind": "[variables('aspConfig').kind]",
+      "location": "[parameters('location')]",
+      "sku": "[variables('aspConfig').sku]",
+      "properties": "[variables('aspConfig').properties]"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-12-01",
+      "name": "[variables('functionAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "EVENTHUB_NAME",
               "value": "[variables('eventHub_name')]"
             },
-            "forwardAdministrativeAzureActivityLogs": {
-              "value": "[parameters('forwardAdministrativeAzureActivityLogs')]"
+            {
+              "name": "EVENTHUB_CONSUMER_CONNECTION",
+              "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName')), '2024-01-01').primaryConnectionString]"
             },
-            "forwardSecurityAzureActivityLogs": {
-              "value": "[parameters('forwardSecurityAzureActivityLogs')]"
+            {
+              "name": "EVENTHUB_CONSUMER_GROUP",
+              "value": "[variables('eventHubConsumerGroupName')]"
             },
-            "forwardServiceHealthAzureActivityLogs": {
-              "value": "[parameters('forwardServiceHealthAzureActivityLogs')]"
+            {
+              "name": "NR_LICENSE_KEY",
+              "value": "[parameters('newRelicLicenseKey')]"
             },
-            "forwardAlertAzureActivityLogs": {
-              "value": "[parameters('forwardAlertAzureActivityLogs')]"
+            {
+              "name": "NR_ENDPOINT",
+              "value": "[parameters('newRelicEndpoint')]"
             },
-            "forwardRecommendationAzureActivityLogs": {
-              "value": "[parameters('forwardRecommendationAzureActivityLogs')]"
+            {
+              "name": "NR_TAGS",
+              "value": "[parameters('logCustomAttributes')]"
             },
-            "forwardPolicyAzureActivityLogs": {
-              "value": "[parameters('forwardPolicyAzureActivityLogs')]"
+            {
+              "name": "NR_MAX_RETRIES",
+              "value": "[format('{0}', parameters('maxRetriesToResendLogs'))]"
             },
-            "forwardAutoscaleAzureActivityLogs": {
-              "value": "[parameters('forwardAutoscaleAzureActivityLogs')]"
+            {
+              "name": "NR_RETRY_INTERVAL",
+              "value": "[format('{0}', parameters('retryInterval'))]"
             },
-            "forwardResourceHealthAzureActivityLogs": {
-              "value": "[parameters('forwardResourceHealthAzureActivityLogs')]"
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "node"
+            },
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "~20"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', variables('storageAccountName'), listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2024-01-01').keys[0].value, environment().suffixes.storage)]"
+            },
+            {
+              "name": "WEBSITE_RUN_FROM_PACKAGE",
+              "value": "[if(parameters('disablePublicAccessToStorageAccount'), variables('eventHubForwarderFunctionArtifact'), '0')]"
             }
+          ],
+          "alwaysOn": "[if(and(parameters('disablePublicAccessToStorageAccount'), not(variables('production'))), true(), false())]",
+          "ftpsState": "Disabled",
+          "publicNetworkAccess": "[if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')]"
+        },
+        "httpsOnly": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "condition": "[not(parameters('disablePublicAccessToStorageAccount'))]",
+      "type": "Microsoft.Web/sites/extensions",
+      "apiVersion": "2020-12-01",
+      "name": "[format('{0}/{1}', variables('functionAppName'), 'MSDeploy')]",
+      "properties": {
+        "packageUri": "[variables('eventHubForwarderFunctionArtifact')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ]
+    },
+    {
+      "condition": "[parameters('disablePublicAccessToStorageAccount')]",
+      "type": "Microsoft.Web/sites/networkConfig",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('functionNetworkConfigName')]",
+      "properties": {
+        "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('functionSubnetName'))]",
+        "swiftSupported": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "condition": "[variables('createActivityLogsDiagnosticSetting')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment",
+      "subscriptionId": "[subscription().subscriptionId]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "resourceId_subscription_subscriptionId_resourceGroup_name_Microsoft_EventHub_namespaces_AuthorizationRules_variables_eventHubNamespaceName_variables_logProducerAuthorizationRuleName": {
+            "value": "[resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logProducerAuthorizationRuleName'))]"
           },
-          "template": {
-            "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
-            "contentVersion": "1.0.0.0",
-            "metadata": {
-              "_generator": {
-                "name": "bicep",
-                "version": "0.33.93.31351",
-                "templateHash": "8762792888722940975"
-              }
-            },
-            "parameters": {
-              "resourceId_subscription_subscriptionId_resourceGroup_name_Microsoft_EventHub_namespaces_AuthorizationRules_variables_eventHubNamespaceName_variables_logProducerAuthorizationRuleName": {
-                "type": "string"
-              },
-              "variables_activityLogsDiagnosticSettingName": {
-                "type": "string"
-              },
-              "variables_eventHubName": {
-                "type": "string"
-              },
-              "forwardAdministrativeAzureActivityLogs": {
-                "type": "bool",
-                "metadata": {
-                  "description": "Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription."
-                }
-              },
-              "forwardSecurityAzureActivityLogs": {
-                "type": "bool",
-                "metadata": {
-                  "description": "Contains the record of any alerts generated by Azure Security Center. An example of a Security event is Suspicious double extension file executed."
-                }
-              },
-              "forwardServiceHealthAzureActivityLogs": {
-                "type": "bool",
-                "metadata": {
-                  "description": "Contains the record of any service health incidents that have occurred in Azure. An example of a Service Health event SQL Azure in East US is experiencing downtime. Service Health events come in Six varieties: Action Required, Assisted Recovery, Incident, Maintenance, Information, or Security. These events are only created if you have a resource in the subscription that would be impacted by the event."
-                }
-              },
-              "forwardAlertAzureActivityLogs": {
-                "type": "bool",
-                "metadata": {
-                  "description": "Contains the record of activations for Azure alerts. An example of an Alert event is CPU % on myVM has been over 80 for the past 5 minutes."
-                }
-              },
-              "forwardRecommendationAzureActivityLogs": {
-                "type": "bool",
-                "metadata": {
-                  "description": "Contains recommendation events from Azure Advisor."
-                }
-              },
-              "forwardPolicyAzureActivityLogs": {
-                "type": "bool",
-                "metadata": {
-                  "description": "Contains records of all effect action operations performed by Azure Policy. Examples of Policy events include Audit and Deny. Every action taken by Policy is modeled as an operation on a resource."
-                }
-              },
-              "forwardAutoscaleAzureActivityLogs": {
-                "type": "bool",
-                "metadata": {
-                  "description": "Contains the record of any events related to the operation of the autoscale engine based on any autoscale settings you have defined in your subscription. An example of an Autoscale event is Autoscale scale up action failed."
-                }
-              },
-              "forwardResourceHealthAzureActivityLogs": {
-                "type": "bool",
-                "metadata": {
-                  "description": "Contains the record of any resource health events that have occurred to your Azure resources. An example of a Resource Health event is Virtual Machine health status changed to unavailable. Resource Health events can represent one of four health statuses: Available, Unavailable, Degraded, and Unknown. Additionally, Resource Health events can be categorized as being Platform Initiated or User Initiated."
-                }
-              }
-            },
-            "resources": [
-              {
-                "type": "Microsoft.Insights/diagnosticSettings",
-                "apiVersion": "2017-05-01-preview",
-                "name": "[parameters('variables_activityLogsDiagnosticSettingName')]",
-                "properties": {
-                  "eventHubAuthorizationRuleId": "[parameters('resourceId_subscription_subscriptionId_resourceGroup_name_Microsoft_EventHub_namespaces_AuthorizationRules_variables_eventHubNamespaceName_variables_logProducerAuthorizationRuleName')]",
-                  "eventHubName": "[parameters('variables_eventHubName')]",
-                  "logs": [
-                    {
-                      "category": "Administrative",
-                      "enabled": "[parameters('forwardAdministrativeAzureActivityLogs')]"
-                    },
-                    {
-                      "category": "Security",
-                      "enabled": "[parameters('forwardSecurityAzureActivityLogs')]"
-                    },
-                    {
-                      "category": "ServiceHealth",
-                      "enabled": "[parameters('forwardServiceHealthAzureActivityLogs')]"
-                    },
-                    {
-                      "category": "Alert",
-                      "enabled": "[parameters('forwardAlertAzureActivityLogs')]"
-                    },
-                    {
-                      "category": "Recommendation",
-                      "enabled": "[parameters('forwardRecommendationAzureActivityLogs')]"
-                    },
-                    {
-                      "category": "Policy",
-                      "enabled": "[parameters('forwardPolicyAzureActivityLogs')]"
-                    },
-                    {
-                      "category": "Autoscale",
-                      "enabled": "[parameters('forwardAutoscaleAzureActivityLogs')]"
-                    },
-                    {
-                      "category": "ResourceHealth",
-                      "enabled": "[parameters('forwardResourceHealthAzureActivityLogs')]"
-                    }
-                  ]
-                }
-              }
-            ]
+          "variables_activityLogsDiagnosticSettingName": {
+            "value": "[variables('activityLogsDiagnosticSettingName')]"
+          },
+          "variables_eventHubName": {
+            "value": "[variables('eventHub_name')]"
+          },
+          "forwardAdministrativeAzureActivityLogs": {
+            "value": "[parameters('forwardAdministrativeAzureActivityLogs')]"
+          },
+          "forwardSecurityAzureActivityLogs": {
+            "value": "[parameters('forwardSecurityAzureActivityLogs')]"
+          },
+          "forwardServiceHealthAzureActivityLogs": {
+            "value": "[parameters('forwardServiceHealthAzureActivityLogs')]"
+          },
+          "forwardAlertAzureActivityLogs": {
+            "value": "[parameters('forwardAlertAzureActivityLogs')]"
+          },
+          "forwardRecommendationAzureActivityLogs": {
+            "value": "[parameters('forwardRecommendationAzureActivityLogs')]"
+          },
+          "forwardPolicyAzureActivityLogs": {
+            "value": "[parameters('forwardPolicyAzureActivityLogs')]"
+          },
+          "forwardAutoscaleAzureActivityLogs": {
+            "value": "[parameters('forwardAutoscaleAzureActivityLogs')]"
+          },
+          "forwardResourceHealthAzureActivityLogs": {
+            "value": "[parameters('forwardResourceHealthAzureActivityLogs')]"
           }
         },
-        "dependsOn": [
-          "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHub_name'))]",
-          "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('eventHubNamespaceName'), variables('logProducerAuthorizationRuleName'))]",
-          "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-        ]
-      }
-    ]
-  }
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.33.93.31351",
+              "templateHash": "8762792888722940975"
+            }
+          },
+          "parameters": {
+            "resourceId_subscription_subscriptionId_resourceGroup_name_Microsoft_EventHub_namespaces_AuthorizationRules_variables_eventHubNamespaceName_variables_logProducerAuthorizationRuleName": {
+              "type": "string"
+            },
+            "variables_activityLogsDiagnosticSettingName": {
+              "type": "string"
+            },
+            "variables_eventHubName": {
+              "type": "string"
+            },
+            "forwardAdministrativeAzureActivityLogs": {
+              "type": "bool",
+              "metadata": {
+                "description": "Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription."
+              }
+            },
+            "forwardSecurityAzureActivityLogs": {
+              "type": "bool",
+              "metadata": {
+                "description": "Contains the record of any alerts generated by Azure Security Center. An example of a Security event is Suspicious double extension file executed."
+              }
+            },
+            "forwardServiceHealthAzureActivityLogs": {
+              "type": "bool",
+              "metadata": {
+                "description": "Contains the record of any service health incidents that have occurred in Azure. An example of a Service Health event SQL Azure in East US is experiencing downtime. Service Health events come in Six varieties: Action Required, Assisted Recovery, Incident, Maintenance, Information, or Security. These events are only created if you have a resource in the subscription that would be impacted by the event."
+              }
+            },
+            "forwardAlertAzureActivityLogs": {
+              "type": "bool",
+              "metadata": {
+                "description": "Contains the record of activations for Azure alerts. An example of an Alert event is CPU % on myVM has been over 80 for the past 5 minutes."
+              }
+            },
+            "forwardRecommendationAzureActivityLogs": {
+              "type": "bool",
+              "metadata": {
+                "description": "Contains recommendation events from Azure Advisor."
+              }
+            },
+            "forwardPolicyAzureActivityLogs": {
+              "type": "bool",
+              "metadata": {
+                "description": "Contains records of all effect action operations performed by Azure Policy. Examples of Policy events include Audit and Deny. Every action taken by Policy is modeled as an operation on a resource."
+              }
+            },
+            "forwardAutoscaleAzureActivityLogs": {
+              "type": "bool",
+              "metadata": {
+                "description": "Contains the record of any events related to the operation of the autoscale engine based on any autoscale settings you have defined in your subscription. An example of an Autoscale event is Autoscale scale up action failed."
+              }
+            },
+            "forwardResourceHealthAzureActivityLogs": {
+              "type": "bool",
+              "metadata": {
+                "description": "Contains the record of any resource health events that have occurred to your Azure resources. An example of a Resource Health event is Virtual Machine health status changed to unavailable. Resource Health events can represent one of four health statuses: Available, Unavailable, Degraded, and Unknown. Additionally, Resource Health events can be categorized as being Platform Initiated or User Initiated."
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2017-05-01-preview",
+              "name": "[parameters('variables_activityLogsDiagnosticSettingName')]",
+              "properties": {
+                "eventHubAuthorizationRuleId": "[parameters('resourceId_subscription_subscriptionId_resourceGroup_name_Microsoft_EventHub_namespaces_AuthorizationRules_variables_eventHubNamespaceName_variables_logProducerAuthorizationRuleName')]",
+                "eventHubName": "[parameters('variables_eventHubName')]",
+                "logs": [
+                  {
+                    "category": "Administrative",
+                    "enabled": "[parameters('forwardAdministrativeAzureActivityLogs')]"
+                  },
+                  {
+                    "category": "Security",
+                    "enabled": "[parameters('forwardSecurityAzureActivityLogs')]"
+                  },
+                  {
+                    "category": "ServiceHealth",
+                    "enabled": "[parameters('forwardServiceHealthAzureActivityLogs')]"
+                  },
+                  {
+                    "category": "Alert",
+                    "enabled": "[parameters('forwardAlertAzureActivityLogs')]"
+                  },
+                  {
+                    "category": "Recommendation",
+                    "enabled": "[parameters('forwardRecommendationAzureActivityLogs')]"
+                  },
+                  {
+                    "category": "Policy",
+                    "enabled": "[parameters('forwardPolicyAzureActivityLogs')]"
+                  },
+                  {
+                    "category": "Autoscale",
+                    "enabled": "[parameters('forwardAutoscaleAzureActivityLogs')]"
+                  },
+                  {
+                    "category": "ResourceHealth",
+                    "enabled": "[parameters('forwardResourceHealthAzureActivityLogs')]"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHub_name'))]",
+        "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('eventHubNamespaceName'), variables('logProducerAuthorizationRuleName'))]",
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ]
+    }
+  ]
+}
