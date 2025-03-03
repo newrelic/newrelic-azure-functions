@@ -3,3 +3,4 @@ node_modules
 coverage/*
 BlobForwarder.zip
 EventHubForwarder.zip
+newrelic-azure-functions/bicep/eventhub-forwarder.json
