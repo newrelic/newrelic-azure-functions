@@ -200,6 +200,7 @@
             "name": "[concat(variables('eventHubNamespaceName'), '/', variables('eventHubName'), '/', variables('eventHubConsumerGroupName'))]",
             "apiVersion": "2017-04-01",
             "dependsOn": [
+                "[resourceId('Microsoft.EventHub/namespaces/', variables('eventHubNamespaceName'))]",
                 "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHubName'))]"
             ],
             "properties": {}
