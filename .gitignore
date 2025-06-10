@@ -2,4 +2,6 @@ node_modules
 .idea
 coverage/*
 BlobForwarder.zip
+package-lock.json
 EventHubForwarder.zip
+newrelic-azure-functions/bicep/eventhub-forwarder.json

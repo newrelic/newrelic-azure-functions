@@ -1,0 +1,311 @@
+@description('Required. A New Relic Ingest License Key for the New Relic account where the logs will be published to.')
+param newRelicLicenseKey string = ''
+
+@description('Optional. Event Hub Namespace where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with \'nrlogs-\').')
+param eventHubNamespace string = ''
+
+@description('Optional. Event Hub where all the Azure Platform logs are being sent to in order to be forwarded to New Relic. Leave this blank for a new Event Hub to be created automatically (its name will be \'nrlogs\').')
+param eventHubName string = ''
+
+@description('Optional. Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group.')
+param location string = resourceGroup().location
+
+@allowed([
+  'devtest'
+  'production'
+])
+@description('Optional. Used to determine if the Azure resources will be provisioned in a High Availability mode. Zone Redundancy is an immutable field on App Service Plans. So this will require a redeploy if you toggle between. Note this will incur additional costs. There is an optional parameter for `disableHighAvailability`.')
+param deploymentMode string = 'devtest'
+
+@description('Optional. Only works if deploymentMode is set to "production" - this parameter will disable High Availability, which is a cost reduction option that allows customers to opt-out to reduce the App Service Plan costs.')
+param disableHighAvailability bool = true
+
+@description('Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you\'re in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1')
+@allowed([
+  'https://log-api.newrelic.com/log/v1'
+  'https://log-api.eu.newrelic.com/log/v1'
+
+])
+param newRelicEndpoint string = 'https://log-api.newrelic.com/log/v1'
+
+@description('Optional. List of semicolon-separated custom attributes that you would like to enrich the forwarded logs with. This can be useful, for example, if you want to indicate common attributes shared by all the logs collected in this account, such as: \'environment:production;department:sales;country:Germany\'')
+param logCustomAttributes string = 'azure-forwarded'
+
+@description('Optional. Maximum number of attempts the forwarder function will perform in the event of a failure while sending your data.')
+@minValue(1)
+@maxValue(20)
+param maxRetriesToResendLogs int = 3
+
+@description('Optional. Number of milliseconds to wait between consecutive retries to send the logs.')
+@minValue(100)
+@maxValue(30000)
+param retryInterval int = 2000
+
+@description('Optional. Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription.')
+param forwardAdministrativeAzureActivityLogs bool = true
+
+@description('Optional. Contains the record of activations for Azure alerts. An example of an Alert event is CPU % on myVM has been over 80 for the past 5 minutes.')
+param forwardAlertAzureActivityLogs bool = true
+
+@description('Optional. Contains the record of any events related to the operation of the autoscale engine based on any autoscale settings you have defined in your subscription. An example of an Autoscale event is Autoscale scale up action failed.')
+param forwardAutoscaleAzureActivityLogs bool = false
+
+@description('Optional. Contains records of all effect action operations performed by Azure Policy. Examples of Policy events include Audit and Deny. Every action taken by Policy is modeled as an operation on a resource.')
+param forwardPolicyAzureActivityLogs bool = false
+
+@description('Optional. Contains recommendation events from Azure Advisor.')
+param forwardRecommendationAzureActivityLogs bool = false
+
+@description('Optional. Contains the record of any resource health events that have occurred to your Azure resources. An example of a Resource Health event is Virtual Machine health status changed to unavailable. Resource Health events can represent one of four health statuses: Available, Unavailable, Degraded, and Unknown. Additionally, Resource Health events can be categorized as being Platform Initiated or User Initiated.')
+param forwardResourceHealthAzureActivityLogs bool = false
+
+@description('Optional. Contains the record of any alerts generated by Azure Security Center. An example of a Security event is Suspicious double extension file executed.')
+param forwardSecurityAzureActivityLogs bool = false
+
+@description('Optional. Contains the record of any service health incidents that have occurred in Azure. An example of a Service Health event SQL Azure in East US is experiencing downtime. Service Health events come in Six varieties: Action Required, Assisted Recovery, Incident, Maintenance, Information, or Security. These events are only created if you have a resource in the subscription that would be impacted by the event.')
+param forwardServiceHealthAzureActivityLogs bool = false
+
+@description('Optional. Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to \'Basic\', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share.')
+param disablePublicAccessToStorageAccount bool = false
+
+@allowed([
+  'Standard'
+  'Premium'
+])
+@description('Optional. Specify the SKU of the EventHub log forwarder where required for scalability.')
+param eventHubSku string = 'Standard'
+
+@allowed([
+  'function'
+  'container'
+])
+@description('Optional. Specify the compute type for the log forwarder. The default is a function but a container app can be used.')
+param computeType string = 'function'
+
+@description('Optional. Container image used if ACA option is selected.')
+param containerImage string = 'nrloggerdemorepo.azurecr.io/log-forwarder-apm-default:10'
+
+
+// Defining Variables
+var onePerResourceGroupUniqueSuffix = uniqueString( resourceGroup().id )
+var createNewEventHubNamespace = (eventHubNamespace == '')
+var eventHubNamespaceName = (createNewEventHubNamespace ? 'nrlogs-eventhub-namespace-${onePerResourceGroupUniqueSuffix}' : eventHubNamespace)
+var createNewEventHub = (eventHubName == '')
+var parsedEventHubName = (createNewEventHub ? 'nrlogs-eventhub' : eventHubName)
+var eventHubConsumerGroupName = 'nrlogs-consumergroup'
+var logConsumerAuthorizationRuleName = 'nrlogs-consumer-policy'
+var logProducerAuthorizationRuleName = 'nrlogs-producer-policy'
+var storageAccountName = 'nrlogs${onePerResourceGroupUniqueSuffix}'
+var servicePlanName = 'nrlogs-serviceplan-${onePerResourceGroupUniqueSuffix}'
+var acaEnvironmentName = 'nrlogs-aca-env-${onePerResourceGroupUniqueSuffix}'
+var onePerResourceGroupAndEventHubUniqueSuffix = uniqueString( resourceGroup().id, eventHubNamespaceName, parsedEventHubName )
+var functionAppName = 'nrlogs-eventhubforwarder-${onePerResourceGroupAndEventHubUniqueSuffix}'
+var activityLogsDiagnosticSettingName = 'nrlogs-activity-log-diagnostic-setting-${onePerResourceGroupAndEventHubUniqueSuffix}'
+var createActivityLogsDiagnosticSetting = (forwardAdministrativeAzureActivityLogs || forwardAlertAzureActivityLogs || forwardAutoscaleAzureActivityLogs || forwardPolicyAzureActivityLogs || forwardRecommendationAzureActivityLogs || forwardResourceHealthAzureActivityLogs || forwardSecurityAzureActivityLogs || forwardServiceHealthAzureActivityLogs)
+var eventHubForwarderFunctionArtifact = 'https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/EventHubForwarder.zip'
+var virtualNetworkName = 'nrlogs${onePerResourceGroupUniqueSuffix}-virtual-network'
+var functionSubnetName = '${virtualNetworkName}-internal-functions-subnet'
+var privateEndpointsSubnetName = '${virtualNetworkName}-private-endpoints-subnet'
+var privateDnsZones = [
+  'file'
+  'blob'
+  'queue'
+  'table'
+]
+var functionNetworkConfigName = '${functionAppName}/virtualNetwork'
+var production = (deploymentMode == 'production' ? true : false)
+
+// Deploying Resources
+@description('The EventHub Namespace that logs will be forwarded to. This will host the EventHub that the NR forwarder will read from.')
+resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2024-01-01' = if (createNewEventHubNamespace) {
+  name: eventHubNamespaceName
+  location: location
+  sku: {
+    name: eventHubSku
+    tier: eventHubSku
+    capacity: 1
+  }
+  properties: {
+    minimumTlsVersion: '1.2'
+    zoneRedundant: (disableHighAvailability ? null : true)
+    isAutoInflateEnabled: (production ? true : false)
+    maximumThroughputUnits: (production ? 20 : 0)
+  }
+}
+
+@description('The EventHub that logs will be forwarded to.')
+resource eventHubNamespaceName_eventHub 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = if (createNewEventHub) {
+  parent: eventHubNamespace_resource
+  name: parsedEventHubName
+  properties: {
+    messageRetentionInDays: 1
+  }
+}
+
+@description('The EventHub consumer group that the log forwarder will read from.')
+resource eventHubNamespaceName_eventHubName_eventHubConsumerGroup 'Microsoft.EventHub/namespaces/eventhubs/consumergroups@2024-01-01' = {
+  parent: eventHubNamespaceName_eventHub
+  name: eventHubConsumerGroupName
+}
+
+@description('Authorization rule for the EventHub consumer group that the log forwarder will read from. This provides access to read events.')
+resource eventHubNamespaceName_logConsumerAuthorizationRule 'Microsoft.EventHub/namespaces/AuthorizationRules@2024-01-01' = {
+  parent: eventHubNamespace_resource
+  name: logConsumerAuthorizationRuleName
+  properties: {
+    rights: [
+      'Listen'
+      'Send'
+      'Manage'
+    ]
+  }
+}
+
+@description('Authorization rule for the EventHub that the log forwarder will write to. This provides access to send events. Used by the Diagnostic Settings.')
+resource eventHubNamespaceName_logProducerAuthorizationRule 'Microsoft.EventHub/namespaces/AuthorizationRules@2024-01-01' = if (createActivityLogsDiagnosticSetting) {
+  parent: eventHubNamespace_resource
+  name: logProducerAuthorizationRuleName
+  properties: {
+    rights: [
+      'Send'
+    ]
+  }
+}
+
+// Provision all required Networking components
+resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-09-01' = if (disablePublicAccessToStorageAccount) {
+  name: virtualNetworkName
+  location: location
+  properties: {
+    addressSpace: {
+      addressPrefixes: [
+        '10.2.0.0/16'
+      ]
+    }
+    subnets: [
+      {
+        name: functionSubnetName
+        properties: {
+          privateEndpointNetworkPolicies: 'Enabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
+          delegations: [
+            {
+              name: 'webapp'
+              properties: {
+                serviceName: 'Microsoft.Web/serverFarms'
+              }
+            }
+          ]
+          addressPrefix: '10.2.0.0/24'
+        }
+      }
+      {
+        name: privateEndpointsSubnetName
+        properties: {
+          privateEndpointNetworkPolicies: 'Disabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
+          addressPrefix: '10.2.1.0/24'
+        }
+      }
+    ]
+  }
+}
+
+module privateEndpoints 'modules/networking/privateEndpoint.bicep' = [for (groupId, index) in privateDnsZones: if(disablePublicAccessToStorageAccount) {
+  name: 'pe-${storageAccount.name}-${groupId}'
+  params: {
+    groupId: groupId
+    location: location
+    storageAccountResourceId: storageAccount.id
+    virtualNetworkName: virtualNetwork.name
+    privateEndpointsSubnetName: privateEndpointsSubnetName
+  }
+}]
+
+module privateDnsSetup 'modules/networking/privateDns.bicep' = [for (privateDnsZone, index) in privateDnsZones: if (disablePublicAccessToStorageAccount) {
+  name: 'private-dns-${privateDnsZone}-${index}'
+  params: {
+    dnsZoneName: privateDnsZone
+    virtualNetworkResourceId: virtualNetwork.id
+    storageAccountName: storageAccount.name
+  }
+}]
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
+  name: storageAccountName
+  location: location
+  sku: {
+    name: 'Standard_LRS'
+  }
+  kind: 'StorageV2'
+  properties: {
+    allowBlobPublicAccess: false
+    minimumTlsVersion: 'TLS1_2'
+    networkAcls: (disablePublicAccessToStorageAccount ? { 
+      bypass: 'None'
+      defaultAction: 'Deny'
+    } : null )
+  }
+}
+
+// Conditionally deploy the traditional Azure Function App Log Forwarder
+module asp_FunctionApp 'modules/functions/function.bicep' = if (computeType == 'function') {
+  name: 'nr-${servicePlanName}-solution'
+  params: {
+    location: location
+    computeType: computeType
+    deploymentMode: deploymentMode
+    disableHighAvailability: disableHighAvailability
+    disablePublicAccessToStorageAccount: disablePublicAccessToStorageAccount
+    eventHubConsumerGroupName: eventHubConsumerGroupName
+    eventHubName: parsedEventHubName
+    functionAppName: functionAppName
+    logCustomAttributes: logCustomAttributes
+    maxRetriesToResendLogs: maxRetriesToResendLogs
+    newRelicEndpoint: newRelicEndpoint
+    newRelicLicenseKey: newRelicLicenseKey
+    retryInterval: retryInterval
+    servicePlanName: servicePlanName
+    storageAccountName: storageAccountName
+    eventHubForwarderFunctionArtifact: eventHubForwarderFunctionArtifact
+    functionNetworkConfigName: functionNetworkConfigName
+    virtualNetworkName: virtualNetwork.name
+    functionSubnetName: functionSubnetName
+    ehConsumerKey: eventHubNamespaceName_logConsumerAuthorizationRule.listKeys().primaryConnectionString
+  }
+}
+
+module aca 'modules/containers/aca.bicep' = if (computeType == 'container' ) {
+  name: 'nr-aca-env-${acaEnvironmentName}'
+  params: {
+    acaEnvironmentName: acaEnvironmentName
+    location: location
+    logCustomAttributes: logCustomAttributes
+    newRelicLicenseKey: newRelicLicenseKey
+    disableZoneRedundancy: disableHighAvailability
+    functionAppName: functionAppName
+    storageAccountName: storageAccountName
+    eventHubConsumerGroupName: eventHubConsumerGroupName
+    eventHubName: parsedEventHubName
+    ehConsumerKey: eventHubNamespaceName_logConsumerAuthorizationRule.listKeys().primaryConnectionString
+    containerImage: containerImage
+  }
+}
+
+module activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment 'modules/diagnosticSettings.bicep' = if (createActivityLogsDiagnosticSetting) {
+  name: 'activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment'
+  scope: subscription(subscription().subscriptionId)
+  params: {
+    eventHubAuthorizationRuleId: eventHubNamespaceName_logProducerAuthorizationRule.id
+    activityLogsDiagnosticSettingName: activityLogsDiagnosticSettingName
+    eventHubName: parsedEventHubName
+    forwardAdministrativeAzureActivityLogs: forwardAdministrativeAzureActivityLogs
+    forwardSecurityAzureActivityLogs: forwardSecurityAzureActivityLogs
+    forwardServiceHealthAzureActivityLogs: forwardServiceHealthAzureActivityLogs
+    forwardAlertAzureActivityLogs: forwardAlertAzureActivityLogs
+    forwardRecommendationAzureActivityLogs: forwardRecommendationAzureActivityLogs
+    forwardPolicyAzureActivityLogs: forwardPolicyAzureActivityLogs
+    forwardAutoscaleAzureActivityLogs: forwardAutoscaleAzureActivityLogs
+    forwardResourceHealthAzureActivityLogs: forwardResourceHealthAzureActivityLogs
+  }
+}
