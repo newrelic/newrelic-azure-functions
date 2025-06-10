@@ -1,5 +1,5 @@
-@description('Required. A New Relic License Key for the New Relic account where the logs will be published to.')
-param newRelicLicenseKey string
+@description('Required. A New Relic Ingest License Key for the New Relic account where the logs will be published to.')
+param newRelicLicenseKey string = ''
 
 @description('Optional. Event Hub Namespace where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with \'nrlogs-\').')
 param eventHubNamespace string = ''
@@ -7,8 +7,8 @@ param eventHubNamespace string = ''
 @description('Optional. Event Hub where all the Azure Platform logs are being sent to in order to be forwarded to New Relic. Leave this blank for a new Event Hub to be created automatically (its name will be \'nrlogs\').')
 param eventHubName string = ''
 
-@description('Required. Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group.')
-param location string
+@description('Optional. Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group.')
+param location string = resourceGroup().location
 
 @allowed([
   'devtest'
@@ -18,7 +18,7 @@ param location string
 param deploymentMode string = 'devtest'
 
 @description('Optional. Only works if deploymentMode is set to "production" - this parameter will disable High Availability, which is a cost reduction option that allows customers to opt-out to reduce the App Service Plan costs.')
-param disableHighAvailability bool = false
+param disableHighAvailability bool = true
 
 @description('Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you\'re in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1')
 @allowed([
@@ -75,17 +75,30 @@ param disablePublicAccessToStorageAccount bool = false
 @description('Optional. Specify the SKU of the EventHub log forwarder where required for scalability.')
 param eventHubSku string = 'Standard'
 
+@allowed([
+  'function'
+  'container'
+])
+@description('Optional. Specify the compute type for the log forwarder. The default is a function but a container app can be used.')
+param computeType string = 'function'
+
+@description('Optional. Container image used if ACA option is selected.')
+param containerImage string = 'nrloggerdemorepo.azurecr.io/log-forwarder-apm-default:10'
+
+
+// Defining Variables
 var onePerResourceGroupUniqueSuffix = uniqueString( resourceGroup().id )
 var createNewEventHubNamespace = (eventHubNamespace == '')
 var eventHubNamespaceName = (createNewEventHubNamespace ? 'nrlogs-eventhub-namespace-${onePerResourceGroupUniqueSuffix}' : eventHubNamespace)
 var createNewEventHub = (eventHubName == '')
-var eventHub_name = (createNewEventHub ? 'nrlogs-eventhub' : eventHubName)
+var parsedEventHubName = (createNewEventHub ? 'nrlogs-eventhub' : eventHubName)
 var eventHubConsumerGroupName = 'nrlogs-consumergroup'
 var logConsumerAuthorizationRuleName = 'nrlogs-consumer-policy'
 var logProducerAuthorizationRuleName = 'nrlogs-producer-policy'
 var storageAccountName = 'nrlogs${onePerResourceGroupUniqueSuffix}'
 var servicePlanName = 'nrlogs-serviceplan-${onePerResourceGroupUniqueSuffix}'
-var onePerResourceGroupAndEventHubUniqueSuffix = uniqueString( resourceGroup().id, eventHubNamespaceName, eventHub_name )
+var acaEnvironmentName = 'nrlogs-aca-env-${onePerResourceGroupUniqueSuffix}'
+var onePerResourceGroupAndEventHubUniqueSuffix = uniqueString( resourceGroup().id, eventHubNamespaceName, parsedEventHubName )
 var functionAppName = 'nrlogs-eventhubforwarder-${onePerResourceGroupAndEventHubUniqueSuffix}'
 var activityLogsDiagnosticSettingName = 'nrlogs-activity-log-diagnostic-setting-${onePerResourceGroupAndEventHubUniqueSuffix}'
 var createActivityLogsDiagnosticSetting = (forwardAdministrativeAzureActivityLogs || forwardAlertAzureActivityLogs || forwardAutoscaleAzureActivityLogs || forwardPolicyAzureActivityLogs || forwardRecommendationAzureActivityLogs || forwardResourceHealthAzureActivityLogs || forwardSecurityAzureActivityLogs || forwardServiceHealthAzureActivityLogs)
@@ -102,6 +115,8 @@ var privateDnsZones = [
 var functionNetworkConfigName = '${functionAppName}/virtualNetwork'
 var production = (deploymentMode == 'production' ? true : false)
 
+// Deploying Resources
+@description('The EventHub Namespace that logs will be forwarded to. This will host the EventHub that the NR forwarder will read from.')
 resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2024-01-01' = if (createNewEventHubNamespace) {
   name: eventHubNamespaceName
   location: location
@@ -118,20 +133,22 @@ resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2024-01-01' =
   }
 }
 
+@description('The EventHub that logs will be forwarded to.')
 resource eventHubNamespaceName_eventHub 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = if (createNewEventHub) {
   parent: eventHubNamespace_resource
-  name: eventHub_name
+  name: parsedEventHubName
   properties: {
     messageRetentionInDays: 1
   }
 }
 
+@description('The EventHub consumer group that the log forwarder will read from.')
 resource eventHubNamespaceName_eventHubName_eventHubConsumerGroup 'Microsoft.EventHub/namespaces/eventhubs/consumergroups@2024-01-01' = {
   parent: eventHubNamespaceName_eventHub
   name: eventHubConsumerGroupName
-  properties: {}
 }
 
+@description('Authorization rule for the EventHub consumer group that the log forwarder will read from. This provides access to read events.')
 resource eventHubNamespaceName_logConsumerAuthorizationRule 'Microsoft.EventHub/namespaces/AuthorizationRules@2024-01-01' = {
   parent: eventHubNamespace_resource
   name: logConsumerAuthorizationRuleName
@@ -144,6 +161,7 @@ resource eventHubNamespaceName_logConsumerAuthorizationRule 'Microsoft.EventHub/
   }
 }
 
+@description('Authorization rule for the EventHub that the log forwarder will write to. This provides access to send events. Used by the Diagnostic Settings.')
 resource eventHubNamespaceName_logProducerAuthorizationRule 'Microsoft.EventHub/namespaces/AuthorizationRules@2024-01-01' = if (createActivityLogsDiagnosticSetting) {
   parent: eventHubNamespace_resource
   name: logProducerAuthorizationRuleName
@@ -152,9 +170,6 @@ resource eventHubNamespaceName_logProducerAuthorizationRule 'Microsoft.EventHub/
       'Send'
     ]
   }
-  dependsOn: [
-    eventHubNamespaceName_logConsumerAuthorizationRule
-  ]
 }
 
 // Provision all required Networking components
@@ -200,6 +215,7 @@ module privateEndpoints 'modules/networking/privateEndpoint.bicep' = [for (group
   name: 'pe-${storageAccount.name}-${groupId}'
   params: {
     groupId: groupId
+    location: location
     storageAccountResourceId: storageAccount.id
     virtualNetworkName: virtualNetwork.name
     privateEndpointsSubnetName: privateEndpointsSubnetName
@@ -215,7 +231,7 @@ module privateDnsSetup 'modules/networking/privateDns.bicep' = [for (privateDnsZ
   }
 }]
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   name: storageAccountName
   location: location
   sku: {
@@ -232,123 +248,48 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   }
 }
 
-module asp 'modules/asp.bicep' = {
-  name: 'nr-asp-${servicePlanName}'
+// Conditionally deploy the traditional Azure Function App Log Forwarder
+module asp_FunctionApp 'modules/functions/function.bicep' = if (computeType == 'function') {
+  name: 'nr-${servicePlanName}-solution'
   params: {
-    deploymentMode: deploymentMode
-    disablePublicAccessToStorageAccount: disableHighAvailability
-    servicePlanName: servicePlanName
-    production: production
     location: location
+    computeType: computeType
+    deploymentMode: deploymentMode
+    disableHighAvailability: disableHighAvailability
+    disablePublicAccessToStorageAccount: disablePublicAccessToStorageAccount
+    eventHubConsumerGroupName: eventHubConsumerGroupName
+    eventHubName: parsedEventHubName
+    functionAppName: functionAppName
+    logCustomAttributes: logCustomAttributes
+    maxRetriesToResendLogs: maxRetriesToResendLogs
+    newRelicEndpoint: newRelicEndpoint
+    newRelicLicenseKey: newRelicLicenseKey
+    retryInterval: retryInterval
+    servicePlanName: servicePlanName
+    storageAccountName: storageAccountName
+    eventHubForwarderFunctionArtifact: eventHubForwarderFunctionArtifact
+    functionNetworkConfigName: functionNetworkConfigName
+    virtualNetworkName: virtualNetwork.name
+    functionSubnetName: functionSubnetName
+    ehConsumerKey: eventHubNamespaceName_logConsumerAuthorizationRule.listKeys().primaryConnectionString
   }
 }
 
-
-resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
-  name: functionAppName
-  location: location
-  kind: 'functionapp'
-  properties: {
-    serverFarmId: asp.outputs.resourceId
-    siteConfig: {
-      appSettings: [
-        {
-          name: 'EVENTHUB_NAME'
-          value: eventHub_name
-        }
-        {
-          name: 'EVENTHUB_CONSUMER_CONNECTION'
-          value: eventHubNamespaceName_logConsumerAuthorizationRule.listKeys().primaryConnectionString
-        }
-        {
-          name: 'EVENTHUB_CONSUMER_GROUP'
-          value: eventHubConsumerGroupName
-        }
-        {
-          name: 'NR_LICENSE_KEY'
-          value: newRelicLicenseKey
-        }
-        {
-          name: 'NR_ENDPOINT'
-          value: newRelicEndpoint
-        }
-        {
-          name: 'NR_TAGS'
-          value: logCustomAttributes
-        }
-        {
-          name: 'NR_MAX_RETRIES'
-          value: '${maxRetriesToResendLogs}'
-        }
-        {
-          name: 'NR_RETRY_INTERVAL'
-          value: '${retryInterval}'
-        }
-        {
-          name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~4'
-        }
-        {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'node'
-        }
-        {
-          name: 'WEBSITE_NODE_DEFAULT_VERSION'
-          value: '~20'
-        }
-        {
-          name: 'NEW_RELIC_APP_NAME'
-          value: 'nr-azure-logforwarder'
-        }
-        {
-          name: 'NEW_RELIC_AZURE_FUNCTION_MODE_ENABLED'
-          value: '1'
-        }
-        {
-          name: 'NEW_RELIC_LICENSE_KEY'
-          value: newRelicLicenseKey
-        }
-        {
-          name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageAccount.listkeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
-        }
-        {
-          name: 'WEBSITE_RUN_FROM_PACKAGE'
-          value: (disablePublicAccessToStorageAccount ? eventHubForwarderFunctionArtifact : '0')
-        }
-      ]
-      alwaysOn: (disablePublicAccessToStorageAccount && !(production)? true : false )
-      ftpsState: 'Disabled'
-      publicNetworkAccess: (disablePublicAccessToStorageAccount ? 'Disabled' : 'Enabled')
-    }
-    httpsOnly: true
+module aca 'modules/containers/aca.bicep' = if (computeType == 'container' ) {
+  name: 'nr-aca-env-${acaEnvironmentName}'
+  params: {
+    acaEnvironmentName: acaEnvironmentName
+    location: location
+    logCustomAttributes: logCustomAttributes
+    newRelicLicenseKey: newRelicLicenseKey
+    disableZoneRedundancy: disableHighAvailability
+    functionAppName: functionAppName
+    storageAccountName: storageAccountName
+    eventHubConsumerGroupName: eventHubConsumerGroupName
+    eventHubName: parsedEventHubName
+    ehConsumerKey: eventHubNamespaceName_logConsumerAuthorizationRule.listKeys().primaryConnectionString
+    containerImage: containerImage
   }
-}
-
-// Future State - Enable New Relic Serverless Monitoring
-// resource siteExtension 'Microsoft.Web/sites/siteextensions@2024-04-01' = {
-//   name: 'NewRelic.Azure.WebSites.Extension.NodeAgent'
-//   parent: functionApp
-// }
-
-resource functionAppName_ZipDeploy 'Microsoft.Web/sites/extensions@2020-12-01' = if (!disablePublicAccessToStorageAccount) {
-  parent: functionApp
-  name: 'MSDeploy'
-  properties: {
-    packageUri: eventHubForwarderFunctionArtifact
-  }
-}
-
-resource functionNetworkConfig 'Microsoft.Web/sites/networkConfig@2022-03-01' = if (disablePublicAccessToStorageAccount) {
-  name: functionNetworkConfigName
-  properties: {
-    subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, functionSubnetName)
-    swiftSupported: true
-  }
-  dependsOn: [
-    functionApp
-    virtualNetwork
-  ]
 }
 
 module activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment 'modules/diagnosticSettings.bicep' = if (createActivityLogsDiagnosticSetting) {
@@ -357,7 +298,7 @@ module activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment 'modules/diag
   params: {
     eventHubAuthorizationRuleId: eventHubNamespaceName_logProducerAuthorizationRule.id
     activityLogsDiagnosticSettingName: activityLogsDiagnosticSettingName
-    eventHubName: eventHub_name
+    eventHubName: parsedEventHubName
     forwardAdministrativeAzureActivityLogs: forwardAdministrativeAzureActivityLogs
     forwardSecurityAzureActivityLogs: forwardSecurityAzureActivityLogs
     forwardServiceHealthAzureActivityLogs: forwardServiceHealthAzureActivityLogs
@@ -367,7 +308,4 @@ module activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment 'modules/diag
     forwardAutoscaleAzureActivityLogs: forwardAutoscaleAzureActivityLogs
     forwardResourceHealthAzureActivityLogs: forwardResourceHealthAzureActivityLogs
   }
-  dependsOn: [
-    functionApp
-  ]
 }

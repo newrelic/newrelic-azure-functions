@@ -1,9 +1,17 @@
 
+@description('Optional. Flag to disable high availability features. Default is false.')
 param disableHighAvailability bool = false
+
+@description('Required. Name of the App Service Plan to be created.')
 param servicePlanName string
+
+@description('Required. Deployment mode for the App Service Plan. Valid values are "production" or "devtest".')
 param deploymentMode string
+
+@description('Required. Flag to control public access to the associated Storage Account.')
 param disablePublicAccessToStorageAccount bool
-param production bool 
+
+@description('Required. Azure region where the App Service Plan will be deployed.')
 param location string
 
 // Defining the ASP Properties for Prod vs DevTest
@@ -20,7 +28,7 @@ var prdASP = {
     tier: 'ElasticPremium'
     size: 'EP1'
     family: 'EP'
-    capacity: 3
+    capacity: 3 // High Availability requires more than 1 instance to run
   }
 }
 
@@ -57,8 +65,11 @@ var defaultASP = {
     tier: 'Dynamic'
   }
 }
-var devTestConfig = (deploymentMode == 'devtest' &&  disablePublicAccessToStorageAccount ? devASP : defaultASP)
-var aspConfig = (production ? prdASP : devTestConfig)
+
+// Determining which configuration to use - As the config is very different depending upon the mode used.
+var isProduction = (deploymentMode == 'production' ? true : false ) 
+var devTestConfig = (deploymentMode == 'devtest' && disablePublicAccessToStorageAccount ? devASP : defaultASP)
+var aspConfig = (isProduction ? prdASP : devTestConfig)
 
 resource servicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
   kind: aspConfig.kind

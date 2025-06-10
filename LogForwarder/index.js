@@ -1,9 +1,8 @@
 /**
- * Azure function to read from Blob Storage and forward logs to New Relic.
+ * Azure function to read from an EventHub or Blob Storage and forward logs to New Relic.
  */
 
 'use strict';
-
 var https = require('https');
 var url = require('url');
 var zlib = require('zlib');
@@ -12,7 +11,6 @@ const VERSION = '0.0.0-development';
 
 // Global constants
 const NR_LICENSE_KEY = process.env.NR_LICENSE_KEY;
-const NR_INSERT_KEY = process.env.NR_INSERT_KEY;
 const NR_ENDPOINT =
   process.env.NR_ENDPOINT || 'https://log-api.newrelic.com/log/v1';
 const NR_TAGS = process.env.NR_TAGS; // Semicolon-seperated tags
@@ -22,7 +20,7 @@ const NR_MAX_RETRIES = process.env.NR_MAX_RETRIES || 3;
 const NR_RETRY_INTERVAL = process.env.NR_RETRY_INTERVAL || 2000; // default: 2 seconds
 
 module.exports = async function main(context, logMessages) {
-  if (!NR_LICENSE_KEY && !NR_INSERT_KEY) {
+  if (!NR_LICENSE_KEY) {
     context.log.error(
       'You have to configure either your LICENSE key or insights insert key. ' +
         'Please follow the instructions in README'
@@ -68,7 +66,6 @@ function compressAndSend(data, context) {
         }
 
         let halfwayThrough = Math.floor(data.length / 2);
-
         let arrayFirstHalf = data.slice(0, halfwayThrough);
         let arraySecondHalf = data.slice(halfwayThrough, data.length);
 
@@ -284,10 +281,7 @@ function httpSend(data, context) {
 
     if (NR_LICENSE_KEY) {
       options.headers['X-License-Key'] = NR_LICENSE_KEY;
-    } else {
-      options.headers['X-Insert-Key'] = NR_INSERT_KEY;
     }
-
     var req = https.request(options, (res) => {
       var body = '';
       res.setEncoding('utf8');
