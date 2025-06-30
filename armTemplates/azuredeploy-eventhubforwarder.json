@@ -180,7 +180,11 @@
                 "tier": "Standard",
                 "capacity": 1
             },
-            "properties": {}
+            "properties": {
+                "minimumTlsVersion": "1.2",
+                "isAutoInflateEnabled": true,
+                "maximumThroughputUnits": 20
+            }
         },
         {
             "type": "Microsoft.EventHub/namespaces/eventhubs",
