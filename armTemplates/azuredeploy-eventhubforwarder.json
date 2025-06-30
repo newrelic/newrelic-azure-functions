@@ -59,15 +59,15 @@
                 "description": "Optional. Number of milliseconds to wait between consecutive retries to send the logs."
             }
         },
-        "deploymentMode": {
+        "scalingMode": {
             "type": "string",
             "allowedValues": [
-                "production",
-                "devtest"
+                "standard",
+                "highScale"
             ],
-            "defaultValue": "devtest",
+            "defaultValue": "standard",
             "metadata": {
-                "description": "Optional. Deployment mode for the resources. If set to 'production', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynaic App Service Plan."
+                "description": "Optional. The scaling for the resources. If set to 'production', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynaic App Service Plan."
             }
         },
         "forwardAdministrativeAzureActivityLogs": {
@@ -132,6 +132,35 @@
             "metadata": {
                 "description": "Optional. Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to 'Basic', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share."
             }
+        },
+         "eventHubMaximumThroughputUnits": {
+            "type": "int",
+            "defaultValue": 10,
+            "minValue": 1,
+            "maxValue": 20,
+            "metadata": {
+                "description": "Optional. Maximum throughput units for the Event Hub Namespace. This parameter is only used if the scalingMode is set to 'highScale'."
+            }
+        },
+        "eventHubPartitionCount": {
+            "type": "int",
+            "defaultValue": 4,
+            "minValue": 1,
+            "maxValue": 32,
+            "metadata": {
+                "description": "Optional. Partition counts over 4 only works with Premium or dedicated EventHubs. This parameter will only modify the number of partitions for the Event Hub if the parameter eventHubSku is set to 'Premium'."
+            }
+        },
+        "eventHubSku": {
+            "type": "string",
+            "defaultValue": "Standard",
+            "allowedValues": [
+                "Standard",
+                "Premium"
+            ],
+            "metadata": {
+                "description": "Optional. The SKU for the Event Hub Namespace. The default value is 'Standard'. To upgrade to Premium the eventHub will need to be recreated (deleted, then redeployed)."
+            }
         }
     },
     "variables": {
@@ -178,7 +207,7 @@
         "privateEndpointPrivateDnsZoneGroupsStorageQueueName": "[format('{0}/{1}', variables('privateEndpointStorageQueueName'), 'queuePrivateDnsZoneGroup')]",
 
         "functionNetworkConfigName": "[format('{0}/{1}', variables('functionAppName'), 'virtualNetwork')]",
-        "prdASP": {
+        "autoscalingASP": {
             "kind": "elastic",
             "properties": {
                 "perSiteScaling": true,
@@ -193,8 +222,8 @@
                 "family": "EP",
                 "capacity": 1
             }
-            },
-            "devASP": {
+        },
+        "privateNetworkASP": {
             "kind": "app",
             "properties": {
                 "name": "[variables('servicePlanName')]",
@@ -210,8 +239,8 @@
                 "tier": "Basic",
                 "capacity": 1
             }
-            },
-            "defaultASP": {
+        },
+        "defaultASP": {
             "kind": "functionapp",
             "properties": {
                 "name": "[variables('servicePlanName')]",
@@ -226,9 +255,9 @@
                 "tier": "Dynamic"
             }
         },
-        "isProduction": "[if(equals(parameters('deploymentMode'), 'production'), true(), false())]",
-        "devTestConfig": "[if(and(equals(parameters('deploymentMode'), 'devtest'), parameters('disablePublicAccessToStorageAccount')), variables('devASP'), variables('defaultASP'))]",
-        "aspConfig": "[if(variables('isProduction'), variables('prdASP'), variables('devTestConfig'))]"
+        "isHighScalabing": "[if(equals(parameters('scalingMode'), 'highScale'), true(), false())]",
+        "standardScaleConfig": "[if(and(equals(parameters('scalingMode'), 'standard'), parameters('disablePublicAccessToStorageAccount')), variables('privateNetworkASP'), variables('defaultASP'))]",
+        "aspConfig": "[if(variables('isHighScalabing'), variables('autoscalingASP'), variables('standardScaleConfig'))]"
         
     },
     "resources": [
@@ -239,19 +268,19 @@
             "condition": "[variables('createNewEventHubNamespace')]",
             "location": "[variables('location')]",
             "sku": {
-                "name": "Standard",
-                "tier": "Standard",
+                "name": "[parameters('eventHubSku')]",
+                "tier": "[parameters('eventHubSku')]",
                 "capacity": 1
             },
             "properties": {
                 "minimumTlsVersion": "1.2",
-                "isAutoInflateEnabled": true,
-                "maximumThroughputUnits": 20
+                "isAutoInflateEnabled": "[if(equals(parameters('scalingMode'), 'highScale'), true(), false())]",
+                "maximumThroughputUnits": "[if(equals(parameters('scalingMode'), 'highScale'), parameters('eventHubMaximumThroughputUnits'), 0)]"
             }
         },
         {
             "type": "Microsoft.EventHub/namespaces/eventhubs",
-            "apiVersion": "2017-04-01",
+            "apiVersion": "2024-01-01",
             "name": "[concat(variables('eventHubNamespaceName'), '/', variables('eventHubName'))]",
             "condition": "[variables('createNewEventHub')]",
             "location": "[variables('location')]",
@@ -259,7 +288,8 @@
                 "[resourceId('Microsoft.EventHub/namespaces/', variables('eventHubNamespaceName'))]"
             ],
             "properties": {
-                "messageRetentionInDays": 1
+                "messageRetentionInDays": 1,
+                "partitionCount": "[if(equals(parameters('eventHubSku'), 'premium'), parameters('eventHubPartitionCount'), null())]"
             }
         },
         {

@@ -24,12 +24,12 @@ param maxRetriesToResendLogs int = 3
 @minValue(100)
 param retryInterval int = 2000
 
-@description('Optional. Deployment mode for the resources. If set to \'production\', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynaic App Service Plan.')
+@description('Optional. The scaling for the resources. If set to \'production\', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynaic App Service Plan.')
 @allowed([
-  'production'
-  'devtest'
+  'standard'
+  'highScale'
 ])
-param deploymentMode string = 'devtest'
+param scalingMode string = 'standard'
 
 @description('Optional. Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription.')
 param forwardAdministrativeAzureActivityLogs bool = false
@@ -57,6 +57,23 @@ param forwardServiceHealthAzureActivityLogs bool = false
 
 @description('Optional. Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to \'Basic\', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share.')
 param disablePublicAccessToStorageAccount bool = false
+
+@description('Optional. Maximum throughput units for the Event Hub Namespace. This parameter is only used if the scalingMode is set to \'highScale\'.')
+@minValue(1)
+@maxValue(20)
+param eventHubMaximumThroughputUnits int = 10
+
+@description('Optional. Partition counts over 4 only works with Premium or dedicated EventHubs. This parameter will only modify the number of partitions for the Event Hub if the parameter eventHubSku is set to \'Premium\'.')
+@minValue(1)
+@maxValue(32)
+param eventHubPartitionCount int = 4
+
+@description('Optional. The SKU for the Event Hub Namespace. The default value is \'Standard\'. To upgrade to Premium the eventHub will need to be recreated (deleted, then redeployed).')
+@allowed([
+  'Standard'
+  'Premium'
+])
+param eventHubSku string = 'Standard'
 
 var location_var = ((location == '') ? resourceGroup().location : location)
 var onePerResourceGroupUniqueSuffix = uniqueString(resourceGroup().id)
@@ -101,7 +118,7 @@ var privateEndpointPrivateDnsZoneGroupsStorageBlobName = '${privateEndpointStora
 var privateEndpointPrivateDnsZoneGroupsStorageTableName = '${privateEndpointStorageTableName}/tablePrivateDnsZoneGroup'
 var privateEndpointPrivateDnsZoneGroupsStorageQueueName = '${privateEndpointStorageQueueName}/queuePrivateDnsZoneGroup'
 var functionNetworkConfigName = '${functionAppName}/virtualNetwork'
-var prdASP = {
+var autoscalingASP = {
   kind: 'elastic'
   properties: {
     perSiteScaling: true
@@ -114,10 +131,10 @@ var prdASP = {
     tier: 'ElasticPremium'
     size: 'EP1'
     family: 'EP'
-    capacity: 3
+    capacity: 1
   }
 }
-var devASP = {
+var privateNetworkASP = {
   kind: 'app'
   properties: {
     name: servicePlanName
@@ -149,31 +166,34 @@ var defaultASP = {
     tier: 'Dynamic'
   }
 }
-var isProduction = ((deploymentMode == 'production') ? true : false)
-var devTestConfig = (((deploymentMode == 'devtest') && disablePublicAccessToStorageAccount) ? devASP : defaultASP)
-var aspConfig = (isProduction ? prdASP : devTestConfig)
+var isHighScalabing = ((scalingMode == 'highScale') ? true : false)
+var standardScaleConfig = (((scalingMode == 'standard') && disablePublicAccessToStorageAccount)
+  ? privateNetworkASP
+  : defaultASP)
+var aspConfig = (isHighScalabing ? autoscalingASP : standardScaleConfig)
 
 resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2024-01-01' = if (createNewEventHubNamespace) {
   name: eventHubNamespaceName
   location: location_var
   sku: {
-    name: 'Standard'
-    tier: 'Standard'
+    name: eventHubSku
+    tier: eventHubSku
     capacity: 1
   }
   properties: {
     minimumTlsVersion: '1.2'
-    isAutoInflateEnabled: true
-    maximumThroughputUnits: 20
+    isAutoInflateEnabled: ((scalingMode == 'highScale') ? true : false)
+    maximumThroughputUnits: ((scalingMode == 'highScale') ? eventHubMaximumThroughputUnits : 0)
   }
 }
 
-resource eventHubNamespaceName_eventHub 'Microsoft.EventHub/namespaces/eventhubs@2017-04-01' = if (createNewEventHub) {
+resource eventHubNamespaceName_eventHub 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = if (createNewEventHub) {
   parent: eventHubNamespace_resource
   name: '${eventHubName_var}'
   location: location_var
   properties: {
     messageRetentionInDays: 1
+    partitionCount: ((eventHubSku == 'premium') ? eventHubPartitionCount : null)
   }
 }
 
@@ -578,8 +598,9 @@ resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
     httpsOnly: true
   }
   dependsOn: [
-    privateStorageTableDnsZoneVirtualNetworkLink
-    privateStorageQueueDnsZoneVirtualNetworkLink
+    privateEndpointStorageFile
+    privateEndpointStorageBlob
+    privateEndpointStorageTable
   ]
 }
 
@@ -603,7 +624,6 @@ resource functionNetworkConfig 'Microsoft.Web/sites/networkConfig@2022-03-01' = 
   ]
 }
 
-// This has to be a module as it deploys against a subscription scope
 module activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment './nested_activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment.bicep' = if (createActivityLogsDiagnosticSetting) {
   name: 'activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment'
   scope: subscription(subscription().subscriptionId)

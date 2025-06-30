@@ -1,7 +1,7 @@
 targetScope = 'subscription'
 param resourceId_subscription_subscriptionId_resourceGroup_name_Microsoft_EventHub_namespaces_AuthorizationRules_variables_eventHubNamespaceName_variables_logProducerAuthorizationRuleName string
 param variables_activityLogsDiagnosticSettingName string
-param variables_eventHubName string 
+param variables_eventHubName string
 
 @description('Optional. Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription.')
 param forwardAdministrativeAzureActivityLogs bool
