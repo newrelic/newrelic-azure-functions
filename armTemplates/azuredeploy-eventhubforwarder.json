@@ -5,42 +5,42 @@
         "newRelicLicenseKey": {
             "type": "string",
             "metadata": {
-                "description": "New Relic License Key"
+                "description": "Required. New Relic License Key"
             }
         },
         "eventHubNamespace": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Event Hub Namespace where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with 'nrlogs-')."
+                "description": "Optional. Event Hub Namespace where all logs to be forwarded to New Relic are being sent to. Leave this blank for a new namespace to be created automatically (its name will start with 'nrlogs-')."
             }
         },
         "eventHubName": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Event Hub where all the Azure Platform logs are being sent to in order to be forwarded to New Relic. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrlogs')."
+                "description": "Optional. Event Hub where all the Azure Platform logs are being sent to in order to be forwarded to New Relic. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrlogs')."
             }
         },
         "location": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group."
+                "description": "Optional. Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group."
             }
         },
         "newRelicEndpoint": {
             "type": "string",
             "defaultValue": "https://log-api.newrelic.com/log/v1",
             "metadata": {
-                "description": "The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
+                "description": "Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
             }
         },
         "logCustomAttributes": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "List of semicolon-separated custom attributes that you would like to enrich the forwarded logs with. This can be useful, for example, if you want to indicate common attributes shared by all the logs collected in this account, such as: 'environment:production;department:sales;country:Germany'"
+                "description": "Optional. List of semicolon-separated custom attributes that you would like to enrich the forwarded logs with. This can be useful, for example, if you want to indicate common attributes shared by all the logs collected in this account, such as: 'environment:production;department:sales;country:Germany'"
             }
         },
         "maxRetriesToResendLogs": {
@@ -48,7 +48,7 @@
             "defaultValue": 3,
             "minValue": 1,
             "metadata": {
-                "description": "Maximum number of attempts the forwarder function will perform in the event of a failure while sending your data."
+                "description": "Optional. Maximum number of attempts the forwarder function will perform in the event of a failure while sending your data."
             }
         },
         "retryInterval": {
@@ -56,70 +56,81 @@
             "defaultValue": 2000,
             "minValue": 100,
             "metadata": {
-                "description": "Number of milliseconds to wait between consecutive retries to send the logs."
+                "description": "Optional. Number of milliseconds to wait between consecutive retries to send the logs."
+            }
+        },
+        "deploymentMode": {
+            "type": "string",
+            "allowedValues": [
+                "production",
+                "devtest"
+            ],
+            "defaultValue": "devtest",
+            "metadata": {
+                "description": "Optional. Deployment mode for the resources. If set to 'production', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynaic App Service Plan."
             }
         },
         "forwardAdministrativeAzureActivityLogs": {
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription."
+                "description": "Optional. Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription."
             }
         },
         "forwardAlertAzureActivityLogs": {
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "Contains the record of activations for Azure alerts. An example of an Alert event is CPU % on myVM has been over 80 for the past 5 minutes."
+                "description": "Optional. Contains the record of activations for Azure alerts. An example of an Alert event is CPU % on myVM has been over 80 for the past 5 minutes."
             }
         },
         "forwardAutoscaleAzureActivityLogs": {
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "Contains the record of any events related to the operation of the autoscale engine based on any autoscale settings you have defined in your subscription. An example of an Autoscale event is Autoscale scale up action failed."
+                "description": "Optional. Contains the record of any events related to the operation of the autoscale engine based on any autoscale settings you have defined in your subscription. An example of an Autoscale event is Autoscale scale up action failed."
             }
         },
         "forwardPolicyAzureActivityLogs": {
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "Contains records of all effect action operations performed by Azure Policy. Examples of Policy events include Audit and Deny. Every action taken by Policy is modeled as an operation on a resource."
+                "description": "Optional. Contains records of all effect action operations performed by Azure Policy. Examples of Policy events include Audit and Deny. Every action taken by Policy is modeled as an operation on a resource."
             }
         },
         "forwardRecommendationAzureActivityLogs": {
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "Contains recommendation events from Azure Advisor."
+                "description": "Optional. Contains recommendation events from Azure Advisor."
             }
         },
         "forwardResourceHealthAzureActivityLogs": {
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "Contains the record of any resource health events that have occurred to your Azure resources. An example of a Resource Health event is Virtual Machine health status changed to unavailable. Resource Health events can represent one of four health statuses: Available, Unavailable, Degraded, and Unknown. Additionally, Resource Health events can be categorized as being Platform Initiated or User Initiated."
+                "description": "Optional. Contains the record of any resource health events that have occurred to your Azure resources. An example of a Resource Health event is Virtual Machine health status changed to unavailable. Resource Health events can represent one of four health statuses: Available, Unavailable, Degraded, and Unknown. Additionally, Resource Health events can be categorized as being Platform Initiated or User Initiated."
             }
         },
         "forwardSecurityAzureActivityLogs": {
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "Contains the record of any alerts generated by Azure Security Center. An example of a Security event is Suspicious double extension file executed."
+                "description": "Optional. Contains the record of any alerts generated by Azure Security Center. An example of a Security event is Suspicious double extension file executed."
             }
         },
         "forwardServiceHealthAzureActivityLogs": {
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "Contains the record of any service health incidents that have occurred in Azure. An example of a Service Health event SQL Azure in East US is experiencing downtime. Service Health events come in Six varieties: Action Required, Assisted Recovery, Incident, Maintenance, Information, or Security. These events are only created if you have a resource in the subscription that would be impacted by the event."
+                "description": "Optional. Contains the record of any service health incidents that have occurred in Azure. An example of a Service Health event SQL Azure in East US is experiencing downtime. Service Health events come in Six varieties: Action Required, Assisted Recovery, Incident, Maintenance, Information, or Security. These events are only created if you have a resource in the subscription that would be impacted by the event."
             }
         },
         "disablePublicAccessToStorageAccount": {
             "type": "bool",
             "defaultValue": false,
             "metadata": {
-                "description": "Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to 'Basic', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share."
+                "description": "Optional. Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to 'Basic', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share."
             }
         }
     },
@@ -166,12 +177,64 @@
         "privateEndpointPrivateDnsZoneGroupsStorageTableName": "[format('{0}/{1}', variables('privateEndpointStorageTableName'), 'tablePrivateDnsZoneGroup')]",
         "privateEndpointPrivateDnsZoneGroupsStorageQueueName": "[format('{0}/{1}', variables('privateEndpointStorageQueueName'), 'queuePrivateDnsZoneGroup')]",
 
-        "functionNetworkConfigName": "[format('{0}/{1}', variables('functionAppName'), 'virtualNetwork')]"
+        "functionNetworkConfigName": "[format('{0}/{1}', variables('functionAppName'), 'virtualNetwork')]",
+        "prdASP": {
+            "kind": "elastic",
+            "properties": {
+                "perSiteScaling": true,
+                "elasticScaleEnabled": true,
+                "maximumElasticWorkerCount": 20,
+                "zoneRedundant": false
+            },
+            "sku": {
+                "name": "EP1",
+                "tier": "ElasticPremium",
+                "size": "EP1",
+                "family": "EP",
+                "capacity": 1
+            }
+            },
+            "devASP": {
+            "kind": "app",
+            "properties": {
+                "name": "[variables('servicePlanName')]",
+                "targetWorkerCount": 1,
+                "targetWorkerSizeId": 1,
+                "workerSize": 1,
+                "numberOfWorkers": 1,
+                "computeMode": "Dynamic",
+                "zoneRedundant": false
+            },
+            "sku": {
+                "name": "B1",
+                "tier": "Basic",
+                "capacity": 1
+            }
+            },
+            "defaultASP": {
+            "kind": "functionapp",
+            "properties": {
+                "name": "[variables('servicePlanName')]",
+                "targetWorkerCount": 1,
+                "targetWorkerSizeId": 1,
+                "workerSize": "1",
+                "numberOfWorkers": 1,
+                "computeMode": "Dynamic"
+            },
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic"
+            }
+        },
+        "isProduction": "[if(equals(parameters('deploymentMode'), 'production'), true(), false())]",
+        "devTestConfig": "[if(and(equals(parameters('deploymentMode'), 'devtest'), parameters('disablePublicAccessToStorageAccount')), variables('devASP'), variables('defaultASP'))]",
+        "aspConfig": "[if(variables('isProduction'), variables('prdASP'), variables('devTestConfig'))]"
+        
     },
     "resources": [
         {
             "type": "Microsoft.EventHub/namespaces",
-            "apiVersion": "2017-04-01",
+            "apiVersion": "2024-01-01",
             "name": "[variables('eventHubNamespaceName')]",
             "condition": "[variables('createNewEventHubNamespace')]",
             "location": "[variables('location')]",
@@ -579,11 +642,11 @@
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2022-09-01",
-            "kind": "[if(parameters('disablePublicAccessToStorageAccount'), 'app', 'functionapp')]",
-            "location": "[variables('location')]",
             "name": "[variables('servicePlanName')]",
-            "sku": "[if(parameters('disablePublicAccessToStorageAccount'), json('{ \"name\":\"B1\", \"tier\": \"Basic\", \"capacity\": 1 }'), json('{ \"name\": \"Y1\", \"tier\": \"Dynamic\" }'))]",
-            "properties": "[ if(parameters('disablePublicAccessToStorageAccount'), json('{ \"maximumElasticWorkerCount\": 1 }'), json(concat('{ \"name\": \"', variables('servicePlanName'), '\", \"targetWorkerCount\": 1, \"targetWorkerSizeId\": 1, \"workerSize\": \"1\", \"numberOfWorkers\": 1, \"computeMode\": \"Dynamic\" }'))) ]"
+            "kind": "[variables('aspConfig').kind]",
+            "location": "[variables('location')]",
+            "sku": "[variables('aspConfig').sku]",
+            "properties": "[variables('aspConfig').properties]"
         },
         {
             "type": "Microsoft.Web/sites",
