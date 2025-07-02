@@ -63,7 +63,7 @@ param disablePublicAccessToStorageAccount bool = false
 @maxValue(20)
 param eventHubMaximumThroughputUnits int = 10
 
-@description('Optional. Partition counts over 4 only works with Premium or dedicated EventHubs. This parameter will only modify the number of partitions for the Event Hub if the parameter eventHubSku is set to \'Premium\'.')
+@description('Optional. Modify the partition count for the EventHub This can increase the throughput of the EventHub.')
 @minValue(1)
 @maxValue(32)
 param eventHubPartitionCount int = 4
@@ -193,7 +193,7 @@ resource eventHubNamespaceName_eventHub 'Microsoft.EventHub/namespaces/eventhubs
   location: location_var
   properties: {
     messageRetentionInDays: 1
-    partitionCount: ((eventHubSku == 'premium') ? eventHubPartitionCount : null)
+    partitionCount: eventHubPartitionCount
   }
 }
 

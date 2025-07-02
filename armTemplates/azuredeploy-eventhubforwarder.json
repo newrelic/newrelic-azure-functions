@@ -148,7 +148,7 @@
             "minValue": 1,
             "maxValue": 32,
             "metadata": {
-                "description": "Optional. Partition counts over 4 only works with Premium or dedicated EventHubs. This parameter will only modify the number of partitions for the Event Hub if the parameter eventHubSku is set to 'Premium'."
+                "description": "Optional. Modify the partition count for the EventHub This can increase the throughput of the EventHub."
             }
         },
         "eventHubSku": {
@@ -289,7 +289,7 @@
             ],
             "properties": {
                 "messageRetentionInDays": 1,
-                "partitionCount": "[if(equals(parameters('eventHubSku'), 'premium'), parameters('eventHubPartitionCount'), null())]"
+                "partitionCount": "[parameters('eventHubPartitionCount')]"
             }
         },
         {
