@@ -62,10 +62,10 @@
         "scalingMode": {
             "type": "string",
             "allowedValues": [
-                "standard",
-                "highScale"
+                "basic",
+                "enterprise"
             ],
-            "defaultValue": "standard",
+            "defaultValue": "basic",
             "metadata": {
                 "description": "Optional. The scaling for the resources. If set to 'production', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynaic App Service Plan."
             }
@@ -139,7 +139,7 @@
             "minValue": 1,
             "maxValue": 20,
             "metadata": {
-                "description": "Optional. Maximum throughput units for the Event Hub Namespace. This parameter is only used if the scalingMode is set to 'highScale'."
+                "description": "Optional. Maximum throughput units for the Event Hub Namespace. This parameter is only used if the scalingMode is set to 'enterprise'."
             }
         },
         "eventHubPartitionCount": {
@@ -255,9 +255,9 @@
                 "tier": "Dynamic"
             }
         },
-        "isHighScalabing": "[if(equals(parameters('scalingMode'), 'highScale'), true(), false())]",
-        "standardScaleConfig": "[if(and(equals(parameters('scalingMode'), 'standard'), parameters('disablePublicAccessToStorageAccount')), variables('privateNetworkASP'), variables('defaultASP'))]",
-        "aspConfig": "[if(variables('isHighScalabing'), variables('autoscalingASP'), variables('standardScaleConfig'))]"
+        "isHighScalabing": "[if(equals(parameters('scalingMode'), 'enterprise'), true(), false())]",
+        "basicScaleConfig": "[if(and(equals(parameters('scalingMode'), 'basic'), parameters('disablePublicAccessToStorageAccount')), variables('privateNetworkASP'), variables('defaultASP'))]",
+        "aspConfig": "[if(variables('isHighScalabing'), variables('autoscalingASP'), variables('basicScaleConfig'))]"
         
     },
     "resources": [
@@ -274,8 +274,8 @@
             },
             "properties": {
                 "minimumTlsVersion": "1.2",
-                "isAutoInflateEnabled": "[if(equals(parameters('scalingMode'), 'highScale'), true(), false())]",
-                "maximumThroughputUnits": "[if(equals(parameters('scalingMode'), 'highScale'), parameters('eventHubMaximumThroughputUnits'), 0)]"
+                "isAutoInflateEnabled": "[if(equals(parameters('scalingMode'), 'enterprise'), true(), false())]",
+                "maximumThroughputUnits": "[if(equals(parameters('scalingMode'), 'enterprise'), parameters('eventHubMaximumThroughputUnits'), 0)]"
             }
         },
         {

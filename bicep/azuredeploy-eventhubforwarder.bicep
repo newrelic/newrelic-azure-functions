@@ -26,10 +26,10 @@ param retryInterval int = 2000
 
 @description('Optional. The scaling for the resources. If set to \'production\', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynaic App Service Plan.')
 @allowed([
-  'standard'
-  'highScale'
+  'basic'
+  'enterprise'
 ])
-param scalingMode string = 'standard'
+param scalingMode string = 'basic'
 
 @description('Optional. Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription.')
 param forwardAdministrativeAzureActivityLogs bool = false
@@ -58,7 +58,7 @@ param forwardServiceHealthAzureActivityLogs bool = false
 @description('Optional. Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to \'Basic\', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share.')
 param disablePublicAccessToStorageAccount bool = false
 
-@description('Optional. Maximum throughput units for the Event Hub Namespace. This parameter is only used if the scalingMode is set to \'highScale\'.')
+@description('Optional. Maximum throughput units for the Event Hub Namespace. This parameter is only used if the scalingMode is set to \'enterprise\'.')
 @minValue(1)
 @maxValue(20)
 param eventHubMaximumThroughputUnits int = 10
@@ -166,11 +166,11 @@ var defaultASP = {
     tier: 'Dynamic'
   }
 }
-var isHighScalabing = ((scalingMode == 'highScale') ? true : false)
-var standardScaleConfig = (((scalingMode == 'standard') && disablePublicAccessToStorageAccount)
+var isHighScalabing = ((scalingMode == 'enterprise') ? true : false)
+var basicScaleConfig = (((scalingMode == 'basic') && disablePublicAccessToStorageAccount)
   ? privateNetworkASP
   : defaultASP)
-var aspConfig = (isHighScalabing ? autoscalingASP : standardScaleConfig)
+var aspConfig = (isHighScalabing ? autoscalingASP : basicScaleConfig)
 
 resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2024-01-01' = if (createNewEventHubNamespace) {
   name: eventHubNamespaceName
@@ -182,8 +182,8 @@ resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2024-01-01' =
   }
   properties: {
     minimumTlsVersion: '1.2'
-    isAutoInflateEnabled: ((scalingMode == 'highScale') ? true : false)
-    maximumThroughputUnits: ((scalingMode == 'highScale') ? eventHubMaximumThroughputUnits : 0)
+    isAutoInflateEnabled: ((scalingMode == 'enterprise') ? true : false)
+    maximumThroughputUnits: ((scalingMode == 'enterprise') ? eventHubMaximumThroughputUnits : 0)
   }
 }
 
