@@ -62,12 +62,12 @@
         "scalingMode": {
             "type": "string",
             "allowedValues": [
-                "basic",
-                "enterprise"
+                "Basic",
+                "Enterprise"
             ],
-            "defaultValue": "basic",
+            "defaultValue": "Basic",
             "metadata": {
-                "description": "Optional. The scaling for the resources. If set to 'production', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynaic App Service Plan."
+                "description": "Optional. The scaling for the resources. If set to 'Enterprise', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynaic App Service Plan."
             }
         },
         "forwardAdministrativeAzureActivityLogs": {
@@ -131,35 +131,6 @@
             "defaultValue": false,
             "metadata": {
                 "description": "Optional. Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to 'Basic', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share."
-            }
-        },
-         "eventHubMaximumThroughputUnits": {
-            "type": "int",
-            "defaultValue": 10,
-            "minValue": 1,
-            "maxValue": 20,
-            "metadata": {
-                "description": "Optional. Maximum throughput units for the Event Hub Namespace. This parameter is only used if the scalingMode is set to 'enterprise'."
-            }
-        },
-        "eventHubPartitionCount": {
-            "type": "int",
-            "defaultValue": 4,
-            "minValue": 1,
-            "maxValue": 32,
-            "metadata": {
-                "description": "Optional. Modify the partition count for the EventHub This can increase the throughput of the EventHub."
-            }
-        },
-        "eventHubSku": {
-            "type": "string",
-            "defaultValue": "Standard",
-            "allowedValues": [
-                "Standard",
-                "Premium"
-            ],
-            "metadata": {
-                "description": "Optional. The SKU for the Event Hub Namespace. The default value is 'Standard'. To upgrade to Premium the eventHub will need to be recreated (deleted, then redeployed)."
             }
         }
     },
@@ -255,8 +226,8 @@
                 "tier": "Dynamic"
             }
         },
-        "isHighScalabing": "[if(equals(parameters('scalingMode'), 'enterprise'), true(), false())]",
-        "basicScaleConfig": "[if(and(equals(parameters('scalingMode'), 'basic'), parameters('disablePublicAccessToStorageAccount')), variables('privateNetworkASP'), variables('defaultASP'))]",
+        "isHighScalabing": "[if(equals(parameters('scalingMode'), 'Enterprise'), true(), false())]",
+        "basicScaleConfig": "[if(and(equals(parameters('scalingMode'), 'Basic'), parameters('disablePublicAccessToStorageAccount')), variables('privateNetworkASP'), variables('defaultASP'))]",
         "aspConfig": "[if(variables('isHighScalabing'), variables('autoscalingASP'), variables('basicScaleConfig'))]"
         
     },
@@ -268,14 +239,14 @@
             "condition": "[variables('createNewEventHubNamespace')]",
             "location": "[variables('location')]",
             "sku": {
-                "name": "[parameters('eventHubSku')]",
-                "tier": "[parameters('eventHubSku')]",
+                "name": "Standard",
+                "tier": "Standard",
                 "capacity": 1
             },
             "properties": {
                 "minimumTlsVersion": "1.2",
-                "isAutoInflateEnabled": "[if(equals(parameters('scalingMode'), 'enterprise'), true(), false())]",
-                "maximumThroughputUnits": "[if(equals(parameters('scalingMode'), 'enterprise'), parameters('eventHubMaximumThroughputUnits'), 0)]"
+                "isAutoInflateEnabled": "[if(equals(parameters('scalingMode'), 'Enterprise'), true(), false())]",
+                "maximumThroughputUnits": "[if(equals(parameters('scalingMode'), 'Enterprise'), 40, 0)]"
             }
         },
         {
@@ -289,7 +260,7 @@
             ],
             "properties": {
                 "messageRetentionInDays": 1,
-                "partitionCount": "[parameters('eventHubPartitionCount')]"
+                "partitionCount": "[if(equals(parameters('scalingMode'), 'Enterprise'), 32, 4)]"
             }
         },
         {
