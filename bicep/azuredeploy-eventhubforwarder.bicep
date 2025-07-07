@@ -24,7 +24,7 @@ param maxRetriesToResendLogs int = 3
 @minValue(100)
 param retryInterval int = 2000
 
-@description('Optional. The scaling for the resources. If set to \'Enterprise\', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynaic App Service Plan.')
+@description('Optional. The scaling for the resources. If set to \'Enterprise\', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynamic App Service Plan.')
 @allowed([
   'Basic'
   'Enterprise'

@@ -67,7 +67,7 @@
             ],
             "defaultValue": "Basic",
             "metadata": {
-                "description": "Optional. The scaling for the resources. If set to 'Enterprise', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynaic App Service Plan."
+                "description": "Optional. The scaling for the resources. If set to 'Enterprise', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynamic App Service Plan."
             }
         },
         "forwardAdministrativeAzureActivityLogs": {
