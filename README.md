@@ -22,10 +22,10 @@ Contributions to improve newrelic-azure-functions are encouraged! Keep in mind w
 To execute our corporate CLA, which is required if your contribution is on behalf of a company, or if you have any questions, please drop us an email at open-source@newrelic.com.
 
 Here are some general guidelines
-1. PR owners would follow the code review process and standards team has established.
-1. Thorough testing must be done by PR owners to ensure new feature works and no regressions.
-1. Add/Update any applicable tests as part of PR.
-1. Breakdown PRs into multiple PRs if needed to reduce chances of breaking changes.
+1. PR owners should follow the code review process and standards team has established.
+1. Thorough testing must be done by PR owners to ensure the new feature works and has no regressions.
+1. Add/Update any applicable tests as part of the PR.
+1. Breakdown PRs into multiple PRs if needed to reduce chances of breaking changes. Specifically, refactoring efforts and new feature implementations should always be submitted as distinct PRs
 
 ## Community
 
