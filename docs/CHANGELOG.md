@@ -1,3 +1,10 @@
+# [2.7.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.6.0...v2.7.0) (2025-07-16)
+
+
+### Features
+
+* Trigger release for providing scaling mode and update deprecated dependency ([#123](https://github.com/newrelic-experimental/newrelic-azure-functions/issues/123)) ([7593d3b](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/7593d3bb36d2fa9437f2f323c39907fe4e417c08))
+
 # [2.6.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.5.1...v2.6.0) (2025-02-18)
 
 
