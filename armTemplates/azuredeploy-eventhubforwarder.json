@@ -43,6 +43,29 @@
                 "description": "Optional. List of semicolon-separated custom attributes that you would like to enrich the forwarded logs with. This can be useful, for example, if you want to indicate common attributes shared by all the logs collected in this account, such as: 'environment:production;department:sales;country:Germany'"
             }
         },
+        "maxEventBatchSize": {
+            "type": "int",
+            "defaultValue": 500,
+            "minValue": 1,
+            "metadata": {
+                "description": "Optional. Maximum number of events that will be delivered in a batch to the function. Default is 500."
+            }
+        },
+        "minEventBatchSize": {
+            "type": "int",
+            "defaultValue": 20,
+            "minValue": 1,
+            "metadata": {
+                "description": "Optional. Minimum number of events that will be delivered in a batch to the function. Default is 20."
+            }
+        },
+        "maxWaitTime": {
+            "type": "string",
+            "defaultValue": "00:00:30",
+            "metadata": {
+                "description": "Optional. Maximum amount of time to wait to build up a batch before delivering to the function (in format HH:MM:SS). Default is 00:00:30."
+            }
+        },
         "maxRetriesToResendLogs": {
             "type": "int",
             "defaultValue": 3,
@@ -702,6 +725,18 @@
                         {
                             "name": "NR_RETRY_INTERVAL",
                             "value": "[parameters('retryInterval')]"
+                        },
+                        {
+                            "name": "AzureFunctionsJobHost__extensions__eventHubs__maxEventBatchSize",
+                            "value": "[string(parameters('maxEventBatchSize'))]"
+                        },
+                        {
+                            "name": "AzureFunctionsJobHost__extensions__eventHubs__minEventBatchSize",
+                            "value": "[string(parameters('minEventBatchSize'))]"
+                        },
+                        {
+                            "name": "AzureFunctionsJobHost__extensions__eventHubs__maxWaitTime",
+                            "value": "[parameters('maxWaitTime')]"
                         },
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",

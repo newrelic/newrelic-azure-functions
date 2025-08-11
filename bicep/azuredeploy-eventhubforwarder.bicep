@@ -58,6 +58,17 @@ param forwardServiceHealthAzureActivityLogs bool = false
 @description('Optional. Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to \'Basic\', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share.')
 param disablePublicAccessToStorageAccount bool = false
 
+@description('Optional. Maximum number of events that will be delivered in a batch to the function. Default is 500.')
+@minValue(1)
+param maxEventBatchSize int = 500
+
+@description('Optional. Minimum number of events that will be delivered in a batch to the function. Default is 1.')
+@minValue(1)
+param minEventBatchSize int = 20
+
+@description('Optional. Maximum amount of time to wait to build up a batch before delivering to the function (in format HH:MM:SS). Default is 00:00:30.')
+param maxWaitTime string = '00:00:30'
+
 var location_var = ((location == '') ? resourceGroup().location : location)
 var onePerResourceGroupUniqueSuffix = uniqueString(resourceGroup().id)
 var createNewEventHubNamespace = (eventHubNamespace == '')
@@ -573,6 +584,19 @@ resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
           name: 'WEBSITE_RUN_FROM_PACKAGE'
           value: (disablePublicAccessToStorageAccount ? eventHubForwarderFunctionArtifact : '0')
         }
+        {
+          name: 'AzureFunctionsJobHost__extensions__eventHubs__maxEventBatchSize'
+          value: string(maxEventBatchSize)
+        }
+        {
+          name: 'AzureFunctionsJobHost__extensions__eventHubs__minEventBatchSize'
+          value: string(minEventBatchSize)
+        }
+        {
+          name: 'AzureFunctionsJobHost__extensions__eventHubs__maxWaitTime'
+          value: maxWaitTime
+        }
+
       ]
       alwaysOn: disablePublicAccessToStorageAccount
       ftpsState: 'Disabled'
