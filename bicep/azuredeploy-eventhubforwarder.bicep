@@ -62,7 +62,7 @@ param disablePublicAccessToStorageAccount bool = false
 @minValue(1)
 param maxEventBatchSize int = 500
 
-@description('Optional. Minimum number of events that will be delivered in a batch to the function. Default is 1.')
+@description('Optional. Minimum number of events that will be delivered in a batch to the function. Default is 20.')
 @minValue(1)
 param minEventBatchSize int = 20
 
