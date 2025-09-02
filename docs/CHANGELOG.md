@@ -1,3 +1,10 @@
+# [2.8.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.7.0...v2.8.0) (2025-09-02)
+
+
+### Features
+
+* Add support of providing eventhub trigger batching related params as user input ([#124](https://github.com/newrelic-experimental/newrelic-azure-functions/issues/124)) ([0729c20](https://github.com/newrelic-experimental/newrelic-azure-functions/commit/0729c20c2e09d3b3869a7e447f015552f35586ea))
+
 # [2.7.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.6.0...v2.7.0) (2025-07-16)
 
 
