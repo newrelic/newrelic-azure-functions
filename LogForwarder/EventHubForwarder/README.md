@@ -37,6 +37,9 @@ Parameters that can be configured in your Azure Resource Manager Template
 | Log Custom Attributes  | no | `none` | Attributes to be added to all logs forwarded to New Relic. Semicolon delimited (e.g. `env:prod;team:myTeam`) |
 | Max Retries To Resend Logs  | no | `3` | Number of times the function will attempt to resend data |
 | Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds |
+| Max Event Batch Size  | no | `500` | Maximum number of events delivered in a batch to the function. |
+| Min Event Batch Size  | no | `20`  | Minimum number of events delivered in a batch to the function. |
+| Max Wait Time         | no | `00:00:30` | Maximum time to wait to build up a batch before delivering to the function (format HH:MM:SS). |
 | Event Hub Namespace Name | no | `none` | Namespace in which hub are allocated. Leave this blank for a new namespace to be created automatically |
 | Event hub Name | no | `none` | Name of the Event Hub where logs are allocated. Leave this blank for a new Event Hub to be created automatically |
 | scalingMode | no | `Basic` | The scaling mode option configured for the New Relic Azure Log Forwarder. Setting this to `Enterprise` will configure autoscaling. <br> <br> > `Note`: If you upgrade from Basic to Enterprise you will need to reprovision the EventHub due to the Azure limit that a Standard SKU cannot change partition counts. |
@@ -97,3 +100,6 @@ Parameters to be configured in your Azure function's [application settings](http
 | NR_TAGS | Optional | `none` | Attributes to be added to all logs forwarded to New Relic. Semicolon delimited (e.g. `env:prod;team:myTeam`) |
 | NR_MAX_RETRIES | Optional | `3` | Number of times the function will attempt to resend data |
 | NR_RETRY_INTERVAL | Optional | `2000` | Interval between retry attempts in milliseconds |
+| MAX_EVENT_BATCH_SIZE | Optional | `500` | Maximum number of events delivered in a batch to the function. |
+| MIN_EVENT_BATCH_SIZE | Optional | `20`  | Minimum number of events delivered in a batch to the function. |
+| MAX_WAIT_TIME        | Optional | `00:00:30` | Maximum time to wait to build up a batch before delivering to the function (format HH:MM:SS). |
