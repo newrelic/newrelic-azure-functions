@@ -10,6 +10,7 @@ process.env.NR_LICENSE_KEY = requireEnvironmentVariable('LICENSE_KEY');
 process.env.NR_ENDPOINT = requireEnvironmentVariable('LOGS_API');
 process.env.NR_TAGS = 'test:azureUnit;test2:success';
 const blobForwader = require('../LogForwarder/index');
+const { InvocationContext } = require('@azure/functions');
 
 /**
  * This tests all things directly configurable from the Infrastructure Agent.
@@ -18,19 +19,13 @@ const blobForwader = require('../LogForwarder/index');
  */
 describe('Blob Forwader tests', () => {
   let nrdb;
-  let context = {};
+  let context = new InvocationContext({
+    functionName: 'Blob Forwarding',
+    invocationid: 'Test function',
+  });
   const OLD_ENV = process.env;
 
   beforeAll(() => {
-    context.log = (message) => console.log(message);
-    context.log.info = (message) => console.log(message);
-    context.log.warn = (message) => console.log(message);
-    context.log.error = (message) => console.log(message);
-    context.executionContext = {
-      functionName: 'Blob Forwarding',
-      invocationid: 'Test function',
-    };
-
     const accountId = requireEnvironmentVariable('ACCOUNT_ID');
     const apiKey = requireEnvironmentVariable('API_KEY');
     const nerdGraphUrl = requireEnvironmentVariable('NERD_GRAPH_URL');
@@ -57,7 +52,7 @@ describe('Blob Forwader tests', () => {
     const line = `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`;
     let buffer = Buffer.from(line);
 
-    await blobForwader(context, buffer);
+    await blobForwader(buffer, context);
     // Wait for that log line to show up in NRDB
     await waitForLogMessageContaining(nrdb, line);
   }, 20000);
@@ -73,7 +68,7 @@ describe('Blob Forwader tests', () => {
     );
     let buffer = Buffer.from(line);
 
-    await blobForwader(context, buffer);
+    await blobForwader(buffer, context);
     // Wait for that log line to show up in NRDB
     await countAll(
       nrdb,
@@ -96,7 +91,7 @@ describe('Blob Forwader tests', () => {
 
       let buffer = Buffer.from(line);
 
-      await blobForwader(context, buffer);
+      await blobForwader(buffer, context);
       // Wait for that log line to show up in NRDB
       await countAll(
         nrdb,
@@ -124,7 +119,7 @@ describe('Blob Forwader tests', () => {
       let buffer = Buffer.from(line);
 
       try {
-        await blobForwader(context, buffer);
+        await blobForwader(buffer, context);
       } catch (e) {
         expect(e.message).toBe(
           'Cannot send the payload as the size of single line exceeds the limit'

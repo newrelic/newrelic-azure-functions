@@ -18,14 +18,12 @@
       "placeholder": "0.0.0-development"
     }],
     ["@semantic-release/exec", {
-      "prepareCmd": "npm run package:eventhubforwarder && npm run package:blobforwarder"
+      "prepareCmd": "npm run package:logforwarder"
     }],
     ["@semantic-release/github", {
       "assets": [
-        {"path": "LogForwarder/index.js", "name": "index-BlobForwarder-${nextRelease.gitTag}.js", "label": "BlobForwarder Azure Function"},
-        {"path": "LogForwarder/index.js", "name": "index-EventHubForwarder-${nextRelease.gitTag}.js", "label": "EventHubForwarder Azure Function"},
-        {"path": "EventHubForwarder.zip", "label": "EventHubForwarder Azure ZipDeploy package (version ${nextRelease.gitTag})"},
-        {"path": "BlobForwarder.zip", "label": "BlobForwarder Azure ZipDeploy package (version ${nextRelease.gitTag})"}
+        {"path": "LogForwarder/index.js", "name": "index-LogForwarder-${nextRelease.gitTag}.js", "label": "LogForwarder Azure Function"},
+        {"path": "LogForwarder.zip", "label": "LogForwarder Azure ZipDeploy package (version ${nextRelease.gitTag})"}
       ]
     }]
   ]

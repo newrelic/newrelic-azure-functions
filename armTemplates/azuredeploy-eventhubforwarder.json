@@ -173,7 +173,7 @@
         "functionAppName": "[concat('nrlogs-eventhubforwarder-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
         "activityLogsDiagnosticSettingName": "[concat('nrlogs-activity-log-diagnostic-setting-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
         "createActivityLogsDiagnosticSetting": "[or(parameters('forwardAdministrativeAzureActivityLogs'), parameters('forwardAlertAzureActivityLogs'), parameters('forwardAutoscaleAzureActivityLogs'), parameters('forwardPolicyAzureActivityLogs'), parameters('forwardRecommendationAzureActivityLogs'), parameters('forwardResourceHealthAzureActivityLogs'), parameters('forwardSecurityAzureActivityLogs'), parameters('forwardServiceHealthAzureActivityLogs'))]",
-        "eventHubForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/EventHubForwarder.zip",
+        "eventHubForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip",
         
         "virtualNetworkName": "[format('nrlogs{0}-virtual-network', variables('onePerResourceGroupUniqueSuffix'))]",
         "functionSubnetName": "[format('{0}-internal-functions-subnet', variables('virtualNetworkName'))]",
@@ -748,11 +748,15 @@
                         },
                         {
                             "name": "WEBSITE_NODE_DEFAULT_VERSION",
-                            "value": "~20"
+                            "value": "~22"
                         },
                         {
                             "name": "AzureWebJobsStorage",
                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=',environment().suffixes.storage)]"
+                        },
+                        {
+                            "name": "EVENTHUB_FORWARDER_ENABLED",
+                            "value": "true"
                         },
                         {
                             "name": "WEBSITE_RUN_FROM_PACKAGE",

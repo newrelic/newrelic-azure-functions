@@ -90,7 +90,7 @@ var onePerResourceGroupAndEventHubUniqueSuffix = uniqueString(
 var functionAppName = 'nrlogs-eventhubforwarder-${onePerResourceGroupAndEventHubUniqueSuffix}'
 var activityLogsDiagnosticSettingName = 'nrlogs-activity-log-diagnostic-setting-${onePerResourceGroupAndEventHubUniqueSuffix}'
 var createActivityLogsDiagnosticSetting = (forwardAdministrativeAzureActivityLogs || forwardAlertAzureActivityLogs || forwardAutoscaleAzureActivityLogs || forwardPolicyAzureActivityLogs || forwardRecommendationAzureActivityLogs || forwardResourceHealthAzureActivityLogs || forwardSecurityAzureActivityLogs || forwardServiceHealthAzureActivityLogs)
-var eventHubForwarderFunctionArtifact = 'https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/EventHubForwarder.zip'
+var eventHubForwarderFunctionArtifact = 'https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip'
 var virtualNetworkName = 'nrlogs${onePerResourceGroupUniqueSuffix}-virtual-network'
 var functionSubnetName = '${virtualNetworkName}-internal-functions-subnet'
 var privateEndpointsSubnetName = '${virtualNetworkName}-private-endpoints-subnet'
@@ -574,11 +574,15 @@ resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
         }
         {
           name: 'WEBSITE_NODE_DEFAULT_VERSION'
-          value: '~20'
+          value: '~22'
         }
         {
           name: 'AzureWebJobsStorage'
           value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${listkeys(storageAccount.id,'2021-04-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+        }
+        {
+          name: 'EVENTHUB_FORWARDER_ENABLED'
+          value: 'true'
         }
         {
           name: 'WEBSITE_RUN_FROM_PACKAGE'

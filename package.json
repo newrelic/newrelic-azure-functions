@@ -2,10 +2,10 @@
   "name": "newrelic-azure-functions",
   "version": "2.8.0",
   "description": "This repository contains functions to collect and forward logs from Microsoft Azure Blob Storage and Event Hubs.",
+  "main": "LogForwarder/index.js",
   "scripts": {
     "lint": "eslint ./**/*.js",
-    "package:eventhubforwarder": "mkdir -p EventHubForwarder && cp LogForwarder/index.js EventHubForwarder/index.js && cp LogForwarder/EventHubForwarder/function.json EventHubForwarder/function.json  && zip -r EventHubForwarder.zip EventHubForwarder/function.json EventHubForwarder/index.js host.json package.json && rm -rf EventHubForwarder",
-    "package:blobforwarder": "mkdir -p BlobForwarder && cp LogForwarder/index.js BlobForwarder/index.js && cp LogForwarder/BlobForwarder/function.json BlobForwarder/function.json  && zip -r BlobForwarder.zip BlobForwarder/function.json BlobForwarder/index.js host.json package.json && rm -rf BlobForwarder",
+    "package:logforwarder": "npm ci --omit=dev && zip -r LogForwarder.zip LogForwarder/index.js host.json package.json node_modules/",
     "test": "jest"
   },
   "jest": {
@@ -17,14 +17,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/newrelic-experimental/newrelic-azure-functions.git"
+    "url": "git+https://github.com/newrelic/newrelic-azure-functions.git"
   },
   "license": "Apache-2.0",
   "bugs": {
     "email": "opensource+newrelic-azure-functions@newrelic.com",
-    "url": "https://github.com/newrelic-experimental/newrelic-azure-functions/issues"
+    "url": "https://github.com/newrelic/newrelic-azure-functions/issues"
   },
-  "homepage": "https://github.com/newrelic-experimental/newrelic-azure-functions#readme",
+  "homepage": "https://github.com/newrelic/newrelic-azure-functions#readme",
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.2",
     "@semantic-release/commit-analyzer": "^9.0.2",
@@ -43,5 +43,8 @@
     "semantic-release-plugin-update-version-in-files": "^1.1.0",
     "uuid": "^9.0.1",
     "winston": "^3.13.0"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.11.2"
   }
 }

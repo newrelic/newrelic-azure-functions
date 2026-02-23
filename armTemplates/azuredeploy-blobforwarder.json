@@ -64,7 +64,7 @@
   },
   "variables": {
     "targetStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('targetStorageAccountName'))]",
-    "blobForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/BlobForwarder.zip",
+    "blobForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip",
     "onePerResourceGroupUniqueSuffix": "[uniqueString(resourceGroup().id)]",
     "onePerResourceGroupAndStorageAccountAndContainer": "[uniqueString(resourceGroup().id, parameters('targetStorageAccountName'), parameters('targetContainerName'))]",
     "functionAppName": "[concat('nrlogs-blobforwarder-', variables('onePerResourceGroupAndStorageAccountAndContainer'))]",
@@ -505,11 +505,15 @@
               },
               {
                 "name": "WEBSITE_NODE_DEFAULT_VERSION",
-                "value": "~20"
+                "value": "~22"
               },
               {
                 "name": "FUNCTIONS_EXTENSION_VERSION",
                 "value": "~4"
+              },
+              {
+                "name": "BLOB_FORWARDER_ENABLED",
+                "value": "true"
               },
               {
                 "name": "WEBSITE_RUN_FROM_PACKAGE",
