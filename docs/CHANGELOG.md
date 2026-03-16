@@ -1,3 +1,15 @@
+# [3.0.0](https://github.com/newrelic/newrelic-azure-functions/compare/v2.8.0...v3.0.0) (2026-03-16)
+
+
+### Features
+
+* upgrade to Azure Functions Node.js v4 programming model and Node.js 22 ([2ece342](https://github.com/newrelic/newrelic-azure-functions/commit/2ece34295ed92766f0680cd3e35fbf57487be3b1))
+
+
+### BREAKING CHANGES
+
+* Requires Node.js 22 and Azure Functions v4 programming model
+
 # [2.8.0](https://github.com/newrelic-experimental/newrelic-azure-functions/compare/v2.7.0...v2.8.0) (2025-09-02)
 
 
