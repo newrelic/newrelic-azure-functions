@@ -9,6 +9,7 @@ process.env.NR_LICENSE_KEY = requireEnvironmentVariable('LICENSE_KEY');
 process.env.NR_ENDPOINT = requireEnvironmentVariable('LOGS_API');
 process.env.NR_TAGS = 'test:azureUnit;test2:success';
 const eventHubForwarder = require('../LogForwarder/index');
+const { InvocationContext } = require('@azure/functions');
 
 /**
  * This tests all things directly configurable from the Infrastructure Agent.
@@ -17,19 +18,13 @@ const eventHubForwarder = require('../LogForwarder/index');
  */
 describe('Event Hub message Forwader tests', () => {
   let nrdb;
-  let context = {};
+  let context = new InvocationContext({
+    functionName: 'Event Hub Message Forwarding',
+    invocationid: 'Test function',
+  });
   const OLD_ENV = process.env;
 
   beforeAll(() => {
-    context.log = (message) => console.log(message);
-    context.log.info = (message) => console.log(message);
-    context.log.warn = (message) => console.log(message);
-    context.log.error = (message) => console.log(message);
-    context.executionContext = {
-      functionName: 'Event Hub Message Forwarding',
-      invocationid: 'Test function',
-    };
-
     const accountId = requireEnvironmentVariable('ACCOUNT_ID');
     const apiKey = requireEnvironmentVariable('API_KEY');
     const nerdGraphUrl = requireEnvironmentVariable('NERD_GRAPH_URL');
@@ -55,7 +50,7 @@ describe('Event Hub message Forwader tests', () => {
     const uuid = uuidv4();
     const line = `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`;
 
-    await eventHubForwarder(context, [line]);
+    await eventHubForwarder([line], context);
     // Wait for that log line to show up in NRDB
     await waitForLogMessageContaining(nrdb, line);
   }, 20000);
@@ -70,7 +65,7 @@ describe('Event Hub message Forwader tests', () => {
       nLine
     );
 
-    await eventHubForwarder(context, lines);
+    await eventHubForwarder(lines, context);
     // Wait for that log line to show up in NRDB
     await countAll(
       nrdb,

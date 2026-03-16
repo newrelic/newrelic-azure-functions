@@ -7,6 +7,7 @@
 var https = require('https');
 var url = require('url');
 var zlib = require('zlib');
+const { app } = require('@azure/functions');
 
 const VERSION = '0.0.0-development';
 
@@ -21,9 +22,31 @@ const NR_MAX_PAYLOAD_SIZE = 1000 * 1024;
 const NR_MAX_RETRIES = process.env.NR_MAX_RETRIES || 3;
 const NR_RETRY_INTERVAL = process.env.NR_RETRY_INTERVAL || 2000; // default: 2 seconds
 
-module.exports = async function main(context, logMessages) {
+if (process.env.EVENTHUB_FORWARDER_ENABLED === 'true') {
+  app.eventHub('EventHubForwarder', {
+    eventHubName: process.env.EVENTHUB_NAME,
+    connection: 'EVENTHUB_CONSUMER_CONNECTION',
+    cardinality: 'many',
+    consumerGroup: process.env.EVENTHUB_CONSUMER_GROUP,
+    handler: async (messages, context) => {
+      await main(messages, context);
+    },
+  });
+}
+
+if (process.env.BLOB_FORWARDER_ENABLED === 'true') {
+  app.storageBlob('BlobForwarder', {
+    path: process.env.CONTAINER_NAME + '/{name}',
+    connection: 'TargetAccountConnection',
+    handler: async (blob, context) => {
+      await main(blob, context);
+    },
+  });
+}
+
+async function main(logMessages, context) {
   if (!NR_LICENSE_KEY && !NR_INSERT_KEY) {
-    context.log.error(
+    context.error(
       'You have to configure either your LICENSE key or insights insert key. ' +
         'Please follow the instructions in README'
     );
@@ -41,13 +64,15 @@ module.exports = async function main(context, logMessages) {
   }
   let buffer = transformData(logs, context);
   if (buffer.length === 0) {
-    context.log.warn('logs format is invalid');
+    context.warn('logs format is invalid');
     return;
   }
   let logLines = appendMetaDataToAllLogLines(buffer);
   logLines = appendTimestampToAllLogLines(logLines);
   await compressAndSend(logLines, context);
-};
+}
+
+module.exports = main;
 
 /**
  * Compress and send logs with Promise
@@ -61,7 +86,7 @@ function compressAndSend(data, context) {
     .then((compressedPayload) => {
       if (compressedPayload.length > NR_MAX_PAYLOAD_SIZE) {
         if (data.length === 1) {
-          context.log.error(
+          context.error(
             'Cannot send the payload as the size of single line exceeds the limit'
           );
           return;
@@ -85,16 +110,16 @@ function compressAndSend(data, context) {
             context.log('Logs payload successfully sent to New Relic.')
           )
           .catch((e) => {
-            context.log.error(
+            context.error(
               'Max retries reached: failed to send logs payload to New Relic'
             );
-            context.log.error('Exception: ', JSON.stringify(e));
+            context.error('Exception: ', JSON.stringify(e));
           });
       }
     })
     .catch((e) => {
-      context.log.error('Error during payload compression.');
-      context.log.error('Exception: ', JSON.stringify(e));
+      context.error('Error during payload compression.');
+      context.error('Exception: ', JSON.stringify(e));
     });
 }
 
@@ -135,8 +160,8 @@ function getCommonAttributes(context) {
         version: VERSION,
       },
       azure: {
-        forwardername: context.executionContext.functionName,
-        invocationid: context.executionContext.invocationId,
+        forwardername: context.functionName,
+        invocationid: context.invocationId,
       },
       tags: getTags(),
     },
@@ -253,7 +278,7 @@ function parseData(logs, context) {
     try {
       return JSON.parse(logs); // for strings let's see if we can parse it into Object
     } catch {
-      context.log.warn('cannot parse logs to JSON');
+      context.warn('cannot parse logs to JSON');
       return logs;
     }
   }
