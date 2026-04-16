@@ -359,3 +359,19 @@ function wait(delay) {
     setTimeout(fulfill, delay || 0);
   });
 }
+
+// Exported for unit testing
+module.exports._test = {
+  transformData,
+  parseData,
+  addMetadata,
+  addTimestamp,
+  getTags,
+  getPayload,
+  getCommonAttributes,
+  compressData,
+  compressAndSend,
+  httpSend,
+  retryMax,
+  wait,
+};
