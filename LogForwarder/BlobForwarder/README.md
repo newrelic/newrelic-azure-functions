@@ -33,6 +33,9 @@ The automatic installation uses Azure Resource Manager (ARM) templates to create
 [Deploy to Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fmaster%2FarmTemplates%2Fazuredeploy-blobforwarder.json)
 using the [Azure ARM template](../armTemplates/azuredeploy-blobforwarder.json).
 
+3. Fill in the required parameters in the Azure Portal deployment form (see parameters table below)
+4. **Important**: For most deployments, leave `Disable Public Access To Storage Account` set to `false` (default). Only set to `true` if you require private network deployment. See the [Architecture](#architecture) section below for details on the differences.
+
 ### ARM Template Parameters
 
 Parameters that can be configured in your Azure Resource Manager Template
@@ -50,12 +53,61 @@ Parameters that can be configured in your Azure Resource Manager Template
 
 ### Architecture
 
-![blob-template-diagram](../../screenshots/BlobForwarder/blob4.png)
+The ARM template supports two deployment architectures based on the `disablePublicAccessToStorageAccount` parameter:
 
-The ARM template supports two deployment architectures:
+#### Standard Deployment (Default: `disablePublicAccessToStorageAccount=false`)
 
-- **Standard deployment** (default): Function App with Consumption (serverless) plan and public network access
-- **Private network deployment** (`disablePublicAccessToStorageAccount=true`): Function App with Basic plan (or higher), VNet integration, private endpoints, private DNS zones, and subnet configuration for enhanced security
+**Network Configuration:**
+- Public internet access enabled for both Function App and internal storage account
+- No VNet integration
+- Standard Consumption plan (serverless)
+
+**Resources Created:**
+- Function App
+- Internal Storage Account (public access)
+- App Service Plan
+
+**Deployment Method:** ZipDeploy extension deploys the function code
+
+**Use Case:** Standard deployments, no network isolation requirements
+
+![Blob Standard Architecture](../../screenshots/BlobForwarder/blob-standard-architecture.png)
+
+#### Private Network Deployment (`disablePublicAccessToStorageAccount=true`)
+
+**Network Configuration:**
+- **Public access disabled** for both Function App and internal storage account
+- **VNet integration** with private networking
+- Communication flows through private endpoints within the VNet
+- DNS resolution handled via Private DNS Zones
+- Requires Basic plan or higher for VNet integration support
+
+**Additional Resources Created:**
+- Virtual Network with 2 subnets:
+  - Function subnet (for Function App VNet integration)
+  - Private endpoints subnet
+- 4 Private Endpoints (file, blob, queue, table storage services)
+- 4 Private DNS Zones for private name resolution
+- 4 Virtual Network Links connecting DNS zones to VNet
+- Network configuration for VNet integration
+
+**Deployment Method:** WEBSITE_RUN_FROM_PACKAGE with GitHub URL (public ZipDeploy endpoint not accessible)
+
+**Use Case:** Compliance requirements, corporate security policies requiring network isolation, no public internet access
+
+![Blob Private VNet Architecture](../../screenshots/BlobForwarder/blob-private-network-architecture.png)
+
+**Key Differences:**
+
+| Aspect | Standard | Private Network |
+|--------|----------|-----------------|
+| Network Access | Public internet | Private VNet only |
+| VNet Integration | None | Full VNet integration with private endpoints |
+| Storage Access | Public endpoints | Private endpoints only |
+| Deployment Method | ZipDeploy extension | Run-from-package URL |
+| Resources Created | 3 basic resources | 15+ networking resources |
+
+**Note**: The manual installation instructions below create a deployment equivalent to the **Standard** architecture with public access.
 
 ---
 
@@ -112,6 +164,12 @@ Azure Functions v4 uses a package deployment model. Code cannot be edited direct
 To get the `TargetAccountConnection` value, go to your target storage account → **Security + networking** → **Access keys** → Click **Show** next to "Connection string" and copy the value.
 
 ![Storage Account Connection String](../../screenshots/BlobForwarder/blob-storage-connection.png)
+
+**Prerequisites - Target Storage Account:**
+
+Before configuring the forwarder, ensure you have an existing Azure Storage Account with a container that contains the logs you want to forward. You can verify your container exists by navigating to the storage account → **Data storage** → **Containers**. Use this container name (e.g., `logs`) for the `CONTAINER_NAME` setting.
+
+![Storage Account Containers](../../screenshots/BlobForwarder/blob-storage-containers.png)
 
 #### Optional Settings
 

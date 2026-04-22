@@ -35,6 +35,9 @@ The automatic installation uses Azure Resource Manager (ARM) templates to create
 [Deploy to Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fmaster%2FarmTemplates%2Fazuredeploy-eventhubforwarder.json)
 using the [Azure ARM template](../armTemplates/azuredeploy-eventhubforwarder.json).
 
+3. Fill in the required parameters in the Azure Portal deployment form (see parameters table below)
+4. **Important**: For most deployments, leave `Disable Public Access To Storage Account` set to `false` (default). Only set to `true` if you require private network deployment. See the [Architecture](#architecture) section below for details on the differences.
+
 ### ARM Template Parameters
 
 Parameters that can be configured in your Azure Resource Manager Template
@@ -65,12 +68,61 @@ Parameters that can be configured in your Azure Resource Manager Template
 
 ### Architecture
 
-![ehub-template-diagram](../../screenshots/EventHub/ehub-template-diagram.png)
+The ARM template supports two deployment architectures based on the `disablePublicAccessToStorageAccount` parameter:
 
-The ARM template supports two deployment architectures:
+#### Standard Deployment (Default: `disablePublicAccessToStorageAccount=false`)
 
-- **Standard deployment** (default): Function App with Consumption (serverless) plan and public network access
-- **Private network deployment** (`disablePublicAccessToStorageAccount=true`): Function App with Basic plan (or higher), VNet integration, private endpoints, private DNS zones, and subnet configuration for enhanced security
+**Network Configuration:**
+- Public internet access enabled for both Function App and internal storage account
+- No VNet integration
+- Standard Consumption plan (serverless)
+
+**Resources Created:**
+- Function App
+- Internal Storage Account (public access)
+- App Service Plan
+
+**Deployment Method:** ZipDeploy extension deploys the function code
+
+**Use Case:** Standard deployments, no network isolation requirements
+
+![EventHub Standard Architecture](../../screenshots/EventHub/eventhub-standard-architecture.png)
+
+#### Private Network Deployment (`disablePublicAccessToStorageAccount=true`)
+
+**Network Configuration:**
+- **Public access disabled** for both Function App and internal storage account
+- **VNet integration** with private networking
+- Communication flows through private endpoints within the VNet
+- DNS resolution handled via Private DNS Zones
+- Requires Basic plan or higher for VNet integration support
+
+**Additional Resources Created:**
+- Virtual Network with 2 subnets:
+  - Function subnet (for Function App VNet integration)
+  - Private endpoints subnet
+- 4 Private Endpoints (file, blob, queue, table storage services)
+- 4 Private DNS Zones for private name resolution
+- 4 Virtual Network Links connecting DNS zones to VNet
+- Network configuration for VNet integration
+
+**Deployment Method:** WEBSITE_RUN_FROM_PACKAGE with GitHub URL (public ZipDeploy endpoint not accessible)
+
+**Use Case:** Compliance requirements, corporate security policies requiring network isolation, no public internet access
+
+![EventHub Private VNet Architecture](../../screenshots/EventHub/eventhub-private-network-architecture.png)
+
+**Key Differences:**
+
+| Aspect | Standard | Private Network |
+|--------|----------|-----------------|
+| Network Access | Public internet | Private VNet only |
+| VNet Integration | None | Full VNet integration with private endpoints |
+| Storage Access | Public endpoints | Private endpoints only |
+| Deployment Method | ZipDeploy extension | Run-from-package URL |
+| Resources Created | 3 basic resources | 15+ networking resources |
+
+**Note**: The manual installation instructions below create a deployment equivalent to the **Standard** architecture with public access.
 
 ---
 
@@ -122,6 +174,12 @@ Azure Functions v4 uses a package deployment model. Code cannot be edited direct
 | `EVENTHUB_CONSUMER_CONNECTION` | Event Hub connection string | Connection string from your Event Hub **namespace** (not the hub itself). Found in Event Hub Namespace → Settings → Shared access policies → RootManageSharedAccessKey → Connection string-primary key. |
 | `EVENTHUB_CONSUMER_GROUP` | `$Default` | Consumer group name. Use `$Default` or create a dedicated consumer group in your Event Hub. |
 | `WEBSITE_RUN_FROM_PACKAGE` | `https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip` | URL to the deployment package. This tells Azure to download and run the latest function code from GitHub. |
+
+**Getting the Event Hub Namespace Connection String:**
+
+To get the `EVENTHUB_CONSUMER_CONNECTION` value, go to your Event Hub Namespace → **Settings** → **Shared access policies** → **RootManageSharedAccessKey** → Copy the **Connection string-primary key**.
+
+![Event Hub Connection String](../../screenshots/EventHub/eventhub-connection-string.png)
 
 #### Optional Settings
 
