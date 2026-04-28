@@ -161,6 +161,8 @@ Azure Functions v4 uses a package deployment model. Code cannot be edited direct
 2. Click the **Application settings** tab
 3. Add the following settings by clicking **+ New application setting** for each:
 
+![Function App Application Settings](../../screenshots/BlobForwarder/function-application-settings.png)
+
 #### Required Settings
 
 | Name | Value                                                                                            | Description |
