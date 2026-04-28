@@ -19,11 +19,12 @@ You can install this integration using one of two methods:
 
 The automatic installation uses Azure Resource Manager (ARM) templates to create and configure all necessary resources automatically.
 
-### Option 1: Install through New Relic Marketplace
+### Option 1: Guided Install through New Relic Marketplace
 
 1. Visit the New Relic Marketplace \[[US](https://one.newrelic.com/marketplace)|[EU](https://one.newrelic.com/marketplace)\]
 2. Search for "Microsoft Azure Blob Storage"
-3. Click on the "Microsoft Azure Blob Storage" tile and follow the steps
+3. Click on the "Microsoft Azure Blob Storage" tile
+4. Select your New Relic account and follow the guided installation wizard
 
 ### Option 2: Install Using Azure Portal
 
@@ -115,11 +116,22 @@ The ARM template supports two deployment architectures based on the `disablePubl
 
 Use this method if you want to manually create and configure the Function App yourself, or if you need more control over the setup process.
 
+### Prerequisites
+
+Before starting the manual installation, ensure you have:
+- An existing Azure Storage Account with a container that contains the logs you want to forward
+- You can verify your container exists by navigating to the storage account → **Data storage** → **Containers**
+- Note the container name (e.g., `logs`) as you'll need it for the `CONTAINER_NAME` setting
+
+![Storage Account Containers](../../screenshots/BlobForwarder/blob-storage-containers.png)
+
 ### Step 1: Create an Azure Function App
 
 1. Log in to the Azure Portal and create a [new Function App](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function).
 
-2. In the **Basics** tab, configure the following:
+2. On the **Hosting** tab (if shown first), select **Consumption (Windows)** as the hosting plan.
+
+3. In the **Basics** tab, configure the following:
 
 | Field | Value |
 |---|---|
@@ -133,11 +145,11 @@ Use this method if you want to manually create and configure the Function App yo
 
 ![Create Function App - Basics](../../screenshots/BlobForwarder/blob-create-basics.png)
 
-3. Complete the **Storage** and **Networking** tabs as needed for your environment.
+4. Complete the **Storage** and **Networking** tabs as needed for your environment.
 
-4. Click **Review + Create**, then **Create** to provision your Function App.
+5. Click **Review + Create**, then **Create** to provision your Function App.
 
-5. Wait 2-3 minutes for deployment to complete.
+6. Wait 2-3 minutes for deployment to complete.
 
 ### Step 2: Deploy the Azure Function
 
@@ -164,12 +176,6 @@ Azure Functions v4 uses a package deployment model. Code cannot be edited direct
 To get the `TargetAccountConnection` value, go to your target storage account → **Security + networking** → **Access keys** → Click **Show** next to "Connection string" and copy the value.
 
 ![Storage Account Connection String](../../screenshots/BlobForwarder/blob-storage-connection.png)
-
-**Prerequisites - Target Storage Account:**
-
-Before configuring the forwarder, ensure you have an existing Azure Storage Account with a container that contains the logs you want to forward. You can verify your container exists by navigating to the storage account → **Data storage** → **Containers**. Use this container name (e.g., `logs`) for the `CONTAINER_NAME` setting.
-
-![Storage Account Containers](../../screenshots/BlobForwarder/blob-storage-containers.png)
 
 #### Optional Settings
 
@@ -210,4 +216,4 @@ These settings are automatically created when you provision the Function App. Ve
 ![BlobForwarder Function Deployed](../../screenshots/BlobForwarder/blob-function-deployed.png)
 
 3. Upload a log file to your blob storage container
-4. Check New Relic Logs UI to verify logs are forwarded successfully
+4. Verify logs are forwarded successfully by viewing them in New Relic. See [Find and use your data](https://docs.newrelic.com/docs/logs/forward-logs/azure-log-forwarding/#find-data) for instructions on querying your Azure logs

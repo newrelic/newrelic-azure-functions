@@ -21,11 +21,12 @@ You can install this integration using one of two methods:
 
 The automatic installation uses Azure Resource Manager (ARM) templates to create and configure all necessary resources automatically.
 
-### Option 1: Install through New Relic Marketplace
+### Option 1: Guided Install through New Relic Marketplace
 
 1. Visit the New Relic Marketplace \[[US](https://one.newrelic.com/marketplace)|[EU](https://one.newrelic.com/marketplace)\]
 2. Search for "Microsoft Azure Event Hub"
-3. Click on the "Microsoft Azure Event Hub" tile and follow the steps
+3. Click on the "Microsoft Azure Event Hub" tile
+4. Select your New Relic account and follow the guided installation wizard
 
 ### Option 2: Install Using Azure Portal
 
@@ -130,11 +131,22 @@ The ARM template supports two deployment architectures based on the `disablePubl
 
 Use this method if you want to manually create and configure the Function App yourself, or if you need more control over the setup process.
 
+### Prerequisites
+
+Before starting the manual installation, ensure you have:
+- An existing Azure Event Hub Namespace with an Event Hub
+- The Event Hub connection string (found in Event Hub Namespace → **Settings** → **Shared access policies** → **RootManageSharedAccessKey**)
+- Note the Event Hub name and consumer group name as you'll need them for configuration
+
+![Event Hub Connection String](../../screenshots/EventHub/eventhub-connection-string.png)
+
 ### Step 1: Create an Azure Function App
 
 1. Log in to the Azure Portal and create a [new Function App](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function).
 
-2. In the **Basics** tab, configure the following:
+2. On the **Hosting** tab (if shown first), select **Consumption (Windows)** as the hosting plan.
+
+3. In the **Basics** tab, configure the following:
 
 | Field | Value |
 |---|---|
@@ -148,11 +160,11 @@ Use this method if you want to manually create and configure the Function App yo
 
 ![Create Function App - Basics](../../screenshots/EventHub/eventhub-create-basics.png)
 
-3. Complete the **Storage** and **Networking** tabs as needed for your environment.
+4. Complete the **Storage** and **Networking** tabs as needed for your environment.
 
-4. Click **Review + Create**, then **Create** to provision your Function App.
+5. Click **Review + Create**, then **Create** to provision your Function App.
 
-5. Wait 2-3 minutes for deployment to complete.
+6. Wait 2-3 minutes for deployment to complete.
 
 ### Step 2: Deploy the Azure Function
 
@@ -174,12 +186,6 @@ Azure Functions v4 uses a package deployment model. Code cannot be edited direct
 | `EVENTHUB_CONSUMER_CONNECTION` | Event Hub connection string | Connection string from your Event Hub **namespace** (not the hub itself). Found in Event Hub Namespace → Settings → Shared access policies → RootManageSharedAccessKey → Connection string-primary key. |
 | `EVENTHUB_CONSUMER_GROUP` | `$Default` | Consumer group name. Use `$Default` or create a dedicated consumer group in your Event Hub. |
 | `WEBSITE_RUN_FROM_PACKAGE` | `https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip` | URL to the deployment package. This tells Azure to download and run the latest function code from GitHub. |
-
-**Getting the Event Hub Namespace Connection String:**
-
-To get the `EVENTHUB_CONSUMER_CONNECTION` value, go to your Event Hub Namespace → **Settings** → **Shared access policies** → **RootManageSharedAccessKey** → Copy the **Connection string-primary key**.
-
-![Event Hub Connection String](../../screenshots/EventHub/eventhub-connection-string.png)
 
 #### Optional Settings
 
@@ -220,4 +226,4 @@ These settings are automatically created when you provision the Function App. Ve
 ![EventHubForwarder Function Deployed](../../screenshots/EventHub/eventhub-function-deployed.png)
 
 3. Trigger an event that sends logs to your Event Hub (e.g., create an Azure Activity Log event)
-4. Check New Relic Logs UI to verify logs are forwarded successfully
+4. Verify logs are forwarded successfully by viewing them in New Relic. See [Find and use your data](https://docs.newrelic.com/docs/logs/forward-logs/azure-log-forwarding/#find-data) for instructions on querying your Azure logs
