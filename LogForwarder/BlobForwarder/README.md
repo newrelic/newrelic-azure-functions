@@ -63,10 +63,15 @@ The ARM template supports two deployment architectures based on the `disablePubl
 - No VNet integration
 - Standard Consumption plan (serverless)
 
-**Resources Created:**
+**Resources Created (4 resources):**
+
+Always Created (3):
 - Function App
 - Internal Storage Account (public access)
 - App Service Plan
+
+Standard Deployment Only (1):
+- ZipDeploy extension
 
 **Deployment Method:** ZipDeploy extension deploys the function code
 
@@ -83,14 +88,22 @@ The ARM template supports two deployment architectures based on the `disablePubl
 - DNS resolution handled via Private DNS Zones
 - Requires Basic plan or higher for VNet integration support
 
-**Additional Resources Created:**
-- Virtual Network with 2 subnets:
+**Resources Created (21 resources):**
+
+Always Created (3):
+- Function App
+- Internal Storage Account (private access only)
+- App Service Plan (Basic plan or higher)
+
+Private VNet Infrastructure (18):
+- 1 Virtual Network with 2 subnets:
   - Function subnet (for Function App VNet integration)
   - Private endpoints subnet
 - 4 Private Endpoints (file, blob, queue, table storage services)
-- 4 Private DNS Zones for private name resolution
-- 4 Virtual Network Links connecting DNS zones to VNet
-- Network configuration for VNet integration
+- 4 Private DNS Zones (privatelink.blob/file/queue/table.core.windows.net)
+- 4 Virtual Network Links (connecting DNS zones to VNet)
+- 4 Private DNS Zone Groups (connecting private endpoints to DNS zones)
+- 1 Network Configuration (VNet integration for Function App)
 
 **Deployment Method:** WEBSITE_RUN_FROM_PACKAGE with GitHub URL (public ZipDeploy endpoint not accessible)
 
@@ -106,7 +119,7 @@ The ARM template supports two deployment architectures based on the `disablePubl
 | VNet Integration | None | Full VNet integration with private endpoints |
 | Storage Access | Public endpoints | Private endpoints only |
 | Deployment Method | ZipDeploy extension | Run-from-package URL |
-| Resources Created | 3 basic resources | 15+ networking resources |
+| Resources Created | 4 resources | 21 resources |
 
 **Note**: The manual installation instructions below create a deployment equivalent to the **Standard** architecture with public access.
 
@@ -124,6 +137,12 @@ Before starting the manual installation, ensure you have:
 - Note the container name (e.g., `logs`) as you'll need it for the `CONTAINER_NAME` setting
 
 ![Storage Account Containers](../../screenshots/BlobForwarder/blob-storage-containers.png)
+
+**Getting the Target Storage Account Connection String:**
+
+You'll need the connection string from your target storage account (where logs are stored). To get the `TargetAccountConnection` value, go to your target storage account → **Security + networking** → **Access keys** → Click **Show** next to "Connection string" and copy the value.
+
+![Storage Account Connection String](../../screenshots/BlobForwarder/blob-storage-connection.png)
 
 ### Step 1: Create an Azure Function App
 
@@ -172,12 +191,6 @@ Azure Functions v4 uses a package deployment model. Code cannot be edited direct
 | `CONTAINER_NAME` | `your-container-name`                                                                            | Name of the container in the target storage account. Example: `logs` to monitor all blobs in the `logs` container. Do NOT include `/{name}` - the function adds this automatically. |
 | `TargetAccountConnection` | Storage account connection string                                                                | Connection string from your target storage account (where logs are stored). Found in Storage Account → Security + networking → Access keys → Connection string. |
 | `WEBSITE_RUN_FROM_PACKAGE` | `https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip` | URL to the deployment package. This tells Azure to download and run the latest function code from GitHub. |
-
-**Getting the Target Storage Account Connection String:**
-
-To get the `TargetAccountConnection` value, go to your target storage account → **Security + networking** → **Access keys** → Click **Show** next to "Connection string" and copy the value.
-
-![Storage Account Connection String](../../screenshots/BlobForwarder/blob-storage-connection.png)
 
 #### Optional Settings
 

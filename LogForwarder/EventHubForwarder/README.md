@@ -78,10 +78,23 @@ The ARM template supports two deployment architectures based on the `disablePubl
 - No VNet integration
 - Standard Consumption plan (serverless)
 
-**Resources Created:**
+**Resources Created (6-10 resources):**
+
+Always Created (5):
 - Function App
 - Internal Storage Account (public access)
 - App Service Plan
+- Consumer Group
+- Authorization Rule (consumer policy)
+
+Standard Deployment Only (1):
+- ZipDeploy extension
+
+Conditionally Created:
+- Event Hub Namespace (if `eventHubNamespace` parameter is empty)
+- Event Hub (if `eventHubName` parameter is empty)
+- Authorization Rule (producer policy - if Activity Logs diagnostic setting enabled)
+- Diagnostic Setting (if Activity Logs diagnostic setting enabled)
 
 **Deployment Method:** ZipDeploy extension deploys the function code
 
@@ -98,14 +111,30 @@ The ARM template supports two deployment architectures based on the `disablePubl
 - DNS resolution handled via Private DNS Zones
 - Requires Basic plan or higher for VNet integration support
 
-**Additional Resources Created:**
-- Virtual Network with 2 subnets:
+**Resources Created (23-27 resources):**
+
+Always Created (5):
+- Function App
+- Internal Storage Account (private access only)
+- App Service Plan (Basic plan or higher)
+- Consumer Group
+- Authorization Rule (consumer policy)
+
+Private VNet Infrastructure (18):
+- 1 Virtual Network with 2 subnets:
   - Function subnet (for Function App VNet integration)
   - Private endpoints subnet
 - 4 Private Endpoints (file, blob, queue, table storage services)
-- 4 Private DNS Zones for private name resolution
-- 4 Virtual Network Links connecting DNS zones to VNet
-- Network configuration for VNet integration
+- 4 Private DNS Zones (privatelink.blob/file/queue/table.core.windows.net)
+- 4 Virtual Network Links (connecting DNS zones to VNet)
+- 4 Private DNS Zone Groups (connecting private endpoints to DNS zones)
+- 1 Network Configuration (VNet integration for Function App)
+
+Conditionally Created:
+- Event Hub Namespace (if `eventHubNamespace` parameter is empty)
+- Event Hub (if `eventHubName` parameter is empty)
+- Authorization Rule (producer policy - if Activity Logs diagnostic setting enabled)
+- Diagnostic Setting (if Activity Logs diagnostic setting enabled)
 
 **Deployment Method:** WEBSITE_RUN_FROM_PACKAGE with GitHub URL (public ZipDeploy endpoint not accessible)
 
@@ -121,7 +150,7 @@ The ARM template supports two deployment architectures based on the `disablePubl
 | VNet Integration | None | Full VNet integration with private endpoints |
 | Storage Access | Public endpoints | Private endpoints only |
 | Deployment Method | ZipDeploy extension | Run-from-package URL |
-| Resources Created | 3 basic resources | 15+ networking resources |
+| Resources Created | 6-10 resources | 23-27 resources |
 
 **Note**: The manual installation instructions below create a deployment equivalent to the **Standard** architecture with public access.
 
