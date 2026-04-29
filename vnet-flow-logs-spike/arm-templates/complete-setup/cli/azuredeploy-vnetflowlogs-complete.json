@@ -1,0 +1,587 @@
+  {
+      "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+          "newRelicLicenseKey": {
+              "type": "string",
+              "metadata": {
+                  "description": "Required. New Relic License Key"
+              }
+          },
+          "vnetName": {
+              "type": "string",
+              "defaultValue": "vnetflowlogs-demo-vnet",
+              "metadata": {
+                  "description": "Optional. Name of the Virtual Network to create"
+              }
+          },
+          "vnetAddressPrefix": {
+              "type": "string",
+              "defaultValue": "10.1.0.0/16",
+              "metadata": {
+                  "description": "Optional. Address prefix for the Virtual Network"
+              }
+          },
+          "subnetName": {
+              "type": "string",
+              "defaultValue": "default",
+              "metadata": {
+                  "description": "Optional. Name of the subnet"
+              }
+          },
+          "subnetAddressPrefix": {
+              "type": "string",
+              "defaultValue": "10.1.0.0/24",
+              "metadata": {
+                  "description": "Optional. Address prefix for the subnet"
+              }
+          },
+          "location": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                  "description": "Optional. Region where all resources will be deployed. Leave blank to use resource group location."
+              }
+          },
+          "newRelicEndpoint": {
+              "type": "string",
+              "defaultValue": "https://log-api.newrelic.com/log/v1",
+              "metadata": {
+                  "description": "Optional. New Relic Logs API endpoint"
+              }
+          },
+          "logCustomAttributes": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                  "description": "Optional. Semicolon-separated custom attributes"
+              }
+          },
+          "maxEventBatchSize": {
+              "type": "int",
+              "defaultValue": 20,
+              "minValue": 1,
+              "metadata": {
+                  "description": "Optional. Maximum events per batch"
+              }
+          },
+          "minEventBatchSize": {
+              "type": "int",
+              "defaultValue": 5,
+              "minValue": 1,
+              "metadata": {
+                  "description": "Optional. Minimum events per batch"
+              }
+          },
+          "maxWaitTime": {
+              "type": "string",
+              "defaultValue": "00:00:30",
+              "metadata": {
+                  "description": "Optional. Maximum wait time to build a batch"
+              }
+          },
+          "flowLogsRetentionDays": {
+              "type": "int",
+              "defaultValue": 7,
+              "minValue": 0,
+              "maxValue": 365,
+              "metadata": {
+                  "description": "Optional. Number of days to retain flow logs in storage (0 = forever)"
+              }
+          }
+      },
+      "variables": {
+          "location": "[if(equals(parameters('location'), ''), resourceGroup().location, parameters('location'))]",
+          "uniqueSuffix": "[uniqueString(resourceGroup().id)]",
+          "comment": "uniqueSuffix ensures same resource names for same resource group = idempotent deployments",
+
+          "vnetName": "[parameters('vnetName')]",
+          "subnetName": "[parameters('subnetName')]",
+          "nsgName": "[concat(parameters('vnetName'), '-nsg')]",
+
+          "networkWatcherName": "[concat('NetworkWatcher_', variables('location'))]",
+          "networkWatcherRG": "NetworkWatcherRG",
+
+          "sourceStorageAccountName": "[concat('bpavan', variables('uniqueSuffix'))]",
+          "internalStorageAccountName": "[concat('bpavanint', variables('uniqueSuffix'))]",
+
+          "eventHubNamespaceName": "[concat('bpavan-vnet-eventhub-ns-', variables('uniqueSuffix'))]",
+          "eventHubName": "bpavan-vnet-eventhub",
+          "logConsumerAuthorizationRuleName": "bpavan-consumer-policy",
+          "logProducerAuthorizationRuleName": "bpavan-producer-policy",
+
+          "servicePlanName": "[concat('bpavan-asp-', variables('uniqueSuffix'))]",
+          "functionAppName": "[concat('bpavan-vnet-func-', variables('uniqueSuffix'))]",
+
+          "eventGridSystemTopicName": "[concat('bpavan-vnet-egtopic-', variables('uniqueSuffix'))]",
+          "eventGridSubscriptionName": "[concat('bpavan-vnet-egsub-', variables('uniqueSuffix'))]",
+
+          "flowLogsName": "[concat(variables('vnetName'), '-flowlogs')]",
+
+          "aspConfig": {
+              "kind": "functionapp",
+              "properties": {
+                  "name": "[variables('servicePlanName')]",
+                  "computeMode": "Dynamic"
+              },
+              "sku": {
+                  "name": "Y1",
+                  "tier": "Dynamic"
+              }
+          }
+      },
+      "resources": [
+          {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-05-01",
+              "name": "[variables('vnetName')]",
+              "location": "[variables('location')]",
+              "properties": {
+                  "addressSpace": {
+                      "addressPrefixes": [
+                          "[parameters('vnetAddressPrefix')]"
+                      ]
+                  },
+                  "subnets": [
+                      {
+                          "name": "[variables('subnetName')]",
+                          "properties": {
+                              "addressPrefix": "[parameters('subnetAddressPrefix')]",
+                              "networkSecurityGroup": {
+                                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+                              }
+                          }
+                      }
+                  ]
+              },
+              "dependsOn": [
+                  "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              ]
+          },
+          {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2023-05-01",
+              "name": "[variables('nsgName')]",
+              "location": "[variables('location')]",
+              "properties": {
+                  "securityRules": [
+                      {
+                          "name": "AllowAll",
+                          "properties": {
+                              "description": "Allow all traffic for demo purposes",
+                              "protocol": "*",
+                              "sourcePortRange": "*",
+                              "destinationPortRange": "*",
+                              "sourceAddressPrefix": "*",
+                              "destinationAddressPrefix": "*",
+                              "access": "Allow",
+                              "priority": 100,
+                              "direction": "Inbound"
+                          }
+                      }
+                  ],
+                  "flushConnection": false
+              }
+          },
+          {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2023-01-01",
+              "name": "[variables('sourceStorageAccountName')]",
+              "location": "[variables('location')]",
+              "sku": {
+                  "name": "Standard_RAGRS"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                  "minimumTlsVersion": "TLS1_2",
+                  "allowBlobPublicAccess": false,
+                  "supportsHttpsTrafficOnly": true
+              }
+          },
+          {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2021-04-01",
+              "name": "flowLogsDeployment",
+              "resourceGroup": "NetworkWatcherRG",
+              "dependsOn": [
+                  "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                  "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountName'))]"
+              ],
+              "properties": {
+                  "mode": "Incremental",
+                  "expressionEvaluationOptions": {
+                      "scope": "inner"
+                  },
+                  "parameters": {
+                      "location": {
+                          "value": "[variables('location')]"
+                      },
+                      "networkWatcherName": {
+                          "value": "[variables('networkWatcherName')]"
+                      },
+                      "flowLogsName": {
+                          "value": "[variables('flowLogsName')]"
+                      },
+                      "vnetResourceId": {
+                          "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+                      },
+                      "storageAccountResourceId": {
+                          "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountName'))]"
+                      },
+                      "retentionDays": {
+                          "value": "[parameters('flowLogsRetentionDays')]"
+                      }
+                  },
+                  "template": {
+                      "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                      "contentVersion": "1.0.0.0",
+                      "parameters": {
+                          "location": {"type": "string"},
+                          "networkWatcherName": {"type": "string"},
+                          "flowLogsName": {"type": "string"},
+                          "vnetResourceId": {"type": "string"},
+                          "storageAccountResourceId": {"type": "string"},
+                          "retentionDays": {"type": "int"}
+                      },
+                      "resources": [
+                          {
+                              "type": "Microsoft.Network/networkWatchers/flowLogs",
+                              "apiVersion": "2023-05-01",
+                              "name": "[concat(parameters('networkWatcherName'), '/', parameters('flowLogsName'))]",
+                              "location": "[parameters('location')]",
+                              "properties": {
+                                  "targetResourceId": "[parameters('vnetResourceId')]",
+                                  "storageId": "[parameters('storageAccountResourceId')]",
+                                  "enabled": true,
+                                  "retentionPolicy": {
+                                      "days": "[parameters('retentionDays')]",
+                                      "enabled": "[if(equals(parameters('retentionDays'), 0), false(), true())]"
+                                  },
+                                  "format": {
+                                      "type": "JSON",
+                                      "version": 2
+                                  }
+                              }
+                          }
+                      ]
+                  }
+              }
+          },
+          {
+              "type": "Microsoft.EventHub/namespaces",
+              "apiVersion": "2024-01-01",
+              "name": "[variables('eventHubNamespaceName')]",
+              "location": "[variables('location')]",
+              "sku": {
+                  "name": "Basic",
+                  "tier": "Basic",
+                  "capacity": 1
+              },
+              "properties": {
+                  "minimumTlsVersion": "1.2"
+              }
+          },
+          {
+              "type": "Microsoft.EventHub/namespaces/eventhubs",
+              "apiVersion": "2024-01-01",
+              "name": "[concat(variables('eventHubNamespaceName'), '/', variables('eventHubName'))]",
+              "location": "[variables('location')]",
+              "dependsOn": [
+                  "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
+              ],
+              "properties": {
+                  "messageRetentionInDays": 1,
+                  "partitionCount": 1
+              }
+          },
+          {
+              "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
+              "apiVersion": "2017-04-01",
+              "name": "[concat(variables('eventHubNamespaceName'), '/', variables('logConsumerAuthorizationRuleName'))]",
+              "location": "[variables('location')]",
+              "dependsOn": [
+                  "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
+              ],
+              "properties": {
+                  "rights": [
+                      "Listen"
+                  ]
+              }
+          },
+          {
+              "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
+              "apiVersion": "2017-04-01",
+              "name": "[concat(variables('eventHubNamespaceName'), '/', variables('logProducerAuthorizationRuleName'))]",
+              "location": "[variables('location')]",
+              "dependsOn": [
+                  "[resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName'))]"
+              ],
+              "properties": {
+                  "rights": [
+                      "Send"
+                  ]
+              }
+          },
+          {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2023-01-01",
+              "name": "[variables('internalStorageAccountName')]",
+              "location": "[variables('location')]",
+              "sku": {
+                  "name": "Standard_RAGRS"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                  "minimumTlsVersion": "TLS1_2",
+                  "allowBlobPublicAccess": false,
+                  "supportsHttpsTrafficOnly": true
+              }
+          },
+          {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2022-09-01",
+              "name": "[variables('servicePlanName')]",
+              "kind": "[variables('aspConfig').kind]",
+              "location": "[variables('location')]",
+              "sku": "[variables('aspConfig').sku]",
+              "properties": "[variables('aspConfig').properties]"
+          },
+          {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2020-12-01",
+              "name": "[variables('functionAppName')]",
+              "location": "[variables('location')]",
+              "kind": "functionapp",
+              "dependsOn": [
+                  "[resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName'))]",
+                  "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]"
+              ],
+              "identity": {
+                  "type": "SystemAssigned"
+              },
+              "properties": {
+                  "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
+                  "siteConfig": {
+                      "appSettings": [
+                          {
+                              "name": "EVENTHUB_NAME",
+                              "value": "[variables('eventHubName')]"
+                          },
+                          {
+                              "name": "EVENTHUB_CONSUMER_CONNECTION",
+                              "value": "[listKeys(resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName')),'2017-04-01').primaryConnectionString]"
+                          },
+                          {
+                              "name": "EVENTHUB_CONSUMER_GROUP",
+                              "value": "$Default"
+                          },
+                          {
+                              "name": "NR_LICENSE_KEY",
+                              "value": "[parameters('newRelicLicenseKey')]"
+                          },
+                          {
+                              "name": "NR_ENDPOINT",
+                              "value": "[parameters('newRelicEndpoint')]"
+                          },
+                          {
+                              "name": "NR_TAGS",
+                              "value": "[parameters('logCustomAttributes')]"
+                          },
+                          {
+                              "name": "NR_MAX_RETRIES",
+                              "value": "3"
+                          },
+                          {
+                              "name": "NR_RETRY_INTERVAL",
+                              "value": "2000"
+                          },
+                          {
+                              "name": "AzureFunctionsJobHost__extensions__eventHubs__maxEventBatchSize",
+                              "value": "[string(parameters('maxEventBatchSize'))]"
+                          },
+                          {
+                              "name": "AzureFunctionsJobHost__extensions__eventHubs__minEventBatchSize",
+                              "value": "[string(parameters('minEventBatchSize'))]"
+                          },
+                          {
+                              "name": "AzureFunctionsJobHost__extensions__eventHubs__maxWaitTime",
+                              "value": "[parameters('maxWaitTime')]"
+                          },
+                          {
+                              "name": "FUNCTIONS_EXTENSION_VERSION",
+                              "value": "~4"
+                          },
+                          {
+                              "name": "FUNCTIONS_WORKER_RUNTIME",
+                              "value": "node"
+                          },
+                          {
+                              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                              "value": "~22"
+                          },
+                          {
+                              "name": "AzureWebJobsStorage",
+                              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('internalStorageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName')), '2023-01-01').keys[0].value,';EndpointSuffix=',environment().suffixes.storage)]"
+                          },
+                          {
+                              "name": "VNETFLOWLOGS_FORWARDER_ENABLED",
+                              "value": "true"
+                          },
+                          {
+                              "name": "VNETFLOWLOGS_STATE_TABLE_NAME",
+                              "value": "vnetflowlogsstate"
+                          },
+                          {
+                              "name": "SOURCE_STORAGE_ACCOUNT_NAME",
+                              "value": "[variables('sourceStorageAccountName')]"
+                          },
+                          {
+                              "name": "WEBSITE_RUN_FROM_PACKAGE",
+                              "value": "0"
+                          },
+                          {
+                              "name": "DEPLOYMENT_CONTEXT_ENABLED",
+                              "value": "true"
+                          },
+                          {
+                              "name": "DEPLOYMENT_NAME",
+                              "value": "[resourceGroup().name]"
+                          },
+                          {
+                              "name": "DEPLOYMENT_VNET_NAME",
+                              "value": "[variables('vnetName')]"
+                          },
+                          {
+                              "name": "DEPLOYMENT_LOCATION",
+                              "value": "[variables('location')]"
+                          },
+                          {
+                              "name": "DEPLOYMENT_TYPE",
+                              "value": "complete-setup"
+                          },
+                          {
+                              "name": "DEPLOYMENT_METHOD",
+                              "value": "cli"
+                          }
+                      ],
+                      "ftpsState": "Disabled",
+                      "publicNetworkAccess": "Enabled"
+                  },
+                  "httpsOnly": true
+              }
+          },
+          {
+              "type": "Microsoft.EventGrid/systemTopics",
+              "apiVersion": "2021-12-01",
+              "name": "[variables('eventGridSystemTopicName')]",
+              "location": "[variables('location')]",
+              "dependsOn": [
+                  "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountName'))]"
+              ],
+              "properties": {
+                  "source": "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountName'))]",
+                  "topicType": "Microsoft.Storage.StorageAccounts"
+              }
+          },
+          {
+              "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+              "apiVersion": "2021-12-01",
+              "name": "[concat(variables('eventGridSystemTopicName'), '/', variables('eventGridSubscriptionName'))]",
+              "dependsOn": [
+                  "[resourceId('Microsoft.EventGrid/systemTopics', variables('eventGridSystemTopicName'))]",
+                  "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHubName'))]",
+                  "[resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logProducerAuthorizationRuleName'))]"
+              ],
+              "properties": {
+                  "destination": {
+                      "endpointType": "EventHub",
+                      "properties": {
+                          "resourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHubName'))]"
+                      }
+                  },
+                  "filter": {
+                      "includedEventTypes": [
+                          "Microsoft.Storage.BlobCreated",
+                          "Microsoft.Storage.BlobDeleted"
+                      ],
+                      "subjectEndsWith": "PT1H.json",
+                      "advancedFilters": [
+                          {
+                              "operatorType": "StringContains",
+                              "key": "subject",
+                              "values": [
+                                  "insights-logs-flowlogflowevent"
+                              ]
+                          }
+                      ],
+                      "enableAdvancedFilteringOnArrays": true
+                  },
+                  "eventDeliverySchema": "EventGridSchema",
+                  "retryPolicy": {
+                      "maxDeliveryAttempts": 30,
+                      "eventTimeToLiveInMinutes": 1440
+                  }
+              }
+          },
+          {
+              "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[concat(variables('sourceStorageAccountName'), '/Microsoft.Authorization/', guid(resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountName')), resourceId('Microsoft.Web/sites', variables('functionAppName')), 'StorageBlobDataReader'))]",
+              "dependsOn": [
+                  "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountName'))]",
+                  "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+              ],
+              "properties": {
+                  "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]",
+                  "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2020-12-01', 'Full').identity.principalId]",
+                  "principalType": "ServicePrincipal"
+              }
+          }
+      ],
+      "outputs": {
+          "vnetName": {
+              "type": "string",
+              "value": "[variables('vnetName')]"
+          },
+          "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+          },
+          "nsgName": {
+              "type": "string",
+              "value": "[variables('nsgName')]"
+          },
+          "sourceStorageAccountName": {
+              "type": "string",
+              "value": "[variables('sourceStorageAccountName')]"
+          },
+          "internalStorageAccountName": {
+              "type": "string",
+              "value": "[variables('internalStorageAccountName')]"
+          },
+          "eventHubNamespace": {
+              "type": "string",
+              "value": "[variables('eventHubNamespaceName')]"
+          },
+          "eventHubName": {
+              "type": "string",
+              "value": "[variables('eventHubName')]"
+          },
+          "functionAppName": {
+              "type": "string",
+              "value": "[variables('functionAppName')]"
+          },
+          "functionAppIdentityPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2020-12-01', 'Full').identity.principalId]"
+          },
+          "eventGridSystemTopic": {
+              "type": "string",
+              "value": "[variables('eventGridSystemTopicName')]"
+          },
+          "flowLogsName": {
+              "type": "string",
+              "value": "[variables('flowLogsName')]"
+          }
+      }
+  }

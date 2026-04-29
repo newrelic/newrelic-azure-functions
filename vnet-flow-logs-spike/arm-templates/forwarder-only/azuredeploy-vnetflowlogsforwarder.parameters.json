@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newRelicLicenseKey": {
+      "value": "YOUR_NEW_RELIC_LICENSE_KEY_HERE"
+    },
+    "sourceStorageAccountName": {
+      "value": "bpavanvnetlogstorage"
+    },
+    "sourceStorageAccountResourceGroup": {
+      "value": "bpavan-vnet-logs"
+    },
+    "eventHubNamespace": {
+      "value": ""
+    },
+    "eventHubName": {
+      "value": ""
+    },
+    "location": {
+      "value": "canadacentral"
+    },
+    "newRelicEndpoint": {
+      "value": "https://log-api.newrelic.com/log/v1"
+    },
+    "logCustomAttributes": {
+      "value": ""
+    },
+    "maxEventBatchSize": {
+      "value": 20
+    },
+    "minEventBatchSize": {
+      "value": 5
+    },
+    "maxWaitTime": {
+      "value": "00:00:30"
+    },
+    "maxRetriesToResendLogs": {
+      "value": 3
+    },
+    "retryInterval": {
+      "value": 2000
+    },
+    "scalingMode": {
+      "value": "Basic"
+    },
+    "disablePublicAccessToStorageAccount": {
+      "value": false
+    }
+  }
+}
