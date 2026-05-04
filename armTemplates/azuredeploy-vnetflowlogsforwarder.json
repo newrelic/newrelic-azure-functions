@@ -34,6 +34,20 @@
                 "description": "Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrvnetflowlogs')."
             }
         },
+        "eventGridSystemTopicName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Optional. Event Grid System Topic name for monitoring blob events. Leave this blank for a new system topic to be created automatically (its name will start with 'nrvnetflowlogs-egtopic-')."
+            }
+        },
+        "eventGridSubscriptionName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Optional. Event Grid Subscription name for filtering PT1H.json files. Leave this blank for a new subscription to be created automatically (its name will start with 'nrvnetflowlogs-egsub-')."
+            }
+        },
         "location": {
             "type": "string",
             "defaultValue": "",
@@ -120,8 +134,8 @@
         "eventHubConsumerGroupName": "nrvnetflowlogs",
         "eventHubAuthRuleName": "nrvnetflowlogs-auth-rule",
 
-        "eventGridSystemTopicName": "[concat('nrvnetflowlogs-egtopic-', variables('uniqueResourceNameSuffix'))]",
-        "eventGridSubscriptionName": "[concat('nrvnetflowlogs-egsub-', variables('uniqueResourceNameSuffix'))]",
+        "eventGridSystemTopicName": "[if(empty(parameters('eventGridSystemTopicName')), concat('nrvnetflowlogs-egtopic-', variables('uniqueResourceNameSuffix')), parameters('eventGridSystemTopicName'))]",
+        "eventGridSubscriptionName": "[if(empty(parameters('eventGridSubscriptionName')), concat('nrvnetflowlogs-egsub-', variables('uniqueResourceNameSuffix')), parameters('eventGridSubscriptionName'))]",
 
         "cursorStorageAccountName": "[concat('nrvnetcursor', variables('uniqueResourceNameSuffix'))]",
         "cursorTableName": "vnetflowlogcursors",
