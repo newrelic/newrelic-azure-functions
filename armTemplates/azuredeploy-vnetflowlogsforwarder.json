@@ -38,14 +38,14 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Event Grid System Topic name for monitoring blob events. Leave this blank for a new system topic to be created automatically (its name will start with 'nrvnetflowlogs-egtopic-')."
+                "description": "Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (will start with 'nrvnetflowlogs-egtopic-')."
             }
         },
         "eventGridSubscriptionName": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Event Grid Subscription name for filtering PT1H.json files. Leave this blank for a new subscription to be created automatically (its name will start with 'nrvnetflowlogs-egsub-')."
+                "description": "Optional. Name for the Event Grid Subscription that will be created to filter PT1H.json files. Leave this blank to auto-generate a unique name (will start with 'nrvnetflowlogs-egsub-')."
             }
         },
         "location": {
