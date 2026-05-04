@@ -12,14 +12,7 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Leave this blank to create a new storage account (its name will start with 'nrvnetsrc')."
-            }
-        },
-        "sourceStorageAccountResourceGroup": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "Optional. Resource group name of the existing storage account where VNet Flow Logs are stored. Required only if sourceStorageAccountName is provided."
+                "description": "Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Must be in the same resource group as this deployment. Leave this blank to create a new storage account (its name will start with 'nrvnetsrc')."
             }
         },
         "eventHubNamespace": {
@@ -82,7 +75,6 @@
 
         "createNewSourceStorage": "[empty(parameters('sourceStorageAccountName'))]",
         "sourceStorageAccountNameResolved": "[if(variables('createNewSourceStorage'), concat('nrvnetsrc', variables('uniqueResourceNameSuffix')), parameters('sourceStorageAccountName'))]",
-        "sourceStorageAccountResourceGroupResolved": "[if(variables('createNewSourceStorage'), resourceGroup().name, parameters('sourceStorageAccountResourceGroup'))]",
 
         "createNewEventHubNamespace": "[empty(parameters('eventHubNamespace'))]",
         "createNewEventHub": "[or(empty(parameters('eventHubNamespace')), empty(parameters('eventHubName')))]",
@@ -102,7 +94,7 @@
         "servicePlanName": "[concat('nrvnetflowlogs-asp-', variables('uniqueResourceNameSuffix'))]",
         "functionAppName": "[concat('nrvnetflowlogs-func-', variables('uniqueResourceNameSuffix'))]",
 
-        "sourceStorageAccountId": "[resourceId(variables('sourceStorageAccountResourceGroupResolved'), 'Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]",
+        "sourceStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]",
 
         "autoscalingASP": {
             "kind": "elastic",
@@ -417,6 +409,10 @@
                         {
                             "name": "SOURCE_STORAGE_ACCOUNT_NAME",
                             "value": "[variables('sourceStorageAccountNameResolved')]"
+                        },
+                        {
+                            "name": "SOURCE_STORAGE_CONNECTION",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('sourceStorageAccountNameResolved'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved')), '2021-09-01').keys[0].value, ';EndpointSuffix=core.windows.net')]"
                         },
                         {
                             "name": "CURSOR_STORAGE_CONNECTION",
