@@ -50,7 +50,7 @@ Parameters that can be configured in your Azure Resource Manager Template
 | New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/#endpoint). Use `https://log-api.eu.newrelic.com/log/v1` for EU accounts. |
 | Max Retries To Resend Logs  | no | `3` | Number of times the function will attempt to resend data if there's a failure. |
 | Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds. |
-| Disable Public Access To Storage Account | no | `false` | When set to `true`, disables public network access to the internal storage account used by the Function App. This creates a private network deployment with VNet integration, private endpoints, private DNS zones, and requires a Basic hosting plan or higher. When `false`, uses standard Consumption plan with public access. |
+| Disable Public Access To Storage Account | no | `false` | When set to `true`, disables public network access to the internal storage account used by the Function App. This creates a private network deployment with VNet integration, private endpoints, private DNS zones, and requires a Basic hosting plan or higher. When `false`, uses App Service plan with public access. |
 
 ### Architecture
 
