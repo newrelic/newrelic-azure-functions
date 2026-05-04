@@ -448,7 +448,7 @@
         {
             "condition": "[variables('createNewSourceStorage')]",
             "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2020-04-01-preview",
+            "apiVersion": "2022-04-01",
             "name": "[guid(resourceGroup().id, variables('functionAppName'), 'StorageBlobDataReader')]",
             "scope": "[variables('sourceStorageAccountId')]",
             "dependsOn": [
@@ -456,14 +456,14 @@
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]"
             ],
             "properties": {
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataReaderRoleId'))]",
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('storageBlobDataReaderRoleId'))]",
                 "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'Full').identity.principalId]",
                 "principalType": "ServicePrincipal"
             }
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2020-04-01-preview",
+            "apiVersion": "2022-04-01",
             "name": "[guid(resourceGroup().id, variables('functionAppName'), 'StorageTableDataContributor')]",
             "scope": "[resourceId('Microsoft.Storage/storageAccounts', variables('cursorStorageAccountName'))]",
             "dependsOn": [
@@ -471,14 +471,14 @@
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('cursorStorageAccountName'))]"
             ],
             "properties": {
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('storageTableDataContributorRoleId'))]",
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('storageTableDataContributorRoleId'))]",
                 "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'Full').identity.principalId]",
                 "principalType": "ServicePrincipal"
             }
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2020-04-01-preview",
+            "apiVersion": "2022-04-01",
             "name": "[guid(resourceGroup().id, variables('functionAppName'), 'EventHubsDataReceiver')]",
             "scope": "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]",
             "dependsOn": [
@@ -486,7 +486,7 @@
                 "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
             ],
             "properties": {
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('eventHubsDataReceiverRoleId'))]",
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('eventHubsDataReceiverRoleId'))]",
                 "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'Full').identity.principalId]",
                 "principalType": "ServicePrincipal"
             }
