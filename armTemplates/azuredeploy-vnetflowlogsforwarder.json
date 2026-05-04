@@ -10,14 +10,16 @@
         },
         "sourceStorageAccountName": {
             "type": "string",
+            "defaultValue": "",
             "metadata": {
-                "description": "Required. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored"
+                "description": "Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Leave this blank to create a new storage account (its name will start with 'nrvnetflowsource')."
             }
         },
         "sourceStorageAccountResourceGroup": {
             "type": "string",
+            "defaultValue": "",
             "metadata": {
-                "description": "Required. Resource group name of the existing storage account where VNet Flow Logs are stored"
+                "description": "Optional. Resource group name of the existing storage account where VNet Flow Logs are stored. Required only if sourceStorageAccountName is provided."
             }
         },
         "eventHubNamespace": {
@@ -78,6 +80,10 @@
         "uniqueResourceNameSuffix": "[uniqueString(resourceGroup().id)]",
         "location": "[if(empty(parameters('location')), resourceGroup().location, parameters('location'))]",
 
+        "createNewSourceStorage": "[empty(parameters('sourceStorageAccountName'))]",
+        "sourceStorageAccountNameResolved": "[if(variables('createNewSourceStorage'), concat('nrvnetflowsource', variables('uniqueResourceNameSuffix')), parameters('sourceStorageAccountName'))]",
+        "sourceStorageAccountResourceGroupResolved": "[if(variables('createNewSourceStorage'), resourceGroup().name, parameters('sourceStorageAccountResourceGroup'))]",
+
         "createNewEventHubNamespace": "[empty(parameters('eventHubNamespace'))]",
         "createNewEventHub": "[or(empty(parameters('eventHubNamespace')), empty(parameters('eventHubName')))]",
 
@@ -96,7 +102,7 @@
         "servicePlanName": "[concat('nrvnetflowlogs-asp-', variables('uniqueResourceNameSuffix'))]",
         "functionAppName": "[concat('nrvnetflowlogs-func-', variables('uniqueResourceNameSuffix'))]",
 
-        "sourceStorageAccountId": "[resourceId(parameters('sourceStorageAccountResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('sourceStorageAccountName'))]",
+        "sourceStorageAccountId": "[resourceId(variables('sourceStorageAccountResourceGroupResolved'), 'Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]",
 
         "storageBlobDataReaderRoleId": "2a2b9908-6b9a-4b12-a50b-6fb3a3c0bb7c",
         "storageTableDataContributorRoleId": "0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3",
@@ -137,6 +143,37 @@
         "aspConfig": "[if(variables('isHighScaling'), variables('autoscalingASP'), variables('defaultASP'))]"
     },
     "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-09-01",
+            "name": "[variables('sourceStorageAccountNameResolved')]",
+            "condition": "[variables('createNewSourceStorage')]",
+            "location": "[variables('location')]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": false,
+                "allowSharedKeyAccess": true,
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "defaultAction": "Allow"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "services": {
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            }
+        },
         {
             "type": "Microsoft.EventHub/namespaces",
             "apiVersion": "2021-11-01",
@@ -198,6 +235,9 @@
             "apiVersion": "2021-12-01",
             "name": "[variables('eventGridSystemTopicName')]",
             "location": "[variables('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]"
+            ],
             "properties": {
                 "source": "[variables('sourceStorageAccountId')]",
                 "topicType": "Microsoft.Storage.StorageAccounts"
@@ -383,7 +423,7 @@
                         },
                         {
                             "name": "SOURCE_STORAGE_ACCOUNT_NAME",
-                            "value": "[parameters('sourceStorageAccountName')]"
+                            "value": "[variables('sourceStorageAccountNameResolved')]"
                         },
                         {
                             "name": "CURSOR_STORAGE_CONNECTION",
@@ -451,6 +491,13 @@
         }
     ],
     "outputs": {
+        "sourceStorageAccountName": {
+            "type": "string",
+            "value": "[variables('sourceStorageAccountNameResolved')]",
+            "metadata": {
+                "description": "Storage account name to configure Network Watcher to use for VNet Flow Logs. Container name should be 'insights-logs-flowlogflowevent'."
+            }
+        },
         "functionAppName": {
             "type": "string",
             "value": "[variables('functionAppName')]"
