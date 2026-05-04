@@ -62,54 +62,6 @@
                 "description": "Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
             }
         },
-        "logCustomAttributes": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "Optional. List of semicolon-separated custom attributes that you would like to enrich the forwarded logs with. This can be useful, for example, if you want to indicate common attributes shared by all the logs collected in this account, such as: 'environment:production;department:networking;country:USA'"
-            }
-        },
-        "maxEventBatchSize": {
-            "type": "int",
-            "defaultValue": 100,
-            "minValue": 1,
-            "maxValue": 500,
-            "metadata": {
-                "description": "Optional. Maximum number of flow log events that will be sent to New Relic in a single batch. Default is 100."
-            }
-        },
-        "maxRetriesToResendLogs": {
-            "type": "int",
-            "defaultValue": 3,
-            "minValue": 1,
-            "metadata": {
-                "description": "Optional. Maximum number of attempts the forwarder function will perform in the event of a failure while sending your data. Default is 3."
-            }
-        },
-        "retryInterval": {
-            "type": "int",
-            "defaultValue": 2000,
-            "minValue": 100,
-            "metadata": {
-                "description": "Optional. Number of milliseconds to wait between consecutive retries to send the logs. Default is 2000ms."
-            }
-        },
-        "cursorCleanupHours": {
-            "type": "int",
-            "defaultValue": 24,
-            "minValue": 1,
-            "maxValue": 168,
-            "metadata": {
-                "description": "Optional. Number of hours to retain cursor data in Azure Table Storage before cleanup. PT1H.json files rotate hourly, so default is 24 hours."
-            }
-        },
-        "enableDetailedLogging": {
-            "type": "bool",
-            "defaultValue": false,
-            "metadata": {
-                "description": "Optional. Enable detailed debug logging for troubleshooting. May impact performance, use only for debugging."
-            }
-        },
         "scalingMode": {
             "type": "string",
             "allowedValues": [
@@ -448,30 +400,6 @@
                         {
                             "name": "NR_ENDPOINT",
                             "value": "[parameters('newRelicEndpoint')]"
-                        },
-                        {
-                            "name": "NR_TAGS",
-                            "value": "[parameters('logCustomAttributes')]"
-                        },
-                        {
-                            "name": "MAX_BATCH_SIZE",
-                            "value": "[parameters('maxEventBatchSize')]"
-                        },
-                        {
-                            "name": "NR_MAX_RETRIES",
-                            "value": "[parameters('maxRetriesToResendLogs')]"
-                        },
-                        {
-                            "name": "NR_RETRY_INTERVAL",
-                            "value": "[parameters('retryInterval')]"
-                        },
-                        {
-                            "name": "ENABLE_DETAILED_LOGGING",
-                            "value": "[parameters('enableDetailedLogging')]"
-                        },
-                        {
-                            "name": "CURSOR_CLEANUP_HOURS",
-                            "value": "[parameters('cursorCleanupHours')]"
                         }
                     ]
                 }
