@@ -61,7 +61,7 @@ The ARM template supports two deployment architectures based on the `disablePubl
 **Network Configuration:**
 - Public internet access enabled for both Function App and internal storage account
 - No VNet integration
-- Consumption (Windows) hosting plan
+- App Service hosting plan
 
 **Resources Created (4 resources):**
 
@@ -121,7 +121,7 @@ Private VNet Infrastructure (18):
 | Deployment Method | ZipDeploy extension | Run-from-package URL |
 | Resources Created | 4 resources | 21 resources |
 
-**Note**: The manual installation instructions below create a deployment equivalent to the **Standard** architecture with public access.
+**Note**: The manual installation instructions below create a deployment with App Service plan and public access.
 
 ---
 
@@ -148,7 +148,9 @@ You'll need the connection string from your target storage account (where logs a
 
 1. Log in to the Azure Portal and create a [new Function App](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function).
 
-2. On the **Hosting** tab (if shown first), select **Consumption (Windows)** as the hosting plan.
+2. On the **Hosting** tab (if shown first), select **App Service** as the hosting plan and **Windows** as the Operating System.
+
+![Hosting Plan Selection](../../screenshots/BlobForwarder/select-function-plan.png)
 
 3. In the **Basics** tab, configure the following:
 
@@ -157,12 +159,13 @@ You'll need the connection string from your target storage account (where logs a
 | Subscription | Your Azure subscription |
 | Resource Group | Create new or select existing |
 | Function App name | Globally unique name |
+| Deploy code or container image | **Code** |
+| Operating System | **Windows** |
 | Runtime stack | **Node.js** |
 | Version | **22 LTS** |
 | Region | Select your preferred region |
-| Operating System | **Windows** |
 
-![Create Function App - Basics](../../screenshots/BlobForwarder/blob-create-basics.png)
+![Create Function App - Basics](../../screenshots/BlobForwarder/create-function.png)
 
 4. Complete the **Storage** and **Networking** tabs as needed for your environment.
 
