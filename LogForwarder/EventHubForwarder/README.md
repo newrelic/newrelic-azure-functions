@@ -173,7 +173,7 @@ Before starting the manual installation, ensure you have:
 
 1. Log in to the Azure Portal and create a [new Function App](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function).
 
-2. On the **Hosting** tab (if shown first), select **App Service** as the hosting plan and **Windows** as the Operating System.
+2. On the **Hosting** tab (if shown first), select **App Service** as the hosting plan
 
 ![Hosting Plan Selection](../../screenshots/EventHub/select-function-plan.png)
 
