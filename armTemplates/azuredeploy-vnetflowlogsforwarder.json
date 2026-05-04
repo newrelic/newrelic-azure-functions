@@ -104,10 +104,6 @@
 
         "sourceStorageAccountId": "[resourceId(variables('sourceStorageAccountResourceGroupResolved'), 'Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]",
 
-        "storageBlobDataReaderRoleId": "2a2b9908-6b9a-4b12-a50b-6fb3a3c0bb7c",
-        "storageTableDataContributorRoleId": "0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3",
-        "eventHubsDataReceiverRoleId": "a638d3c7-ab3a-418d-83e6-5f17a39d4fde",
-
         "autoscalingASP": {
             "kind": "elastic",
             "properties": {
@@ -365,9 +361,6 @@
             "name": "[variables('functionAppName')]",
             "location": "[variables('location')]",
             "kind": "functionapp",
-            "identity": {
-                "type": "SystemAssigned"
-            },
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName'))]",
@@ -444,52 +437,6 @@
                     ]
                 }
             }
-        },
-        {
-            "condition": "[variables('createNewSourceStorage')]",
-            "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id, variables('functionAppName'), 'StorageBlobDataReader')]",
-            "scope": "[variables('sourceStorageAccountId')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]"
-            ],
-            "properties": {
-                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('storageBlobDataReaderRoleId'))]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'Full').identity.principalId]",
-                "principalType": "ServicePrincipal"
-            }
-        },
-        {
-            "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id, variables('functionAppName'), 'StorageTableDataContributor')]",
-            "scope": "[resourceId('Microsoft.Storage/storageAccounts', variables('cursorStorageAccountName'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('cursorStorageAccountName'))]"
-            ],
-            "properties": {
-                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('storageTableDataContributorRoleId'))]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'Full').identity.principalId]",
-                "principalType": "ServicePrincipal"
-            }
-        },
-        {
-            "type": "Microsoft.Authorization/roleAssignments",
-            "apiVersion": "2022-04-01",
-            "name": "[guid(resourceGroup().id, variables('functionAppName'), 'EventHubsDataReceiver')]",
-            "scope": "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
-                "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
-            ],
-            "properties": {
-                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', variables('eventHubsDataReceiverRoleId'))]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'Full').identity.principalId]",
-                "principalType": "ServicePrincipal"
-            }
         }
     ],
     "outputs": {
@@ -519,13 +466,6 @@
         "eventGridSystemTopicName": {
             "type": "string",
             "value": "[variables('eventGridSystemTopicName')]"
-        },
-        "functionAppPrincipalId": {
-            "type": "string",
-            "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'Full').identity.principalId]",
-            "metadata": {
-                "description": "Function App managed identity principal ID. If using existing source storage account, manually assign 'Storage Blob Data Reader' role to this principal ID on the source storage account."
-            }
         }
     }
 }
