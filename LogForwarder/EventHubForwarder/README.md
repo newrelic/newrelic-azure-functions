@@ -34,7 +34,7 @@ The automatic installation uses Azure Resource Manager (ARM) templates to create
 2. Click the button below to start the installation process via the Azure Portal
 
 [Deploy to Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fmaster%2FarmTemplates%2Fazuredeploy-eventhubforwarder.json)
-using the [Azure ARM template](../armTemplates/azuredeploy-eventhubforwarder.json).
+using the [Azure ARM template](../../armTemplates/azuredeploy-eventhubforwarder.json).
 
 3. Fill in the required parameters in the Azure Portal deployment form (see parameters table below)
 4. **Important**: For most deployments, leave `Disable Public Access To Storage Account` set to `false` (default). Only set to `true` if you require private network deployment. See the [Architecture](#architecture) section below for details on the differences.
@@ -76,7 +76,7 @@ The ARM template supports two deployment architectures based on the `disablePubl
 **Network Configuration:**
 - Public internet access enabled for both Function App and internal storage account
 - No VNet integration
-- Standard Consumption plan (serverless)
+- Consumption (Windows) hosting plan
 
 **Resources Created (6-10 resources):**
 
