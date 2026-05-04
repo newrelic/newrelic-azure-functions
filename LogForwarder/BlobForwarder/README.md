@@ -232,3 +232,4 @@ These settings are automatically created when you provision the Function App. Ve
 
 3. Upload a log file to your blob storage container
 4. Verify logs are forwarded successfully by viewing them in New Relic. See [Find and use your data](https://docs.newrelic.com/docs/logs/forward-logs/azure-log-forwarding/#find-data) for instructions on querying your Azure logs
+
