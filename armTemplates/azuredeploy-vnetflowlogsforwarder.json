@@ -95,7 +95,7 @@
         "eventGridSystemTopicName": "[if(empty(parameters('eventGridSystemTopicName')), concat('nrvnetflowlogs-egtopic-', variables('uniqueResourceNameSuffix')), parameters('eventGridSystemTopicName'))]",
         "eventGridSubscriptionName": "[if(empty(parameters('eventGridSubscriptionName')), concat('nrvnetflowlogs-egsub-', variables('uniqueResourceNameSuffix')), parameters('eventGridSubscriptionName'))]",
 
-        "cursorStorageAccountName": "[concat('nrvnetcursor', variables('uniqueResourceNameSuffix'))]",
+        "cursorStorageAccountName": "[concat('nrvnetcur', variables('uniqueResourceNameSuffix'))]",
         "cursorTableName": "vnetflowlogcursors",
 
         "functionStorageAccountName": "[concat('nrvnetfunc', variables('uniqueResourceNameSuffix'))]",
