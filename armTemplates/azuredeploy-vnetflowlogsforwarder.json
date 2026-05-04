@@ -446,12 +446,14 @@
             }
         },
         {
+            "condition": "[variables('createNewSourceStorage')]",
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2020-04-01-preview",
             "name": "[guid(resourceGroup().id, variables('functionAppName'), 'StorageBlobDataReader')]",
             "scope": "[variables('sourceStorageAccountId')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]"
             ],
             "properties": {
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataReaderRoleId'))]",
@@ -520,7 +522,10 @@
         },
         "functionAppPrincipalId": {
             "type": "string",
-            "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'Full').identity.principalId]"
+            "value": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2021-03-01', 'Full').identity.principalId]",
+            "metadata": {
+                "description": "Function App managed identity principal ID. If using existing source storage account, manually assign 'Storage Blob Data Reader' role to this principal ID on the source storage account."
+            }
         }
     }
 }
