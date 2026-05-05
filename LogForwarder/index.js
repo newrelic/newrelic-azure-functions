@@ -89,12 +89,11 @@ async function handleVNetFlowLogs(messages, context) {
         blobUrl: blobUrl,
         eventTime: event.eventTime,
         subject: event.subject,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       testLogs.push(testLog);
       context.log('Created test log:', JSON.stringify(testLog));
-
     } catch (error) {
       context.error('Error processing message:', error.message);
     }
@@ -102,14 +101,14 @@ async function handleVNetFlowLogs(messages, context) {
 
   if (testLogs.length > 0) {
     // Send test logs to New Relic
-    const logLines = testLogs.map(log => ({
+    const logLines = testLogs.map((log) => ({
       message: JSON.stringify(log),
       attributes: {
         plugin: {
           type: 'azure.vnet.flowlogs',
-          version: VERSION
-        }
-      }
+          version: VERSION,
+        },
+      },
     }));
 
     await compressAndSend(logLines, context);
