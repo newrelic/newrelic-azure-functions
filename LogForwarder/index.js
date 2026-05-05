@@ -44,6 +44,79 @@ if (process.env.BLOB_FORWARDER_ENABLED === 'true') {
   });
 }
 
+if (process.env.VNETFLOWLOGS_FORWARDER_ENABLED === 'true') {
+  app.eventHub('VNetFlowLogsForwarder', {
+    eventHubName: process.env.EVENTHUB_NAME,
+    connection: 'EVENTHUB_CONSUMER_CONNECTION',
+    cardinality: 'many',
+    consumerGroup: process.env.EVENTHUB_CONSUMER_GROUP,
+    handler: async (messages, context) => {
+      await handleVNetFlowLogs(messages, context);
+    },
+  });
+}
+
+async function handleVNetFlowLogs(messages, context) {
+  if (!NR_LICENSE_KEY && !NR_INSERT_KEY) {
+    context.error(
+      'You have to configure either your LICENSE key or insights insert key. ' +
+        'Please follow the instructions in README'
+    );
+    return;
+  }
+
+  context.log(`Received ${messages.length} Event Grid events`);
+
+  const testLogs = [];
+
+  for (const message of messages) {
+    try {
+      // Event Grid event is already parsed as an object
+      const event = message;
+
+      // Log the event for debugging
+      context.log('Event Grid event:', JSON.stringify(event, null, 2));
+
+      // Extract blob information
+      const blobUrl = event.data?.url || 'unknown';
+      const eventType = event.eventType || 'unknown';
+
+      // Create a simple test log to send to New Relic
+      const testLog = {
+        message: 'VNet Flow Logs E2E Test',
+        logtype: 'azure.vnet.flowlog.test',
+        eventType: eventType,
+        blobUrl: blobUrl,
+        eventTime: event.eventTime,
+        subject: event.subject,
+        timestamp: new Date().toISOString()
+      };
+
+      testLogs.push(testLog);
+      context.log('Created test log:', JSON.stringify(testLog));
+
+    } catch (error) {
+      context.error('Error processing message:', error.message);
+    }
+  }
+
+  if (testLogs.length > 0) {
+    // Send test logs to New Relic
+    const logLines = testLogs.map(log => ({
+      message: JSON.stringify(log),
+      attributes: {
+        plugin: {
+          type: 'azure.vnet.flowlogs',
+          version: VERSION
+        }
+      }
+    }));
+
+    await compressAndSend(logLines, context);
+    context.log(`Successfully sent ${testLogs.length} test logs to New Relic`);
+  }
+}
+
 async function main(logMessages, context) {
   if (!NR_LICENSE_KEY && !NR_INSERT_KEY) {
     context.error(
