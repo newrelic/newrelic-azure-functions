@@ -11,7 +11,7 @@ This integration requires both a New Relic and Azure account.
 
 ### Install through New Relic Marketplace
 
-1. Visit the New Relic Marketplace \[[US](https://one.newrelic.com/marketplace)|[EU](https://one.newrelic.com/marketplace)\]
+1. Visit the New Relic Marketplace \[[US](https://one.newrelic.com/marketplace)|[EU](https://one.newrelic.com/marketplace)|[JP](https://one.newrelic.com/marketplace)\]
 2. Search for "Microsoft Azure Blob Storage"
 3. Click on the "Microsoft Azure Blob Storage" tile and follow the steps.
 
@@ -35,7 +35,7 @@ Parameters that can be configured in your Azure Resource Manager Template
 | Storage Account Kind | yes | `StorageV2` | Indicates the type of storage account. Each type supports different features and has its own pricing model. Consider these differences before you create a storage account to determine the type of account that's best for your applications or choose one that match your existing storage account. More information about Storage Account Kind in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview#types-of-storage-accounts). |
 | Storage Account Location | yes | `none` | Location where the storage account resides. |
 | Storage Account Container | yes | `none` | Container name inside the Storage Account. More information about Blob storages in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-introduction). |
-| New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/new-relic-logs/log-api/introduction-log-api#endpoint) |
+| New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/new-relic-logs/log-api/introduction-log-api#endpoint). Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
 | Max Retries To Resend Logs  | no | `3` | Number of times the function will attempt to resend data |
 | Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds |
 
@@ -80,7 +80,7 @@ Parameters to be configured in your Azure function's [application settings](http
 | Property | Required or Optional | Default Value | Description
 |---|---|---|---|
 | NR_LICENSE_KEY | Required | `none` | Your New Relic License Key [license key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/) |
-| NR_ENDPOINT |  Optional | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/new-relic-logs/log-api/introduction-log-api#endpoint) |
+| NR_ENDPOINT |  Optional | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/new-relic-logs/log-api/introduction-log-api#endpoint). Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
 | NR_TAGS | Optional | `none` | Attributes to be added to all logs forwarded to New Relic. Semicolon delimited (e.g. `env:prod;team:myTeam`) |
 | NR_MAX_RETRIES | Optional | `3` | Number of times the function will attempt to resend data |
 | NR_RETRY_INTERVAL | Optional | `2000` | Interval between retry attempts in milliseconds |
@@ -88,4 +88,4 @@ Parameters to be configured in your Azure function's [application settings](http
 ### Finding your NR_LICENSE_KEY Key
 
 * Your New Relic Licence Key [license keys](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/) can be found here:
-\[[US](https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher)|[EU](https://one.eu.newrelic.com/launcher/api-keys-ui.api-keys-launcher)\]
+\[[US](https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher)|[EU](https://one.eu.newrelic.com/launcher/api-keys-ui.api-keys-launcher)|[JP](https://one.jp.newrelic.com/launcher/api-keys-ui.api-keys-launcher)\]
