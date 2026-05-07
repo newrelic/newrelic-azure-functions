@@ -23,7 +23,7 @@ The automatic installation uses Azure Resource Manager (ARM) templates to create
 
 ### Option 1: Guided Install through New Relic Marketplace
 
-1. Visit the New Relic Marketplace \[[US](https://one.newrelic.com/marketplace)|[EU](https://one.newrelic.com/marketplace)\]
+1. Visit the New Relic Marketplace \[[US](https://one.newrelic.com/marketplace)|[EU](https://one.newrelic.com/marketplace)|[JP](https://one.newrelic.com/marketplace)\]
 2. Search for "Microsoft Azure Event Hub"
 3. Click on the "Microsoft Azure Event Hub" tile
 4. Select your New Relic account and follow the guided installation wizard
@@ -47,7 +47,7 @@ Parameters that can be configured in your Azure Resource Manager Template
 |---|---|---|---|
 | New Relic License Key  | yes | `none` | Your New Relic [License key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#license-key). |
 | Location | no | Resource group location | Region where the Function App and associated resources will be deployed. Defaults to the resource group's location. |
-| New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/#endpoint). Use `https://log-api.eu.newrelic.com/log/v1` for EU accounts. |
+| New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/#endpoint). Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
 | Log Custom Attributes  | no | `none` | Attributes to be added to all logs forwarded to New Relic. Semicolon delimited (e.g. `env:prod;team:myTeam`) |
 | Max Retries To Resend Logs  | no | `3` | Number of times the function will attempt to resend data if there's a failure. |
 | Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds. |
@@ -225,7 +225,7 @@ Azure Functions v4 uses a package deployment model. Code cannot be edited direct
 
 | Name | Default Value | Description |
 |------|---------------|-------------|
-| `NR_ENDPOINT` | `https://log-api.newrelic.com/log/v1` | New Relic Logs API endpoint. Use `https://log-api.eu.newrelic.com/log/v1` for EU region accounts. |
+| `NR_ENDPOINT` | `https://log-api.newrelic.com/log/v1` | New Relic Logs API endpoint. Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
 | `NR_TAGS` | _(empty)_ | Custom attributes to add to all forwarded logs. Semicolon-delimited format: `env:prod;team:platform;app:myapp` |
 | `NR_MAX_RETRIES` | `3` | Number of retry attempts if sending logs to New Relic fails. |
 | `NR_RETRY_INTERVAL` | `2000` | Milliseconds to wait between retry attempts. |
