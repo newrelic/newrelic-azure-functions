@@ -11,38 +11,53 @@ Currently, this integration allows you to create resources to targets Azure Acti
 
 This integration requires both a New Relic and Azure account.
 
-### Install through New Relic Marketplace
+You can install this integration using one of two methods:
+- **Automatic Installation** (recommended): Uses Azure ARM templates to automatically create and configure all resources
+- **Manual Installation**: Step-by-step manual setup for users who want more control or have specific requirements
+
+---
+
+## Automatic Installation (Recommended)
+
+The automatic installation uses Azure Resource Manager (ARM) templates to create and configure all necessary resources automatically.
+
+### Option 1: Guided Install through New Relic Marketplace
 
 1. Visit the New Relic Marketplace \[[US](https://one.newrelic.com/marketplace)|[EU](https://one.newrelic.com/marketplace)|[JP](https://one.newrelic.com/marketplace)\]
 2. Search for "Microsoft Azure Event Hub"
-3. Click on the "Microsoft Azure Event Hub" tile and follow the steps.
+3. Click on the "Microsoft Azure Event Hub" tile
+4. Select your New Relic account and follow the guided installation wizard
 
-### Install Using Azure Portal
+### Option 2: Install Using Azure Portal
 
-Retrieve your [New Relic License Key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#ingest-license-key).
-Then click the button below to start the installation process via the Azure Portal.
+1. Retrieve your [New Relic License Key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#ingest-license-key)
+2. Click the button below to start the installation process via the Azure Portal
 
 [Deploy to Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fmaster%2FarmTemplates%2Fazuredeploy-eventhubforwarder.json)
-using the [Azure ARM template](../armTemplates/azuredeploy-eventhubforwarder.json).
+using the [Azure ARM template](../../armTemplates/azuredeploy-eventhubforwarder.json).
 
-### Azure Application Settings
+3. Fill in the required parameters in the Azure Portal deployment form (see parameters table below)
+4. **Important**: For most deployments, leave `Disable Public Access To Storage Account` set to `false` (default). Only set to `true` if you require private network deployment. See the [Architecture](#architecture) section below for details on the differences.
+
+### ARM Template Parameters
 
 Parameters that can be configured in your Azure Resource Manager Template
 
 | Parameter  | Required | Default Value | Description
 |---|---|---|---|
-| New Relic License Key  | yes | `none` | Your New Relic [License key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/) |
-| Event Hub Namespace | no | `none` | In case you already have a Event hub namespace configured |
-| New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/new-relic-logs/log-api/introduction-log-api#endpoint). Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
+| New Relic License Key  | yes | `none` | Your New Relic [License key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#license-key). |
+| Location | no | Resource group location | Region where the Function App and associated resources will be deployed. Defaults to the resource group's location. |
+| New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/#endpoint). Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
 | Log Custom Attributes  | no | `none` | Attributes to be added to all logs forwarded to New Relic. Semicolon delimited (e.g. `env:prod;team:myTeam`) |
-| Max Retries To Resend Logs  | no | `3` | Number of times the function will attempt to resend data |
-| Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds |
+| Max Retries To Resend Logs  | no | `3` | Number of times the function will attempt to resend data if there's a failure. |
+| Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds. |
 | Max Event Batch Size  | no | `500` | Maximum number of events delivered in a batch to the function. |
 | Min Event Batch Size  | no | `20`  | Minimum number of events delivered in a batch to the function. |
 | Max Wait Time         | no | `00:00:30` | Maximum time to wait to build up a batch before delivering to the function (format HH:MM:SS). |
-| Event Hub Namespace Name | no | `none` | Namespace in which hub are allocated. Leave this blank for a new namespace to be created automatically |
-| Event hub Name | no | `none` | Name of the Event Hub where logs are allocated. Leave this blank for a new Event Hub to be created automatically |
-| scalingMode | no | `Basic` | The scaling mode option configured for the New Relic Azure Log Forwarder. Setting this to `Enterprise` will configure autoscaling. <br> <br> > `Note`: If you upgrade from Basic to Enterprise you will need to reprovision the EventHub due to the Azure limit that a Standard SKU cannot change partition counts. |
+| Event Hub Namespace Name | no | `none` | Namespace in which Event Hubs are allocated. Leave blank for a new namespace to be created automatically. |
+| Event Hub Name | no | `none` | Name of the Event Hub where logs are allocated. Leave blank for a new Event Hub to be created automatically. |
+| Scaling Mode | no | `Basic` | The scaling mode option configured for the New Relic Azure Log Forwarder. Setting this to `Enterprise` will configure autoscaling. **Note:** If you upgrade from Basic to Enterprise you will need to reprovision the EventHub due to Azure limits on partition count changes for Standard SKU. |
+| Disable Public Access To Storage Account | no | `false` | When set to `true`, disables public network access to the internal storage account used by the Function App. This creates a private network deployment with VNet integration, private endpoints, private DNS zones, and requires a Basic hosting plan or higher. When `false`, uses App Service plan with public access. |
 | Enable Administrative Azure Activity Logs | no | `false` | Contains the record of all create, update, delete, and action operations performed through Resource Manager. More information about Administrative category in [azure official documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log-schema#administrative-category). |
 | Enable Alert Azure Activity Logs | no | `false` | Contains the record of all activations of classic Azure alerts. More information about Alert category in [azure official documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log-schema#alert-category). |
 | Enable Policy Azure Activity Logs | no | `false` | Contains records of all effect action operations performed by Azure Policy. More information about Policy category in [azure official documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log-schema#policy-category). |
@@ -50,56 +65,200 @@ Parameters that can be configured in your Azure Resource Manager Template
 | Enable Recommendation Azure Activity Logs | no | `false` | Contains recommendation events from Azure Advisor. More information about Recommendation category in [azure official documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log-schema#recommendation-category). |
 | Enable Resource Health Azure Activity Logs | no | `false` | Contains the record of any resource health events that have occurred to your Azure resources. More information about Resource Health category in [azure official documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log-schema#resource-health-category). |
 | Enable Security Azure Activity Logs | no | `false` | Contains the record of any alerts generated by Azure Security Center. More information about Security category in [azure official documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log-schema#security-category). |
-| Enable Service Health Azure Activity Logs | no | `false` | Contains the record of any service health incidents that have occurred in Azure. More information about Recommendation category in [azure official documentation](. More information about Recommendation category in [azure official documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log-schema#recommendation-category). |
+| Enable Service Health Azure Activity Logs | no | `false` | Contains the record of any service health incidents that have occurred in Azure. More information about Service Health category in [azure official documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log-schema#service-health-category). |
 
-Alternatively you can configure this template that will automatically create the resource, deployed them and configure Activity Logs to forward them to New Relic.
+### Architecture
 
-### Architecture 
+The ARM template supports two deployment architectures based on the `disablePublicAccessToStorageAccount` parameter:
 
-![ehub-template-diagram](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub-template-diagram.png?raw=true)
+#### Standard Deployment (Default: `disablePublicAccessToStorageAccount=false`)
 
-## Manually create an Azure Function App
+**Network Configuration:**
+- Public internet access enabled for both Function App and internal storage account
+- No VNet integration
+- App Service hosting plan
 
-1. Log in to the Azure Portal and create a new [Function App](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function).
-2. Add the following in the **Instance Details** section of the **Basics** tab:
+**Resources Created (6-10 resources):**
+
+Always Created (5):
+- Function App
+- Internal Storage Account (public access)
+- App Service Plan
+- Consumer Group
+- Authorization Rule (consumer policy)
+
+Standard Deployment Only (1):
+- ZipDeploy extension
+
+Conditionally Created:
+- Event Hub Namespace (if `eventHubNamespace` parameter is empty)
+- Event Hub (if `eventHubName` parameter is empty)
+- Authorization Rule (producer policy - if Activity Logs diagnostic setting enabled)
+- Diagnostic Setting (if Activity Logs diagnostic setting enabled)
+
+**Deployment Method:** ZipDeploy extension deploys the function code
+
+**Use Case:** Standard deployments, no network isolation requirements
+
+![EventHub Standard Architecture](../../screenshots/EventHub/eventhub-standard-architecture.png)
+
+#### Private Network Deployment (`disablePublicAccessToStorageAccount=true`)
+
+**Network Configuration:**
+- **Public access disabled** for both Function App and internal storage account
+- **VNet integration** with private networking
+- Communication flows through private endpoints within the VNet
+- DNS resolution handled via Private DNS Zones
+- Requires Basic plan or higher for VNet integration support
+
+**Resources Created (23-27 resources):**
+
+Always Created (5):
+- Function App
+- Internal Storage Account (private access only)
+- App Service Plan (Basic plan or higher)
+- Consumer Group
+- Authorization Rule (consumer policy)
+
+Private VNet Infrastructure (18):
+- 1 Virtual Network with 2 subnets:
+  - Function subnet (for Function App VNet integration)
+  - Private endpoints subnet
+- 4 Private Endpoints (file, blob, queue, table storage services)
+- 4 Private DNS Zones (privatelink.blob/file/queue/table.core.windows.net)
+- 4 Virtual Network Links (connecting DNS zones to VNet)
+- 4 Private DNS Zone Groups (connecting private endpoints to DNS zones)
+- 1 Network Configuration (VNet integration for Function App)
+
+Conditionally Created:
+- Event Hub Namespace (if `eventHubNamespace` parameter is empty)
+- Event Hub (if `eventHubName` parameter is empty)
+- Authorization Rule (producer policy - if Activity Logs diagnostic setting enabled)
+- Diagnostic Setting (if Activity Logs diagnostic setting enabled)
+
+**Deployment Method:** WEBSITE_RUN_FROM_PACKAGE with GitHub URL (public ZipDeploy endpoint not accessible)
+
+**Use Case:** Compliance requirements, corporate security policies requiring network isolation, no public internet access
+
+![EventHub Private VNet Architecture](../../screenshots/EventHub/eventhub-private-network-architecture.png)
+
+**Key Differences:**
+
+| Aspect | Standard | Private Network |
+|--------|----------|-----------------|
+| Network Access | Public internet | Private VNet only |
+| VNet Integration | None | Full VNet integration with private endpoints |
+| Storage Access | Public endpoints | Private endpoints only |
+| Deployment Method | ZipDeploy extension | Run-from-package URL |
+| Resources Created | 6-10 resources | 23-27 resources |
+
+ **Note**: The manual installation instructions below create a deployment with App Service plan and public access.
+
+---
+
+## Manual Installation
+
+Use this method if you want to manually create and configure the Function App yourself, or if you need more control over the setup process.
+
+### Prerequisites
+
+Before starting the manual installation, ensure you have:
+- An existing Azure Event Hub Namespace with an Event Hub
+- The Event Hub connection string (found in Event Hub Namespace → **Settings** → **Shared access policies** → **RootManageSharedAccessKey**)
+- Note the Event Hub name and consumer group name as you'll need them for configuration
+
+![Event Hub Connection String](../../screenshots/EventHub/eventhub-connection-string.png)
+
+### Step 1: Create an Azure Function App
+
+1. Log in to the Azure Portal and create a [new Function App](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function).
+
+2. On the **Hosting** tab (if shown first), select **App Service** as the hosting plan
+
+![Hosting Plan Selection](../../screenshots/EventHub/select-function-plan.png)
+
+3. In the **Basics** tab, configure the following:
 
 | Field | Value |
 |---|---|
-|Publish|Code|
-|Runtime stack|Node.js|
-|Version|12|
+| Subscription | Your Azure subscription |
+| Resource Group | Create new or select existing |
+| Function App name | Globally unique name |
+| Deploy code or container image | **Code** |
+| Operating System | **Windows** |
+| Runtime stack | **Node.js** |
+| Version | **22 LTS** |
+| Region | Select your preferred region |
 
-![ehub1](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub1.png?raw=true)
+![Create Function App - Basics](../../screenshots/EventHub/create-function.png)
 
-3. Select the **Hosting** tab and select **Windows** as the Operating System
-4. Fill out remaining required fields as desired and **Create** your Function App.
+4. Complete the **Storage** and **Networking** tabs as needed for your environment.
 
-### Create and Deploy the Azure Function
+5. Click **Review + Create**, then **Create** to provision your Function App.
 
-1. Once your function app has been created, expand it and select the `+` button next to **Functions** 
-![func-plus](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/func-plus.png?raw=true)
-2. Click **In-portal** followed by **More templates...**. Next click **Finish and view templates**.
-![ehub3](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub3.png?raw=true)
-3. Search for "event hub" and select **Azure Event Hub trigger**
-![ehub5](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub5.png?raw=true)
-4. Define the desired **Name**, **Event Hub connection** and **Event Hub name** of the Event Hub to collect logs from, as well as the **Event Hub consumer group**
-![ehub6](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub6.png?raw=true)
-5. Paste the New Relic [function code](index.js) in the function's existing `index.js` and click **Save**.
-6. Navigate to the **Integrate** tab and verify **Event parameter name** is set to `eventHubMessages` and **Event Hub Cardinality** is set to `Many`.
-![ehub7](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/EventHub/ehub7.png?raw=true)
-7. [Configure](#azure-application-settings) your function's Application settings and define the desired application settings. `NR_INSERT_KEY` must be configured here.
+6. Wait 2-3 minutes for deployment to complete.
 
-### Application Settings
+### Step 2: Deploy the Azure Function
 
-Parameters to be configured in your Azure function's [application settings](https://docs.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings).
+Azure Functions v4 uses a package deployment model. Code cannot be edited directly in the Azure Portal. Instead, you must deploy a pre-built package and configure application settings.
 
-| Property | Required or Optional | Default Value | Description
-|---|---|---|---|
-| NR_INSERT_KEY | Required | `none` | Your New Relic Insights [insert key](https://docs.newrelic.com/docs/insights/insights-api/get-data/query-insights-event-data-api#register) |
-| NR_ENDPOINT |  Optional | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/new-relic-logs/log-api/introduction-log-api#endpoint). Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
-| NR_TAGS | Optional | `none` | Attributes to be added to all logs forwarded to New Relic. Semicolon delimited (e.g. `env:prod;team:myTeam`) |
-| NR_MAX_RETRIES | Optional | `3` | Number of times the function will attempt to resend data |
-| NR_RETRY_INTERVAL | Optional | `2000` | Interval between retry attempts in milliseconds |
-| MAX_EVENT_BATCH_SIZE | Optional | `500` | Maximum number of events delivered in a batch to the function. |
-| MIN_EVENT_BATCH_SIZE | Optional | `20`  | Minimum number of events delivered in a batch to the function. |
-| MAX_WAIT_TIME        | Optional | `00:00:30` | Maximum time to wait to build up a batch before delivering to the function (format HH:MM:SS). |
+#### Configure Application Settings
+
+1. Navigate to your Function App → **Settings** → **Configuration**
+2. Click the **Application settings** tab
+3. Add the following settings by clicking **+ New application setting** for each:
+
+![Function App Application Settings](../../screenshots/EventHub/eventhub-func-application-settings.png)
+
+#### Required Settings
+
+| Name | Value | Description |
+|------|-------|-------------|
+| `NR_LICENSE_KEY` | Your New Relic License Key | Found at [one.newrelic.com](https://one.newrelic.com) → API Keys → License Key |
+| `EVENTHUB_FORWARDER_ENABLED` | `true` | Enables the Event Hub trigger. **Must be lowercase** `true`. |
+| `EVENTHUB_NAME` | `your-eventhub-name` | Name of the Event Hub to read logs from. Example: `insights-logs-activitylogs` |
+| `EVENTHUB_CONSUMER_CONNECTION` | Event Hub connection string | Connection string from your Event Hub **namespace** (not the hub itself). Found in Event Hub Namespace → Settings → Shared access policies → RootManageSharedAccessKey → Connection string-primary key. |
+| `EVENTHUB_CONSUMER_GROUP` | `$Default` | Consumer group name. Use `$Default` or create a dedicated consumer group in your Event Hub. |
+| `WEBSITE_RUN_FROM_PACKAGE` | `https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip` | URL to the deployment package. This tells Azure to download and run the latest function code from GitHub. |
+
+#### Optional Settings
+
+| Name | Default Value | Description |
+|------|---------------|-------------|
+| `NR_ENDPOINT` | `https://log-api.newrelic.com/log/v1` | New Relic Logs API endpoint. Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
+| `NR_TAGS` | _(empty)_ | Custom attributes to add to all forwarded logs. Semicolon-delimited format: `env:prod;team:platform;app:myapp` |
+| `NR_MAX_RETRIES` | `3` | Number of retry attempts if sending logs to New Relic fails. |
+| `NR_RETRY_INTERVAL` | `2000` | Milliseconds to wait between retry attempts. |
+
+#### Auto-Configured Settings (Verify Exist)
+
+These settings are automatically created when you provision the Function App. Verify they exist and have the correct values:
+
+| Name | Expected Value | Notes |
+|------|----------------|-------|
+| `FUNCTIONS_EXTENSION_VERSION` | `~4` | Azure Functions v4 runtime. |
+| `FUNCTIONS_WORKER_RUNTIME` | `node` | Node.js worker runtime. May be auto-managed on some hosting plans. |
+| `WEBSITE_NODE_DEFAULT_VERSION` | `~22` | Node.js version 22. May be auto-managed on some hosting plans. |
+| `AzureWebJobsStorage` | _(connection string)_ | Internal storage account used by the Function App for state management. Auto-created. |
+
+![Application Settings Configured](../../screenshots/EventHub/eventhub-app-settings.png)
+
+4. Click **Save** at the top of the page
+5. Click **Continue** to confirm the Function App restart
+
+#### Deploy the Function Package
+
+1. Go to Function App → **Overview**
+2. Click **Restart** to ensure all settings are applied and the package is downloaded
+3. Wait 30-60 seconds for the deployment to complete
+
+#### Verify Function Deployment
+
+1. Navigate to **Functions** in the left menu
+2. You should see **EventHubForwarder** listed with Status: **Enabled**
+
+![EventHubForwarder Function Deployed](../../screenshots/EventHub/eventhub-function-deployed.png)
+
+3. Trigger an event that sends logs to your Event Hub (e.g., create an Azure Activity Log event)
+4. Verify logs are forwarded successfully by viewing them in New Relic. See [Find and use your data](https://docs.newrelic.com/docs/logs/forward-logs/azure-log-forwarding/#find-data) for instructions on querying your Azure logs
+
