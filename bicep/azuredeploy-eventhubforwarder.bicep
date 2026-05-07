@@ -69,6 +69,13 @@ param minEventBatchSize int = 20
 @description('Optional. Maximum amount of time to wait to build up a batch before delivering to the function (in format HH:MM:SS). Default is 00:00:30.')
 param maxWaitTime string = '00:00:30'
 
+@description('Optional. Authentication method to use for the Event Hub connection. Use Managed Identity when local authentication is disabled in your Azure environment (e.g. for security compliance). Use Local Authentication to connect using a shared access key connection string.')
+@allowed([
+  'Local Authentication'
+  'Managed Identity'
+])
+param authenticationMode string = 'Local Authentication'
+
 var location_var = ((location == '') ? resourceGroup().location : location)
 var onePerResourceGroupUniqueSuffix = uniqueString(resourceGroup().id)
 var createNewEventHubNamespace = (eventHubNamespace == '')
@@ -166,6 +173,15 @@ var basicScaleConfig = (((scalingMode == 'Basic') && disablePublicAccessToStorag
   : defaultASP)
 var aspConfig = (isHighScalabing ? autoscalingASP : basicScaleConfig)
 
+var useManagedIdentity = authenticationMode == 'Managed Identity'
+var eventHubsDataReceiverRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')
+var managedIdentityAppSettings = [
+  {
+    name: 'EVENTHUB_CONSUMER_CONNECTION__fullyQualifiedNamespace'
+    value: '${eventHubNamespaceName}.servicebus.windows.net'
+  }
+]
+
 resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2024-01-01' = if (createNewEventHubNamespace) {
   name: eventHubNamespaceName
   location: location_var
@@ -206,6 +222,10 @@ resource eventHubNamespaceName_logConsumerAuthorizationRule 'Microsoft.EventHub/
       'Listen'
     ]
   }
+}
+
+resource eventHubNamespaceRef 'Microsoft.EventHub/namespaces@2024-01-01' existing = {
+  name: eventHubNamespaceName
 }
 
 resource eventHubNamespaceName_logProducerAuthorizationRule 'Microsoft.EventHub/namespaces/AuthorizationRules@2017-04-01' = if (createActivityLogsDiagnosticSetting) {
@@ -528,80 +548,86 @@ resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
   name: functionAppName
   location: location_var
   kind: 'functionapp'
+  identity: useManagedIdentity ? { type: 'SystemAssigned' } : null
   properties: {
     serverFarmId: servicePlan.id
     siteConfig: {
-      appSettings: [
-        {
-          name: 'EVENTHUB_NAME'
-          value: eventHubName_var
-        }
-        {
-          name: 'EVENTHUB_CONSUMER_CONNECTION'
-          value: listKeys(eventHubNamespaceName_logConsumerAuthorizationRule.id, '2017-04-01').primaryConnectionString
-        }
-        {
-          name: 'EVENTHUB_CONSUMER_GROUP'
-          value: eventHubConsumerGroupName
-        }
-        {
-          name: 'NR_LICENSE_KEY'
-          value: newRelicLicenseKey
-        }
-        {
-          name: 'NR_ENDPOINT'
-          value: newRelicEndpoint
-        }
-        {
-          name: 'NR_TAGS'
-          value: logCustomAttributes
-        }
-        {
-          name: 'NR_MAX_RETRIES'
-          value: maxRetriesToResendLogs
-        }
-        {
-          name: 'NR_RETRY_INTERVAL'
-          value: retryInterval
-        }
-        {
-          name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~4'
-        }
-        {
-          name: 'FUNCTIONS_WORKER_RUNTIME'
-          value: 'node'
-        }
-        {
-          name: 'WEBSITE_NODE_DEFAULT_VERSION'
-          value: '~22'
-        }
-        {
-          name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${listkeys(storageAccount.id,'2021-04-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
-        }
-        {
-          name: 'EVENTHUB_FORWARDER_ENABLED'
-          value: 'true'
-        }
-        {
-          name: 'WEBSITE_RUN_FROM_PACKAGE'
-          value: (disablePublicAccessToStorageAccount ? eventHubForwarderFunctionArtifact : '0')
-        }
-        {
-          name: 'AzureFunctionsJobHost__extensions__eventHubs__maxEventBatchSize'
-          value: string(maxEventBatchSize)
-        }
-        {
-          name: 'AzureFunctionsJobHost__extensions__eventHubs__minEventBatchSize'
-          value: string(minEventBatchSize)
-        }
-        {
-          name: 'AzureFunctionsJobHost__extensions__eventHubs__maxWaitTime'
-          value: maxWaitTime
-        }
-
-      ]
+      appSettings: concat(
+        [
+          {
+            name: 'EVENTHUB_NAME'
+            value: eventHubName_var
+          }
+          {
+            name: 'EVENTHUB_CONSUMER_GROUP'
+            value: eventHubConsumerGroupName
+          }
+          {
+            name: 'NR_LICENSE_KEY'
+            value: newRelicLicenseKey
+          }
+          {
+            name: 'NR_ENDPOINT'
+            value: newRelicEndpoint
+          }
+          {
+            name: 'NR_TAGS'
+            value: logCustomAttributes
+          }
+          {
+            name: 'NR_MAX_RETRIES'
+            value: maxRetriesToResendLogs
+          }
+          {
+            name: 'NR_RETRY_INTERVAL'
+            value: retryInterval
+          }
+          {
+            name: 'FUNCTIONS_EXTENSION_VERSION'
+            value: '~4'
+          }
+          {
+            name: 'FUNCTIONS_WORKER_RUNTIME'
+            value: 'node'
+          }
+          {
+            name: 'WEBSITE_NODE_DEFAULT_VERSION'
+            value: '~22'
+          }
+          {
+            name: 'AzureWebJobsStorage'
+            value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${listkeys(storageAccount.id, '2021-04-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+          }
+          {
+            name: 'EVENTHUB_FORWARDER_ENABLED'
+            value: 'true'
+          }
+          {
+            name: 'WEBSITE_RUN_FROM_PACKAGE'
+            value: (disablePublicAccessToStorageAccount ? eventHubForwarderFunctionArtifact : '0')
+          }
+          {
+            name: 'AzureFunctionsJobHost__extensions__eventHubs__maxEventBatchSize'
+            value: string(maxEventBatchSize)
+          }
+          {
+            name: 'AzureFunctionsJobHost__extensions__eventHubs__minEventBatchSize'
+            value: string(minEventBatchSize)
+          }
+          {
+            name: 'AzureFunctionsJobHost__extensions__eventHubs__maxWaitTime'
+            value: maxWaitTime
+          }
+        ],
+        useManagedIdentity
+          ? managedIdentityAppSettings
+          : [
+              {
+                name: 'EVENTHUB_CONSUMER_CONNECTION'
+                value: listKeys(eventHubNamespaceName_logConsumerAuthorizationRule.id, '2017-04-01').primaryConnectionString
+              }
+            ]
+      )
       alwaysOn: disablePublicAccessToStorageAccount
       ftpsState: 'Disabled'
       publicNetworkAccess: (disablePublicAccessToStorageAccount ? 'Disabled' : 'Enabled')
@@ -612,6 +638,16 @@ resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
     privateEndpointPrivateDnsZoneGroupsStorageTable
     privateEndpointPrivateDnsZoneGroupsStorageFile
   ]
+}
+
+resource eventHubDataReceiverRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (useManagedIdentity) {
+  name: guid(eventHubNamespaceRef.id, functionApp.id, eventHubsDataReceiverRoleDefinitionId)
+  scope: eventHubNamespaceRef
+  properties: {
+    roleDefinitionId: eventHubsDataReceiverRoleDefinitionId
+    principalId: useManagedIdentity ? functionApp.identity.principalId : ''
+    principalType: 'ServicePrincipal'
+  }
 }
 
 resource functionAppName_ZipDeploy 'Microsoft.Web/sites/extensions@2020-12-01' = if (!disablePublicAccessToStorageAccount) {
@@ -663,5 +699,5 @@ module activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment './activityLo
   ]
 }
 
-output connectionString string = listKeys(eventHubNamespaceName_logConsumerAuthorizationRule.id, '2017-04-01').primaryConnectionString
+output connectionString string = useManagedIdentity ? '' : listKeys(eventHubNamespaceName_logConsumerAuthorizationRule.id, '2017-04-01').primaryConnectionString
 output eventHubName string = eventHubName_var
