@@ -9,83 +9,230 @@ It relies on Azure Blob Storage trigger, which will trigger an Azure Function to
 
 This integration requires both a New Relic and Azure account.
 
-### Install through New Relic Marketplace
+You can install this integration using one of two methods:
+- **Automatic Installation** (recommended): Uses Azure ARM templates to automatically create and configure all resources
+- **Manual Installation**: Step-by-step manual setup for users who want more control or have specific requirements
+
+---
+
+## Automatic Installation (Recommended)
+
+The automatic installation uses Azure Resource Manager (ARM) templates to create and configure all necessary resources automatically.
+
+### Option 1: Guided Install through New Relic Marketplace
 
 1. Visit the New Relic Marketplace \[[US](https://one.newrelic.com/marketplace)|[EU](https://one.newrelic.com/marketplace)|[JP](https://one.newrelic.com/marketplace)\]
 2. Search for "Microsoft Azure Blob Storage"
-3. Click on the "Microsoft Azure Blob Storage" tile and follow the steps.
+3. Click on the "Microsoft Azure Blob Storage" tile
+4. Select your New Relic account and follow the guided installation wizard
 
-### Install Using Azure Portal
+### Option 2: Install Using Azure Portal
 
-Retrieve your [New Relic License Key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#ingest-license-key).
-Then click the button below to start the installation process via the Azure Portal.
+1. Retrieve your [New Relic License Key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/#ingest-license-key)
+2. Click the button below to start the installation process via the Azure Portal
 
 [Deploy to Azure](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnewrelic%2Fnewrelic-azure-functions%2Fmaster%2FarmTemplates%2Fazuredeploy-blobforwarder.json)
-using the [Azure ARM template](../armTemplates/azuredeploy-blobforwarder.json).
+using the [Azure ARM template](../../armTemplates/azuredeploy-blobforwarder.json).
 
-### Azure Application Settings
+3. Fill in the required parameters in the Azure Portal deployment form (see parameters table below)
+4. **Important**: For most deployments, leave `Disable Public Access To Storage Account` set to `false` (default). Only set to `true` if you require private network deployment. See the [Architecture](#architecture) section below for details on the differences.
+
+### ARM Template Parameters
 
 Parameters that can be configured in your Azure Resource Manager Template
 
 | Parameter  | Required | Default Value | Description
 |---|---|---|---|
 | New Relic License Key  | yes | `none` | Your New Relic [License key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/). |
-| Storage Account Name | yes | `none` | Storage Account Name in which the Blobs are allocated. If a new name is provided, a new Storage Account will be created. More information about Storage Account in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/). |
-| Storage Account Redundancy | yes | `Standard_LRS` | The data in your Azure storage account is always replicated to ensure durability and high availability. Choose a replication strategy that matches your existing storage account or a new one to be created. More information about Storage Account Redundancy in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/common/storage-redundancy). |
-| Storage Account Kind | yes | `StorageV2` | Indicates the type of storage account. Each type supports different features and has its own pricing model. Consider these differences before you create a storage account to determine the type of account that's best for your applications or choose one that match your existing storage account. More information about Storage Account Kind in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-overview#types-of-storage-accounts). |
-| Storage Account Location | yes | `none` | Location where the storage account resides. |
-| Storage Account Container | yes | `none` | Container name inside the Storage Account. More information about Blob storages in [azure official documentation](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-introduction). |
-| New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/new-relic-logs/log-api/introduction-log-api#endpoint). Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
-| Max Retries To Resend Logs  | no | `3` | Number of times the function will attempt to resend data |
-| Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds |
+| Target Storage Account Name | yes | `none` | Name of the existing Azure Storage Account that contains the logs you want to forward. |
+| Target Container Name | yes | `none` | Name of the container inside the target Storage Account that contains the log blobs. |
+| Location | no | Resource group location | Region where the Function App and associated resources will be deployed. Defaults to the resource group's location. |
+| New Relic Endpoint  |  no | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/#endpoint). Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
+| Max Retries To Resend Logs  | no | `3` | Number of times the function will attempt to resend data if there's a failure. |
+| Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds. |
+| Disable Public Access To Storage Account | no | `false` | When set to `true`, disables public network access to the internal storage account used by the Function App. This creates a private network deployment with VNet integration, private endpoints, private DNS zones, and requires a Basic hosting plan or higher. When `false`, uses App Service plan with public access. |
 
 ### Architecture
 
-![blob-template-diagram](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/BlobForwarder/blob4.png?raw=true)
+The ARM template supports two deployment architectures based on the `disablePublicAccessToStorageAccount` parameter:
 
-## Manually create an Azure Function App
+#### Standard Deployment (Default: `disablePublicAccessToStorageAccount=false`)
+
+**Network Configuration:**
+- Public internet access enabled for both Function App and internal storage account
+- No VNet integration
+- App Service hosting plan
+
+**Resources Created (4 resources):**
+
+Always Created (3):
+- Function App
+- Internal Storage Account (public access)
+- App Service Plan
+
+Standard Deployment Only (1):
+- ZipDeploy extension
+
+**Deployment Method:** ZipDeploy extension deploys the function code
+
+**Use Case:** Standard deployments, no network isolation requirements
+
+![Blob Standard Architecture](../../screenshots/BlobForwarder/blob-standard-architecture.png)
+
+#### Private Network Deployment (`disablePublicAccessToStorageAccount=true`)
+
+**Network Configuration:**
+- **Public access disabled** for both Function App and internal storage account
+- **VNet integration** with private networking
+- Communication flows through private endpoints within the VNet
+- DNS resolution handled via Private DNS Zones
+- Requires Basic plan or higher for VNet integration support
+
+**Resources Created (21 resources):**
+
+Always Created (3):
+- Function App
+- Internal Storage Account (private access only)
+- App Service Plan (Basic plan or higher)
+
+Private VNet Infrastructure (18):
+- 1 Virtual Network with 2 subnets:
+  - Function subnet (for Function App VNet integration)
+  - Private endpoints subnet
+- 4 Private Endpoints (file, blob, queue, table storage services)
+- 4 Private DNS Zones (privatelink.blob/file/queue/table.core.windows.net)
+- 4 Virtual Network Links (connecting DNS zones to VNet)
+- 4 Private DNS Zone Groups (connecting private endpoints to DNS zones)
+- 1 Network Configuration (VNet integration for Function App)
+
+**Deployment Method:** WEBSITE_RUN_FROM_PACKAGE with GitHub URL (public ZipDeploy endpoint not accessible)
+
+**Use Case:** Compliance requirements, corporate security policies requiring network isolation, no public internet access
+
+![Blob Private VNet Architecture](../../screenshots/BlobForwarder/blob-private-network-architecture.png)
+
+**Key Differences:**
+
+| Aspect | Standard | Private Network |
+|--------|----------|-----------------|
+| Network Access | Public internet | Private VNet only |
+| VNet Integration | None | Full VNet integration with private endpoints |
+| Storage Access | Public endpoints | Private endpoints only |
+| Deployment Method | ZipDeploy extension | Run-from-package URL |
+| Resources Created | 4 resources | 21 resources |
+
+**Note**: The manual installation instructions below create a deployment with App Service plan and public access.
+
+---
+
+## Manual Installation
+
+Use this method if you want to manually create and configure the Function App yourself, or if you need more control over the setup process.
+
+### Prerequisites
+
+Before starting the manual installation, ensure you have:
+- An existing Azure Storage Account with a container that contains the logs you want to forward
+- You can verify your container exists by navigating to the storage account → **Data storage** → **Containers**
+- Note the container name (e.g., `logs`) as you'll need it for the `CONTAINER_NAME` setting
+
+![Storage Account Containers](../../screenshots/BlobForwarder/blob-storage-containers.png)
+
+**Getting the Target Storage Account Connection String:**
+
+You'll need the connection string from your target storage account (where logs are stored). To get the `TargetAccountConnection` value, go to your target storage account → **Security + networking** → **Access keys** → Click **Show** next to "Connection string" and copy the value.
+
+![Storage Account Connection String](../../screenshots/BlobForwarder/blob-storage-connection.png)
+
+### Step 1: Create an Azure Function App
 
 1. Log in to the Azure Portal and create a [new Function App](https://docs.microsoft.com/en-us/azure/azure-functions/functions-create-first-azure-function).
-2. Add the following in the **Instance Details** section of the **Basics** tab:
+
+2. On the **Hosting** tab (if shown first), select **App Service** as the hosting plan
+
+![Hosting Plan Selection](../../screenshots/BlobForwarder/select-function-plan.png)
+
+3. In the **Basics** tab, configure the following:
 
 | Field | Value |
 |---|---|
-|Publish|Code|
-|Runtime stack|Node.js|
-|Version|12|
+| Subscription | Your Azure subscription |
+| Resource Group | Create new or select existing |
+| Function App name | Globally unique name |
+| Deploy code or container image | **Code** |
+| Operating System | **Windows** |
+| Runtime stack | **Node.js** |
+| Version | **22 LTS** |
+| Region | Select your preferred region |
 
-![blob1](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/BlobForwarder/blob1.png?raw=true)
+![Create Function App - Basics](../../screenshots/BlobForwarder/create-function.png)
 
-3. Select the region that match where the Blobs are storaged
-4. Select the **Hosting** tab and select **Windows** as the Operating System
-5. Fill out remaining required fields as desired.
+4. Complete the **Storage** and **Networking** tabs as needed for your environment.
 
-## Create and Deploy the Azure Function
+5. Click **Review + Create**, then **Create** to provision your Function App.
 
-1. Once your function app has been created, click and open it
-2. In the left menu, click **Functions**
-   ![blob2](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/BlobForwarder/blob2.png?raw=true)
-3. Click on **Create** and search for "blob" and select **Azure Blob Storage trigger**
-   ![blob3](https://github.com/newrelic/newrelic-azure-functions/blob/master/screenshots/BlobForwarder/blob3.png?raw=true)
-4. Define the desired **Name**, **Path** to your blob, and **Storage account connection** (Path follows the convention `container/blob`. In order to trigger all blobs inside a container use the `{name}` parameter. eg. `my-container/{name}`)
-5. Paste the New Relic [function code](index.js?raw=true) in the function's existing `index.js` and click **Save**.
-6. Navigate to the **Integrate** tab and verify **Blob parameter name** is set to `myBlob`.
-7. Configure your function's [Application settings](https://docs.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings) and define the desired application settings. `NR_INSERT_KEY` must be configured here.
+6. Wait 2-3 minutes for deployment to complete.
 
+### Step 2: Deploy the Azure Function
 
-## NewRelic Azure Application Settings
+Azure Functions v4 uses a package deployment model. Code cannot be edited directly in the Azure Portal. Instead, you must deploy a pre-built package and configure application settings.
 
-Parameters to be configured in your Azure function's [application settings](https://docs.microsoft.com/en-us/azure/azure-functions/functions-how-to-use-azure-function-app-settings). 
+#### Configure Application Settings
 
-| Property | Required or Optional | Default Value | Description
-|---|---|---|---|
-| NR_LICENSE_KEY | Required | `none` | Your New Relic License Key [license key](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/) |
-| NR_ENDPOINT |  Optional | `https://log-api.newrelic.com/log/v1` | New Relic Logs [ingestion endpoint](https://docs.newrelic.com/docs/logs/new-relic-logs/log-api/introduction-log-api#endpoint). Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
-| NR_TAGS | Optional | `none` | Attributes to be added to all logs forwarded to New Relic. Semicolon delimited (e.g. `env:prod;team:myTeam`) |
-| NR_MAX_RETRIES | Optional | `3` | Number of times the function will attempt to resend data |
-| NR_RETRY_INTERVAL | Optional | `2000` | Interval between retry attempts in milliseconds |
+1. Navigate to your Function App → **Settings** → **Configuration**
+2. Click the **Application settings** tab
+3. Add the following settings by clicking **+ New application setting** for each:
 
-### Finding your NR_LICENSE_KEY Key
+![Function App Application Settings](../../screenshots/BlobForwarder/function-application-settings.png)
 
-* Your New Relic Licence Key [license keys](https://docs.newrelic.com/docs/apis/intro-apis/new-relic-api-keys/) can be found here:
-\[[US](https://one.newrelic.com/launcher/api-keys-ui.api-keys-launcher)|[EU](https://one.eu.newrelic.com/launcher/api-keys-ui.api-keys-launcher)|[JP](https://one.jp.newrelic.com/launcher/api-keys-ui.api-keys-launcher)\]
+#### Required Settings
+
+| Name | Value                                                                                            | Description |
+|------|--------------------------------------------------------------------------------------------------|-------------|
+| `NR_LICENSE_KEY` | Your New Relic License Key                                                                       | Found at [one.newrelic.com](https://one.newrelic.com) → API Keys → License Key |
+| `BLOB_FORWARDER_ENABLED` | `true`                                                                                           | Enables the Blob Storage trigger. **Must be lowercase** `true`. |
+| `CONTAINER_NAME` | `your-container-name`                                                                            | Name of the container in the target storage account. Example: `logs` to monitor all blobs in the `logs` container. Do NOT include `/{name}` - the function adds this automatically. |
+| `TargetAccountConnection` | Storage account connection string                                                                | Connection string from your target storage account (where logs are stored). Found in Storage Account → Security + networking → Access keys → Connection string. |
+| `WEBSITE_RUN_FROM_PACKAGE` | `https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip` | URL to the deployment package. This tells Azure to download and run the latest function code from GitHub. |
+
+#### Optional Settings
+
+| Name | Default Value | Description |
+|------|---------------|-------------|
+| `NR_ENDPOINT` | `https://log-api.newrelic.com/log/v1` | New Relic Logs API endpoint. Use `https://log-api.newrelic.com/log/v1` for US, `https://log-api.eu.newrelic.com/log/v1` for EU, or `https://log-api.jp.newrelic.com/log/v1` for JP region |
+| `NR_TAGS` | _(empty)_ | Custom attributes to add to all forwarded logs. Semicolon-delimited format: `env:prod;team:platform;app:myapp` |
+| `NR_MAX_RETRIES` | `3` | Number of retry attempts if sending logs to New Relic fails. |
+| `NR_RETRY_INTERVAL` | `2000` | Milliseconds to wait between retry attempts. |
+
+#### Auto-Configured Settings (Verify Exist)
+
+These settings are automatically created when you provision the Function App. Verify they exist and have the correct values:
+
+| Name | Expected Value | Notes |
+|------|----------------|-------|
+| `FUNCTIONS_EXTENSION_VERSION` | `~4` | Azure Functions v4 runtime. |
+| `FUNCTIONS_WORKER_RUNTIME` | `node` | Node.js worker runtime. May be auto-managed on some hosting plans. |
+| `WEBSITE_NODE_DEFAULT_VERSION` | `~22` | Node.js version 22. May be auto-managed on some hosting plans. |
+| `AzureWebJobsStorage` | _(connection string)_ | Internal storage account used by the Function App for state management. Auto-created. |
+
+![Application Settings Configured](../../screenshots/BlobForwarder/blob-app-settings.png)
+
+4. Click **Save** at the top of the page
+5. Click **Continue** to confirm the Function App restart
+
+#### Deploy the Function Package
+
+1. Go to Function App → **Overview**
+2. Click **Restart** to ensure all settings are applied and the package is downloaded
+3. Wait 30-60 seconds for the deployment to complete
+
+#### Verify Function Deployment
+
+1. Navigate to **Functions** in the left menu
+2. You should see **BlobForwarder** listed with Status: **Enabled**
+
+![BlobForwarder Function Deployed](../../screenshots/BlobForwarder/blob-function-deployed.png)
+
+3. Upload a log file to your blob storage container
+4. Verify logs are forwarded successfully by viewing them in New Relic. See [Find and use your data](https://docs.newrelic.com/docs/logs/forward-logs/azure-log-forwarding/#find-data) for instructions on querying your Azure logs
+
