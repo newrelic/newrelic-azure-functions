@@ -209,7 +209,6 @@
             "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
             "apiVersion": "2021-11-01",
             "name": "[concat(variables('eventHubNamespaceName'), '/', variables('eventHubAuthRuleName'))]",
-            "condition": "[variables('createNewEventHubNamespace')]",
             "dependsOn": [
                 "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
             ],
