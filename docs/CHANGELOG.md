@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/newrelic/newrelic-azure-functions/compare/v3.0.0...v3.1.0) (2026-05-11)
+
+
+### Features
+
+* Update blob and event-hub forwarder readme and add jp region support ([1bcff3e](https://github.com/newrelic/newrelic-azure-functions/commit/1bcff3e98cd74c53f2656454caeeaf582a1f803b))
+
 # [3.0.0](https://github.com/newrelic/newrelic-azure-functions/compare/v2.8.0...v3.0.0) (2026-03-16)
 
 
