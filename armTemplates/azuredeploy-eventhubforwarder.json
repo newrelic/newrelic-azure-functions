@@ -16,7 +16,7 @@
                 "Managed Identity"
             ],
             "metadata": {
-                "description": "Optional. Authentication method to use for the Event Hub connection. Use Managed Identity when local authentication is disabled in your Azure environment (e.g. for security compliance). Use Local Authentication to connect using a shared access key connection string."
+                "description": "Optional. Authentication method for connecting to the Event Hub. Use Local Authentication to connect via a shared access key connection string, or Managed Identity for keyless authentication using a system-assigned Azure AD identity."
             }
         },
         "eventHubNamespace": {

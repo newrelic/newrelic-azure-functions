@@ -69,7 +69,7 @@ param minEventBatchSize int = 20
 @description('Optional. Maximum amount of time to wait to build up a batch before delivering to the function (in format HH:MM:SS). Default is 00:00:30.')
 param maxWaitTime string = '00:00:30'
 
-@description('Optional. Authentication method to use for the Event Hub connection. Use Managed Identity when local authentication is disabled in your Azure environment (e.g. for security compliance). Use Local Authentication to connect using a shared access key connection string.')
+@description('Optional. Authentication method for connecting to the Event Hub. Use Local Authentication to connect via a shared access key connection string, or Managed Identity for keyless authentication using a system-assigned Azure AD identity.')
 @allowed([
   'Local Authentication'
   'Managed Identity'
