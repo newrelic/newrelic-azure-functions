@@ -387,7 +387,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
 
 resource functionAppName_ZipDeploy 'Microsoft.Web/sites/extensions@2020-12-01' = {
   parent: functionApp
-  name: 'ZipDeploy'
+  name: 'MSDeploy'
   properties: {
     packageUri: vnetFlowLogsForwarderFunctionArtifact
   }
