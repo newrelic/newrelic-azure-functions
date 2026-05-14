@@ -4,13 +4,15 @@
         "id": "Microsoft.Azure.Functions.ExtensionBundle",
         "version": "[4.*,5.0)"
     },
-    "functions": [],
     "functionTimeout": "00:05:00",
     "extensions": {
         "eventHubs": {
             "initialOffsetOptions": {
                 "type": "fromEnd"
-            }
+            },
+            "maxEventBatchSize": 10,
+            "minEventBatchSize": 1,
+            "maxWaitTime": "00:00:30"
         }
     }
 }
