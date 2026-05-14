@@ -378,4 +378,3 @@ module.exports._test = {
 
 // Load VNet Flow Logs Forwarder functions (registered via app.eventGrid / app.eventHub)
 require('../VNetFlowForwarder/index');
-
