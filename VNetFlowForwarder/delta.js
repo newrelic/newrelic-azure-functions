@@ -7,9 +7,7 @@
  * Uses block list inspection to determine what's new since the last cursor.
  */
 
-const {
-  BlobServiceClient,
-} = require('@azure/storage-blob');
+const { BlobServiceClient } = require('@azure/storage-blob');
 const config = require('./config');
 
 let blobServiceClient = null;

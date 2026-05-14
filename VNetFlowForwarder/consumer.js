@@ -56,7 +56,9 @@ async function consumerHandler(messages, context) {
         const { lastBlockId, failureCount } = await cursor.getCursor(blobPath);
         await cursor.incrementFailure(blobPath, lastBlockId, failureCount);
       } catch (cursorErr) {
-        context.warn(`Failed to increment failure counter: ${cursorErr.message}`);
+        context.warn(
+          `Failed to increment failure counter: ${cursorErr.message}`
+        );
       }
     }
   }

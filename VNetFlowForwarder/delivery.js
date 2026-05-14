@@ -196,7 +196,9 @@ async function retryWithBackoff(fn, maxRetries, interval, context) {
       lastError = err;
       if (attempt < maxRetries) {
         context.warn(
-          `NR delivery attempt ${attempt + 1} failed: ${err.message}. Retrying in ${interval}ms...`
+          `NR delivery attempt ${attempt + 1} failed: ${
+            err.message
+          }. Retrying in ${interval}ms...`
         );
         await sleep(interval);
       }

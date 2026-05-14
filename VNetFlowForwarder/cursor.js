@@ -34,8 +34,10 @@ function getTableClient() {
  */
 function encodeKeys(blobPath) {
   // Replace disallowed characters with pipe-delimited hex
-  const encoded = blobPath
-    .replace(/[/\\#?]/g, (ch) => `|${ch.charCodeAt(0).toString(16)}|`);
+  const encoded = blobPath.replace(
+    /[/\\#?]/g,
+    (ch) => `|${ch.charCodeAt(0).toString(16)}|`
+  );
 
   // Use a fixed partition to keep queries simple; rowKey is the encoded path
   return {

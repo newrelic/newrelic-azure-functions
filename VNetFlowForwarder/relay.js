@@ -59,7 +59,9 @@ async function relayHandler(event, context) {
 
   const added = batch.tryAdd({ body: eventBody });
   if (!added) {
-    context.error(`Relay: event too large for Event Hub batch. Subject: ${subject}`);
+    context.error(
+      `Relay: event too large for Event Hub batch. Subject: ${subject}`
+    );
     return;
   }
 

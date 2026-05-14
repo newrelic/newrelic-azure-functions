@@ -56,25 +56,25 @@
 const config = require('./config');
 
 const PROTOCOL_MAP = {
-  '6': 'TCP',
-  '17': 'UDP',
-  '1': 'ICMP',
+  6: 'TCP',
+  17: 'UDP',
+  1: 'ICMP',
 };
 
 const DIRECTION_MAP = {
-  'I': 'Inbound',
-  'O': 'Outbound',
+  I: 'Inbound',
+  O: 'Outbound',
 };
 
 const ACTION_MAP = {
-  'A': 'Allowed',
-  'D': 'Denied',
+  A: 'Allowed',
+  D: 'Denied',
 };
 
 const STATE_MAP = {
-  'B': 'Begin',
-  'C': 'Continuing',
-  'E': 'End',
+  B: 'Begin',
+  C: 'Continuing',
+  E: 'End',
 };
 
 /**

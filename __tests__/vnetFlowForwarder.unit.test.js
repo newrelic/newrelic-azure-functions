@@ -6,9 +6,12 @@
 
 // Mock environment before requiring modules
 process.env.NR_LICENSE_KEY = 'test-license-key';
-process.env.SOURCE_STORAGE_CONNECTION = 'DefaultEndpointsProtocol=https;AccountName=test;AccountKey=dGVzdA==;EndpointSuffix=core.windows.net';
-process.env.CURSOR_STORAGE_CONNECTION = 'DefaultEndpointsProtocol=https;AccountName=test;AccountKey=dGVzdA==;EndpointSuffix=core.windows.net';
-process.env.EVENTHUB_CONNECTION = 'Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=test;SharedAccessKey=dGVzdA==';
+process.env.SOURCE_STORAGE_CONNECTION =
+  'DefaultEndpointsProtocol=https;AccountName=test;AccountKey=dGVzdA==;EndpointSuffix=core.windows.net';
+process.env.CURSOR_STORAGE_CONNECTION =
+  'DefaultEndpointsProtocol=https;AccountName=test;AccountKey=dGVzdA==;EndpointSuffix=core.windows.net';
+process.env.EVENTHUB_CONNECTION =
+  'Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=test;SharedAccessKey=dGVzdA==';
 process.env.EVENTHUB_NAME = 'eh-vnetflow';
 process.env.CURSOR_TABLE_NAME = 'cursors';
 process.env.VNETFLOW_RELAY_ENABLED = 'true';
@@ -25,7 +28,8 @@ const config = require('../VNetFlowForwarder/config');
 describe('Parser', () => {
   describe('parseFlowTuple', () => {
     it('should parse a complete flow tuple CSV', () => {
-      const tuple = '1699990055,10.0.0.4,10.0.0.5,12345,443,6,O,A,C,10,1500,8,1200';
+      const tuple =
+        '1699990055,10.0.0.4,10.0.0.5,12345,443,6,O,A,C,10,1500,8,1200';
       const result = parser.parseFlowTuple(tuple);
 
       expect(result.timestamp).toBe(1699990055000);
@@ -80,14 +84,16 @@ describe('Parser', () => {
     });
 
     it('should parse a JSON fragment (appended blocks)', () => {
-      const fragment = ',{"time":"2024-01-01T01:00:00Z","macAddress":"112233445566","flowRecords":{"flows":[]}}]}';
+      const fragment =
+        ',{"time":"2024-01-01T01:00:00Z","macAddress":"112233445566","flowRecords":{"flows":[]}}]}';
       const result = parser.parseRawDelta(fragment);
       expect(result).toHaveLength(1);
       expect(result[0].macAddress).toBe('112233445566');
     });
 
     it('should parse multiple records in a fragment', () => {
-      const fragment = ',{"time":"T1","macAddress":"AA"},{"time":"T2","macAddress":"BB"}]}';
+      const fragment =
+        ',{"time":"T1","macAddress":"AA"},{"time":"T2","macAddress":"BB"}]}';
       const result = parser.parseRawDelta(fragment);
       expect(result).toHaveLength(2);
       expect(result[0].macAddress).toBe('AA');
@@ -205,7 +211,8 @@ describe('Parser', () => {
 describe('Cursor', () => {
   describe('encodeKeys', () => {
     it('should encode slashes in blob paths', () => {
-      const path = '/blobServices/default/containers/insights/blobs/resource/PT1H.json';
+      const path =
+        '/blobServices/default/containers/insights/blobs/resource/PT1H.json';
       const keys = cursor.encodeKeys(path);
 
       expect(keys.partitionKey).toBe('vnetflow');
@@ -254,7 +261,9 @@ describe('Delta', () => {
     });
 
     it('should throw for invalid path with no slash', () => {
-      expect(() => delta.parseBlobPath('nocontainer')).toThrow('Invalid blob path');
+      expect(() => delta.parseBlobPath('nocontainer')).toThrow(
+        'Invalid blob path'
+      );
     });
   });
 });
@@ -295,7 +304,9 @@ describe('Delivery', () => {
       expect(payload).toHaveLength(1);
       expect(payload[0].common.attributes.plugin.type).toBe('azure');
       expect(payload[0].common.attributes.plugin.version).toBe(config.version);
-      expect(payload[0].common.attributes.azure.forwardername).toBe('VNetFlowConsumer');
+      expect(payload[0].common.attributes.azure.forwardername).toBe(
+        'VNetFlowConsumer'
+      );
       expect(payload[0].common.attributes.azure.invocationid).toBe('inv-123');
       expect(payload[0].logs).toEqual(entries);
     });
@@ -340,7 +351,9 @@ describe('Config', () => {
     const orig = config.sourceStorageConnection;
     config.sourceStorageConnection = '';
 
-    expect(() => config.validate()).toThrow('Missing SOURCE_STORAGE_CONNECTION');
+    expect(() => config.validate()).toThrow(
+      'Missing SOURCE_STORAGE_CONNECTION'
+    );
 
     config.sourceStorageConnection = orig;
   });
