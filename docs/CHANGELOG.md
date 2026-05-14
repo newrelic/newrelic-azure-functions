@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/newrelic/newrelic-azure-functions/compare/v3.1.0...v3.2.0) (2026-05-14)
+
+
+### Features
+
+* release version 3.2.0, it contians managed identity auth for event hub ([#136](https://github.com/newrelic/newrelic-azure-functions/issues/136)) ([0ef017a](https://github.com/newrelic/newrelic-azure-functions/commit/0ef017a631f3ce690352130c5974aa21c66875e3))
+
 # [3.1.0](https://github.com/newrelic/newrelic-azure-functions/compare/v3.0.0...v3.1.0) (2026-05-11)
 
 
