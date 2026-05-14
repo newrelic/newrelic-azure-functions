@@ -266,6 +266,9 @@
 
         "useManagedIdentity": "[equals(parameters('authenticationMode'), 'Managed Identity')]",
         "eventHubsDataReceiverRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')]",
+        "logConsumerAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName'))]",
+        "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "azureWebJobsStorageConnectionFormat": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey={0};EndpointSuffix=', environment().suffixes.storage)]",
 
         "baseAppSettings": [
             {
@@ -777,7 +780,7 @@
             "properties": {
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
                 "siteConfig": {
-                    "appSettings": "[concat(variables('baseAppSettings'), if(variables('useManagedIdentity'), variables('managedIdentityAppSettings'), createArray(createObject('name', 'EVENTHUB_CONSUMER_CONNECTION', 'value', listKeys(resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName')),'2017-04-01').primaryConnectionString))), createArray(createObject('name', 'AzureWebJobsStorage', 'value', concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=',environment().suffixes.storage))))]",
+                    "appSettings": "[concat(variables('baseAppSettings'), if(variables('useManagedIdentity'), variables('managedIdentityAppSettings'), createArray(createObject('name', 'EVENTHUB_CONSUMER_CONNECTION', 'value', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2017-04-01').primaryConnectionString))), createArray(createObject('name', 'AzureWebJobsStorage', 'value', format(variables('azureWebJobsStorageConnectionFormat'), listKeys(variables('storageAccountResourceId'), '2021-04-01').keys[0].value))))]",
                     "alwaysOn": "[parameters('disablePublicAccessToStorageAccount')]",
                     "ftpsState": "Disabled",
                     "publicNetworkAccess": "[if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')]"
@@ -895,7 +898,7 @@
     "outputs": {
         "connectionString": {
             "type": "String",
-            "value": "[if(variables('useManagedIdentity'), '', listKeys(resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName')),'2017-04-01').primaryConnectionString)]"
+            "value": "[if(variables('useManagedIdentity'), '', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2017-04-01').primaryConnectionString)]"
         },
         "eventHubName": {
             "type": "string",
