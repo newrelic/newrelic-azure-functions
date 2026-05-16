@@ -22,6 +22,27 @@ const NR_MAX_PAYLOAD_SIZE = 1000 * 1024;
 const NR_MAX_RETRIES = process.env.NR_MAX_RETRIES || 3;
 const NR_RETRY_INTERVAL = process.env.NR_RETRY_INTERVAL || 2000; // default: 2 seconds
 
+// Deployment context for easy identification in logs
+const DEPLOYMENT_CONTEXT_ENABLED = process.env.DEPLOYMENT_CONTEXT_ENABLED === 'true';
+const DEPLOYMENT_NAME = process.env.DEPLOYMENT_NAME || 'unknown';
+const DEPLOYMENT_VNET_NAME = process.env.DEPLOYMENT_VNET_NAME || 'unknown';
+const DEPLOYMENT_LOCATION = process.env.DEPLOYMENT_LOCATION || 'unknown';
+const DEPLOYMENT_TYPE = process.env.DEPLOYMENT_TYPE || 'unknown';
+const DEPLOYMENT_METHOD = process.env.DEPLOYMENT_METHOD || 'unknown';
+
+function getDeploymentContext() {
+  if (!DEPLOYMENT_CONTEXT_ENABLED) {
+    return null;
+  }
+  return {
+    deploymentName: DEPLOYMENT_NAME,
+    vnetName: DEPLOYMENT_VNET_NAME,
+    location: DEPLOYMENT_LOCATION,
+    deploymentType: DEPLOYMENT_TYPE,
+    deploymentMethod: DEPLOYMENT_METHOD
+  };
+}
+
 if (process.env.EVENTHUB_FORWARDER_ENABLED === 'true') {
   app.eventHub('EventHubForwarder', {
     eventHubName: process.env.EVENTHUB_NAME,
@@ -42,6 +63,131 @@ if (process.env.BLOB_FORWARDER_ENABLED === 'true') {
       await main(blob, context);
     },
   });
+}
+
+if (process.env.VNETFLOWLOGS_FORWARDER_ENABLED === 'true') {
+  app.eventHub('VNetFlowLogsForwarder', {
+    eventHubName: process.env.EVENTHUB_NAME,
+    connection: 'EVENTHUB_CONSUMER_CONNECTION',
+    cardinality: 'many',
+    consumerGroup: process.env.EVENTHUB_CONSUMER_GROUP,
+    handler: async (messages, context) => {
+      await vnetFlowLogsHandler(messages, context);
+    },
+  });
+}
+
+async function vnetFlowLogsHandler(messages, context) {
+  const deploymentCtx = getDeploymentContext();
+
+  context.log('==== VNetFlowLogsForwarder Triggered ====');
+  if (deploymentCtx) {
+    context.log(`📍 Deployment: ${deploymentCtx.deploymentName}`);
+    context.log(`🌐 VNet: ${deploymentCtx.vnetName}`);
+    context.log(`📍 Location: ${deploymentCtx.location}`);
+    context.log(`🔧 Method: ${deploymentCtx.deploymentMethod}`);
+  }
+  context.log(`Received ${messages.length} Event Grid event(s)`);
+
+  const validationLogs = [];
+
+  for (let i = 0; i < messages.length; i++) {
+    const message = messages[i];
+    context.log(`\n--- Processing Message ${i + 1}/${messages.length} ---`);
+
+    try {
+      // Parse Event Grid event - message can be string or object
+      let eventData =
+        typeof message === 'string' ? JSON.parse(message) : message;
+
+      // Event Grid events come as an array
+      const events = Array.isArray(eventData) ? eventData : [eventData];
+
+      context.log(`Found ${events.length} Event Grid event(s) in message`);
+
+      // Process each Event Grid event
+      for (let j = 0; j < events.length; j++) {
+        const event = events[j];
+
+        context.log(`\n  -- Event ${j + 1}/${events.length} --`);
+        context.log('  Event Type:', event.eventType);
+        context.log('  Event Subject:', event.subject);
+        context.log('  Event Time:', event.eventTime);
+
+        // Extract blob information from Event Grid event
+        if (event.eventType === 'Microsoft.Storage.BlobCreated') {
+          const blobUrl = event.data?.url || event.subject;
+          const blobSize = event.data?.contentLength || 0;
+          const blobType = event.data?.contentType || 'unknown';
+
+          context.log(`  Blob URL: ${blobUrl}`);
+          context.log(`  Blob Size: ${blobSize} bytes`);
+
+          // Check if it's a PT1H.json file (VNet Flow Log)
+          if (blobUrl && blobUrl.includes('PT1H.json')) {
+            context.log(
+              '  ✓ VALIDATED: This is a VNet Flow Log file (PT1H.json)'
+            );
+            context.log('  ✓ Event Grid → Event Hub flow is working!');
+
+            // Create validation log for New Relic
+            const validationLog = {
+              message: 'VNet Flow Logs E2E Validation - Event Received',
+              logtype: 'azure.vnet.flowlog.validation',
+              validation: {
+                status: 'success',
+                step: 'event-grid-to-eventhub',
+                description:
+                  'Event Grid successfully forwarded blob creation event to Event Hub',
+              },
+              event: {
+                eventType: event.eventType,
+                eventTime: event.eventTime,
+                subject: event.subject,
+              },
+              blob: {
+                url: blobUrl,
+                size: blobSize,
+                contentType: blobType,
+                isPT1HFile: true,
+                isFlowLogContainer: blobUrl.includes(
+                  'insights-logs-flowlogflowevent'
+                ),
+              },
+              deployment: deploymentCtx,
+              timestamp: new Date().toISOString(),
+            };
+
+            validationLogs.push(validationLog);
+            context.log('  ✓ Validation log prepared for New Relic');
+          } else {
+            context.log('  ⚠ Not a PT1H.json file, skipping');
+          }
+        } else {
+          context.log('  ⚠ Event type:', event.eventType || 'unknown');
+        }
+      }
+    } catch (error) {
+      context.error('Error processing message:', error.message);
+    }
+  }
+
+  // Send validation logs to New Relic
+  if (validationLogs.length > 0) {
+    context.log(
+      `\n==== Sending ${validationLogs.length} validation log(s) to New Relic ====`
+    );
+
+    // Use the existing compressAndSend function
+    const logLines = validationLogs.map((log) => {
+      log.timestamp = log.timestamp || Date.now();
+      return log;
+    });
+
+    await compressAndSend(logLines, context);
+  }
+
+  context.log('==== VNetFlowLogsForwarder Completed ====\n');
 }
 
 async function main(logMessages, context) {
@@ -153,19 +299,26 @@ function getPayload(logs, context) {
 }
 
 function getCommonAttributes(context) {
-  return {
-    attributes: {
-      plugin: {
-        type: NR_LOGS_SOURCE,
-        version: VERSION,
-      },
-      azure: {
-        forwardername: context.functionName,
-        invocationid: context.invocationId,
-      },
-      tags: getTags(),
+  const deploymentCtx = getDeploymentContext();
+
+  const attributes = {
+    plugin: {
+      type: NR_LOGS_SOURCE,
+      version: VERSION,
     },
+    azure: {
+      forwardername: context.functionName,
+      invocationid: context.invocationId,
+    },
+    tags: getTags(),
   };
+
+  // Add deployment context to all logs
+  if (deploymentCtx) {
+    attributes.deployment = deploymentCtx;
+  }
+
+  return { attributes };
 }
 
 function getTags() {
