@@ -306,6 +306,24 @@
             }
         },
         {
+            "type": "Microsoft.Storage/storageAccounts/tableServices",
+            "apiVersion": "2022-09-01",
+            "name": "[concat(variables('cursorStorageAccountName'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('cursorStorageAccountName'))]"
+            ],
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+            "apiVersion": "2022-09-01",
+            "name": "[concat(variables('cursorStorageAccountName'), '/default/', variables('cursorTableName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices', variables('cursorStorageAccountName'), 'default')]"
+            ],
+            "properties": {}
+        },
+        {
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2021-09-01",
             "name": "[variables('functionStorageAccountName')]",
@@ -358,6 +376,7 @@
                 "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('cursorStorageAccountName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/tableServices/tables', variables('cursorStorageAccountName'), 'default', variables('cursorTableName'))]",
                 "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
             ],
             "properties": {
