@@ -257,6 +257,18 @@ resource cursorStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   }
 }
 
+resource cursorStorageAccountName_default 'Microsoft.Storage/storageAccounts/tableServices@2022-09-01' = {
+  parent: cursorStorageAccount
+  name: 'default'
+  properties: {}
+}
+
+resource cursorStorageAccountName_default_cursorTable 'Microsoft.Storage/storageAccounts/tableServices/tables@2022-09-01' = {
+  parent: cursorStorageAccountName_default
+  name: cursorTableName
+  properties: {}
+}
+
 resource functionStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: functionStorageAccountName
   location: location_var
@@ -382,6 +394,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
   }
   dependsOn: [
     eventHubNamespaceName_eventHubAuthRule
+    cursorStorageAccountName_default_cursorTable
   ]
 }
 
