@@ -1,25 +1,26 @@
 @description('Required. New Relic License Key')
+@secure()
 param newRelicLicenseKey string
 
-@description('Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Must be in the same resource group as this deployment. Leave this blank to create a new storage account (its name will start with \'nrvnetsrc\').')
+@description('Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Must be in the same resource group as this deployment. Leave this blank to create a new storage account (its name will start with \'nrvnetflsrc\').')
 param sourceStorageAccountName string = ''
 
-@description('Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with \'nrvnetflowlogs-\').')
+@description('Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with \'nrvnetflowlogs-ehns-\').')
 param eventHubNamespace string = ''
 
-@description('Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be \'nrvnetflowlogs\').')
+@description('Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be \'nrvnetflowlogs-ehub\').')
 param eventHubName string = ''
 
-@description('Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (will start with \'nrvnetflowlogs-egtopic-\').')
+@description('Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (its name will start with \'nrvnetflowlogs-egtopic-\').')
 param eventGridSystemTopicName string = ''
 
-@description('Optional. Name for the Event Grid Subscription that will be created to filter PT1H.json files. Leave this blank to auto-generate a unique name (will start with \'nrvnetflowlogs-egsub-\').')
+@description('Optional. Name for the Event Grid Subscription that will be created to filter PT1H.json files. Leave this blank to auto-generate a unique name (its name will start with \'nrvnetflowlogs-egsub-\').')
 param eventGridSubscriptionName string = ''
 
 @description('Optional. Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group.')
 param location string = ''
 
-@description('Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you\'re in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1')
+@description('Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. If you\'re in the European Union (EU) region, use https://log-api.eu.newrelic.com/log/v1. If you\'re in the Japan (JP) region, use https://log-api.jp.newrelic.com/log/v1')
 param newRelicEndpoint string = 'https://log-api.newrelic.com/log/v1'
 
 @description('Optional. The scaling for the resources. If set to \'Enterprise\', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynamic App Service Plan.')
@@ -33,28 +34,28 @@ var uniqueResourceNameSuffix = uniqueString(resourceGroup().id)
 var location_var = (empty(location) ? resourceGroup().location : location)
 var createNewSourceStorage = empty(sourceStorageAccountName)
 var sourceStorageAccountNameResolved_var = (createNewSourceStorage
-  ? 'nrvnetsrc${uniqueResourceNameSuffix}'
+  ? 'nrvnetflsrc${uniqueResourceNameSuffix}'
   : sourceStorageAccountName)
 var createNewEventHubNamespace = empty(eventHubNamespace)
 var createNewEventHub = (empty(eventHubNamespace) || empty(eventHubName))
 var eventHubNamespaceName = (createNewEventHubNamespace
-  ? 'nrvnetflowlogs-${uniqueResourceNameSuffix}'
+  ? 'nrvnetflowlogs-ehns-${uniqueResourceNameSuffix}'
   : eventHubNamespace)
-var eventHubName_var = (createNewEventHub ? 'nrvnetflowlogs' : eventHubName)
-var eventHubConsumerGroupName = 'nrvnetflowlogs'
-var eventHubAuthRuleName = 'nrvnetflowlogs-auth-rule'
+var eventHubName_var = (createNewEventHub ? 'nrvnetflowlogs-ehub' : eventHubName)
+var eventHubConsumerGroupName = 'nrvnetflowlogs-cg'
+var eventHubAuthRuleName = 'nrvnetflowlogs-auth'
 var eventGridSystemTopicName_var = (empty(eventGridSystemTopicName)
   ? 'nrvnetflowlogs-egtopic-${uniqueResourceNameSuffix}'
   : eventGridSystemTopicName)
 var eventGridSubscriptionName_var = (empty(eventGridSubscriptionName)
   ? 'nrvnetflowlogs-egsub-${uniqueResourceNameSuffix}'
   : eventGridSubscriptionName)
-var cursorStorageAccountName = 'nrvnetcur${uniqueResourceNameSuffix}'
-var cursorTableName = 'vnetflowlogcursors'
-var functionStorageAccountName = 'nrvnetfunc${uniqueResourceNameSuffix}'
+var cursorStorageAccountName = 'nrvnetflcur${uniqueResourceNameSuffix}'
+var cursorTableName = 'nrvnetflowlogscursors'
+var functionStorageAccountName = 'nrvnetflfn${uniqueResourceNameSuffix}'
 var servicePlanName = 'nrvnetflowlogs-asp-${uniqueResourceNameSuffix}'
 var functionAppName = 'nrvnetflowlogs-func-${uniqueResourceNameSuffix}'
-var sourceStorageAccountId = createNewSourceStorage ? sourceStorageAccountNameResolved.id : existingSourceStorage.id
+var sourceStorageAccountId = sourceStorageAccountNameResolved.id
 var vnetFlowLogsForwarderFunctionArtifact = 'https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip'
 var autoscalingASP = {
   kind: 'elastic'
@@ -119,10 +120,6 @@ resource sourceStorageAccountNameResolved 'Microsoft.Storage/storageAccounts@202
   }
 }
 
-resource existingSourceStorage 'Microsoft.Storage/storageAccounts@2021-09-01' existing = if (!createNewSourceStorage) {
-  name: sourceStorageAccountName
-}
-
 resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2021-11-01' = if (createNewEventHubNamespace) {
   name: eventHubNamespaceName
   location: location_var
@@ -139,45 +136,31 @@ resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2021-11-01' =
   }
 }
 
-resource existingEventHubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' existing = if (!createNewEventHubNamespace) {
-  name: eventHubNamespace
-}
-
 resource eventHubNamespaceName_eventHub 'Microsoft.EventHub/namespaces/eventhubs@2021-11-01' = if (createNewEventHub) {
-  name: '${eventHubNamespaceName}/${eventHubName_var}'
+  parent: eventHubNamespace_resource
+  name: '${eventHubName_var}'
   location: location_var
   properties: {
     messageRetentionInDays: 1
     partitionCount: ((scalingMode == 'Enterprise') ? 32 : 4)
   }
-  dependsOn: [
-    eventHubNamespace_resource
-  ]
-}
-
-resource existingEventHub 'Microsoft.EventHub/namespaces/eventhubs@2021-11-01' existing = if (!createNewEventHub) {
-  name: '${eventHubNamespaceName}/${eventHubName}'
 }
 
 resource eventHubNamespaceName_eventHubName_eventHubConsumerGroup 'Microsoft.EventHub/namespaces/eventhubs/consumergroups@2021-11-01' = {
-  name: '${eventHubNamespaceName}/${eventHubName_var}/${eventHubConsumerGroupName}'
+  parent: eventHubNamespaceName_eventHub
+  name: eventHubConsumerGroupName
   properties: {}
-  dependsOn: [
-    eventHubNamespaceName_eventHub
-  ]
 }
 
 resource eventHubNamespaceName_eventHubAuthRule 'Microsoft.EventHub/namespaces/AuthorizationRules@2021-11-01' = {
-  name: '${eventHubNamespaceName}/${eventHubAuthRuleName}'
+  parent: eventHubNamespace_resource
+  name: '${eventHubAuthRuleName}'
   properties: {
     rights: [
       'Listen'
       'Send'
     ]
   }
-  dependsOn: [
-    eventHubNamespace_resource
-  ]
 }
 
 resource eventGridSystemTopic 'Microsoft.EventGrid/systemTopics@2021-12-01' = {
@@ -196,7 +179,7 @@ resource eventGridSystemTopicName_eventGridSubscription 'Microsoft.EventGrid/sys
     destination: {
       endpointType: 'EventHub'
       properties: {
-        resourceId: createNewEventHub ? eventHubNamespaceName_eventHub.id : existingEventHub.id
+        resourceId: eventHubNamespaceName_eventHub.id
       }
     }
     filter: {
@@ -359,7 +342,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         }
         {
           name: 'EVENTHUB_CONSUMER_CONNECTION'
-          value: listKeys(resourceId('Microsoft.EventHub/namespaces/authorizationRules', eventHubNamespaceName, eventHubAuthRuleName), '2021-11-01').primaryConnectionString
+          value: listKeys(eventHubNamespaceName_eventHubAuthRule.id, '2021-11-01').primaryConnectionString
         }
         {
           name: 'EVENTHUB_CONSUMER_GROUP'
@@ -371,7 +354,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         }
         {
           name: 'SOURCE_STORAGE_CONNECTION'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${sourceStorageAccountNameResolved_var};AccountKey=${listKeys(sourceStorageAccountId,'2021-09-01').keys[0].value};EndpointSuffix=core.windows.net'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${sourceStorageAccountNameResolved_var};AccountKey=${listKeys(sourceStorageAccountNameResolved.id,'2021-09-01').keys[0].value};EndpointSuffix=core.windows.net'
         }
         {
           name: 'CURSOR_STORAGE_CONNECTION'
@@ -393,12 +376,11 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
     }
   }
   dependsOn: [
-    eventHubNamespaceName_eventHubAuthRule
     cursorStorageAccountName_default_cursorTable
   ]
 }
 
-resource functionAppName_ZipDeploy 'Microsoft.Web/sites/extensions@2020-12-01' = {
+resource functionAppName_MSDeploy 'Microsoft.Web/sites/extensions@2020-12-01' = {
   parent: functionApp
   name: 'MSDeploy'
   properties: {
