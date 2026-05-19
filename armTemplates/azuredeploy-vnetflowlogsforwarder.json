@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "newRelicLicenseKey": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "Required. New Relic License Key"
             }
