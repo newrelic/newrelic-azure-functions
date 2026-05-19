@@ -15,6 +15,20 @@
                 "description": "Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Must be in the same resource group as this deployment. Leave this blank to create a new storage account (its name will start with 'nrvnetflsrc')."
             }
         },
+        "eventHubNamespace": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with 'nrvnetflowlogs-ehns-')."
+            }
+        },
+        "eventHubName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrvnetflowlogs-ehub')."
+            }
+        },
         "eventGridSystemTopicName": {
             "type": "string",
             "defaultValue": "",
@@ -62,8 +76,11 @@
         "createNewSourceStorage": "[empty(parameters('sourceStorageAccountName'))]",
         "sourceStorageAccountNameResolved": "[if(variables('createNewSourceStorage'), concat('nrvnetflsrc', variables('uniqueResourceNameSuffix')), parameters('sourceStorageAccountName'))]",
 
-        "eventHubNamespaceName": "[concat('nrvnetflowlogs-ehns-', variables('uniqueResourceNameSuffix'))]",
-        "eventHubName": "nrvnetflowlogs-ehub",
+        "createNewEventHubNamespace": "[empty(parameters('eventHubNamespace'))]",
+        "createNewEventHub": "[or(empty(parameters('eventHubNamespace')), empty(parameters('eventHubName')))]",
+
+        "eventHubNamespaceName": "[if(variables('createNewEventHubNamespace'), concat('nrvnetflowlogs-ehns-', variables('uniqueResourceNameSuffix')), parameters('eventHubNamespace'))]",
+        "eventHubName": "[if(variables('createNewEventHub'), 'nrvnetflowlogs-ehub', parameters('eventHubName'))]",
         "eventHubConsumerGroupName": "nrvnetflowlogs-cg",
         "eventHubAuthRuleName": "nrvnetflowlogs-auth",
 
@@ -151,6 +168,7 @@
             "type": "Microsoft.EventHub/namespaces",
             "apiVersion": "2021-11-01",
             "name": "[variables('eventHubNamespaceName')]",
+            "condition": "[variables('createNewEventHubNamespace')]",
             "location": "[variables('location')]",
             "sku": {
                 "name": "Standard",
@@ -168,6 +186,7 @@
             "type": "Microsoft.EventHub/namespaces/eventhubs",
             "apiVersion": "2021-11-01",
             "name": "[concat(variables('eventHubNamespaceName'), '/', variables('eventHubName'))]",
+            "condition": "[variables('createNewEventHub')]",
             "location": "[variables('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.EventHub/namespaces/', variables('eventHubNamespaceName'))]"
