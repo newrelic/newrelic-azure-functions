@@ -377,7 +377,7 @@
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('cursorStorageAccountName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/tableServices/tables', variables('cursorStorageAccountName'), 'default', variables('cursorTableName'))]",
-                "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
+                "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('eventHubNamespaceName'), variables('eventHubAuthRuleName'))]"
             ],
             "properties": {
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
