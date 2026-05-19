@@ -12,35 +12,35 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Must be in the same resource group as this deployment. Leave this blank to create a new storage account (its name will start with 'nrvnetsrc')."
+                "description": "Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Must be in the same resource group as this deployment. Leave this blank to create a new storage account (its name will start with 'nrvnetflsrc')."
             }
         },
         "eventHubNamespace": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with 'nrvnetflowlogs-')."
+                "description": "Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with 'nrvnetflowlogs-ehns-')."
             }
         },
         "eventHubName": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrvnetflowlogs')."
+                "description": "Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrvnetflowlogs-ehub')."
             }
         },
         "eventGridSystemTopicName": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (will start with 'nrvnetflowlogs-egtopic-')."
+                "description": "Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (its name will start with 'nrvnetflowlogs-egtopic-')."
             }
         },
         "eventGridSubscriptionName": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Name for the Event Grid Subscription that will be created to filter PT1H.json files. Leave this blank to auto-generate a unique name (will start with 'nrvnetflowlogs-egsub-')."
+                "description": "Optional. Name for the Event Grid Subscription that will be created to filter PT1H.json files. Leave this blank to auto-generate a unique name (its name will start with 'nrvnetflowlogs-egsub-')."
             }
         },
         "location": {
@@ -54,7 +54,7 @@
             "type": "string",
             "defaultValue": "https://log-api.newrelic.com/log/v1",
             "metadata": {
-                "description": "Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
+                "description": "Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. If you're in the European Union (EU) region, use https://log-api.eu.newrelic.com/log/v1. If you're in the Japan (JP) region, use https://log-api.jp.newrelic.com/log/v1"
             }
         },
         "scalingMode": {
@@ -74,23 +74,23 @@
         "location": "[if(empty(parameters('location')), resourceGroup().location, parameters('location'))]",
 
         "createNewSourceStorage": "[empty(parameters('sourceStorageAccountName'))]",
-        "sourceStorageAccountNameResolved": "[if(variables('createNewSourceStorage'), concat('nrvnetsrc', variables('uniqueResourceNameSuffix')), parameters('sourceStorageAccountName'))]",
+        "sourceStorageAccountNameResolved": "[if(variables('createNewSourceStorage'), concat('nrvnetflsrc', variables('uniqueResourceNameSuffix')), parameters('sourceStorageAccountName'))]",
 
         "createNewEventHubNamespace": "[empty(parameters('eventHubNamespace'))]",
         "createNewEventHub": "[or(empty(parameters('eventHubNamespace')), empty(parameters('eventHubName')))]",
 
-        "eventHubNamespaceName": "[if(variables('createNewEventHubNamespace'), concat('nrvnetflowlogs-', variables('uniqueResourceNameSuffix')), parameters('eventHubNamespace'))]",
-        "eventHubName": "[if(variables('createNewEventHub'), 'nrvnetflowlogs', parameters('eventHubName'))]",
-        "eventHubConsumerGroupName": "nrvnetflowlogs",
-        "eventHubAuthRuleName": "nrvnetflowlogs-auth-rule",
+        "eventHubNamespaceName": "[if(variables('createNewEventHubNamespace'), concat('nrvnetflowlogs-ehns-', variables('uniqueResourceNameSuffix')), parameters('eventHubNamespace'))]",
+        "eventHubName": "[if(variables('createNewEventHub'), 'nrvnetflowlogs-ehub', parameters('eventHubName'))]",
+        "eventHubConsumerGroupName": "nrvnetflowlogs-cg",
+        "eventHubAuthRuleName": "nrvnetflowlogs-auth",
 
         "eventGridSystemTopicName": "[if(empty(parameters('eventGridSystemTopicName')), concat('nrvnetflowlogs-egtopic-', variables('uniqueResourceNameSuffix')), parameters('eventGridSystemTopicName'))]",
         "eventGridSubscriptionName": "[if(empty(parameters('eventGridSubscriptionName')), concat('nrvnetflowlogs-egsub-', variables('uniqueResourceNameSuffix')), parameters('eventGridSubscriptionName'))]",
 
-        "cursorStorageAccountName": "[concat('nrvnetcur', variables('uniqueResourceNameSuffix'))]",
-        "cursorTableName": "vnetflowlogcursors",
+        "cursorStorageAccountName": "[concat('nrvnetflcur', variables('uniqueResourceNameSuffix'))]",
+        "cursorTableName": "nrvnetflowlogscursors",
 
-        "functionStorageAccountName": "[concat('nrvnetfunc', variables('uniqueResourceNameSuffix'))]",
+        "functionStorageAccountName": "[concat('nrvnetflfn', variables('uniqueResourceNameSuffix'))]",
         "servicePlanName": "[concat('nrvnetflowlogs-asp-', variables('uniqueResourceNameSuffix'))]",
         "functionAppName": "[concat('nrvnetflowlogs-func-', variables('uniqueResourceNameSuffix'))]",
 
