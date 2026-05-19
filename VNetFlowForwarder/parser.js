@@ -193,6 +193,20 @@ function extractMetadataFromPath(blobPath) {
     metadata.resourceName = providerMatch[2];
   }
 
+  // VNet Flow Log v4 path format:
+  //   flowLogResourceID=/{subscriptionId}_{resourceGroup}/{flowLogName}/y=.../macAddress=.../PT1H.json
+  if (!metadata.subscriptionId) {
+    const v4Match = blobPath.match(
+      /flowLogResourceID=\/([0-9a-f-]+)_([^/]+)\/([^/]+)\//i
+    );
+    if (v4Match) {
+      metadata.subscriptionId = v4Match[1].toLowerCase();
+      metadata.resourceGroup = v4Match[2];
+      metadata.resourceName = v4Match[3];
+      metadata.resourceType = 'flowLogs';
+    }
+  }
+
   // Extract MAC address
   const macMatch = blobPath.match(/macAddress=([^/]+)/i);
   if (macMatch) metadata.macAddress = macMatch[1];

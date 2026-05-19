@@ -67,6 +67,13 @@
             "metadata": {
                 "description": "Optional. The scaling for the resources. If set to 'Enterprise', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynamic App Service Plan."
             }
+        },
+        "deployFunctionApp": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Optional. Set to false to skip deploying the App Service Plan and Function App (useful when the subscription lacks serverFarm quota). The Function App can then be created separately via CLI."
+            }
         }
     },
     "variables": {
@@ -95,8 +102,6 @@
         "functionAppName": "[concat('nrvnetflowlogs-func-', variables('uniqueResourceNameSuffix'))]",
 
         "sourceStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]",
-
-        "vnetFlowLogsForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip",
 
         "autoscalingASP": {
             "kind": "elastic",
@@ -360,6 +365,7 @@
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2021-03-01",
+            "condition": "[parameters('deployFunctionApp')]",
             "name": "[variables('servicePlanName')]",
             "location": "[variables('location')]",
             "kind": "[variables('aspConfig').kind]",
@@ -369,6 +375,7 @@
         {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2021-03-01",
+            "condition": "[parameters('deployFunctionApp')]",
             "name": "[variables('functionAppName')]",
             "location": "[variables('location')]",
             "kind": "functionapp",
@@ -415,6 +422,10 @@
                             "value": "0"
                         },
                         {
+                            "name": "VNETFLOW_RELAY_ENABLED",
+                            "value": "true"
+                        },
+                        {
                             "name": "VNETFLOWLOGS_FORWARDER_ENABLED",
                             "value": "true"
                         },
@@ -456,17 +467,6 @@
                         }
                     ]
                 }
-            }
-        },
-        {
-            "type": "Microsoft.Web/sites/extensions",
-            "apiVersion": "2020-12-01",
-            "name": "[concat(variables('functionAppName'), '/ZipDeploy')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
-            ],
-            "properties": {
-                "packageUri": "[variables('vnetFlowLogsForwarderFunctionArtifact')]"
             }
         }
     ],
