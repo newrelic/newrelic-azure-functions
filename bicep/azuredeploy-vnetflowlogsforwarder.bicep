@@ -5,12 +5,6 @@ param newRelicLicenseKey string
 @description('Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Must be in the same resource group as this deployment. Leave this blank to create a new storage account (its name will start with \'nrvnetflsrc\').')
 param sourceStorageAccountName string = ''
 
-@description('Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with \'nrvnetflowlogs-ehns-\').')
-param eventHubNamespace string = ''
-
-@description('Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be \'nrvnetflowlogs-ehub\').')
-param eventHubName string = ''
-
 @description('Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (its name will start with \'nrvnetflowlogs-egtopic-\').')
 param eventGridSystemTopicName string = ''
 
@@ -36,12 +30,8 @@ var createNewSourceStorage = empty(sourceStorageAccountName)
 var sourceStorageAccountNameResolved_var = (createNewSourceStorage
   ? 'nrvnetflsrc${uniqueResourceNameSuffix}'
   : sourceStorageAccountName)
-var createNewEventHubNamespace = empty(eventHubNamespace)
-var createNewEventHub = (empty(eventHubNamespace) || empty(eventHubName))
-var eventHubNamespaceName = (createNewEventHubNamespace
-  ? 'nrvnetflowlogs-ehns-${uniqueResourceNameSuffix}'
-  : eventHubNamespace)
-var eventHubName_var = (createNewEventHub ? 'nrvnetflowlogs-ehub' : eventHubName)
+var eventHubNamespaceName = 'nrvnetflowlogs-ehns-${uniqueResourceNameSuffix}'
+var eventHubName = 'nrvnetflowlogs-ehub'
 var eventHubConsumerGroupName = 'nrvnetflowlogs-cg'
 var eventHubAuthRuleName = 'nrvnetflowlogs-auth'
 var eventGridSystemTopicName_var = (empty(eventGridSystemTopicName)
@@ -120,7 +110,7 @@ resource sourceStorageAccountNameResolved 'Microsoft.Storage/storageAccounts@202
   }
 }
 
-resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2021-11-01' = if (createNewEventHubNamespace) {
+resource eventHubNamespace 'Microsoft.EventHub/namespaces@2021-11-01' = {
   name: eventHubNamespaceName
   location: location_var
   sku: {
@@ -136,9 +126,9 @@ resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2021-11-01' =
   }
 }
 
-resource eventHubNamespaceName_eventHub 'Microsoft.EventHub/namespaces/eventhubs@2021-11-01' = if (createNewEventHub) {
-  parent: eventHubNamespace_resource
-  name: '${eventHubName_var}'
+resource eventHubNamespaceName_eventHub 'Microsoft.EventHub/namespaces/eventhubs@2021-11-01' = {
+  parent: eventHubNamespace
+  name: '${eventHubName}'
   location: location_var
   properties: {
     messageRetentionInDays: 1
@@ -153,7 +143,7 @@ resource eventHubNamespaceName_eventHubName_eventHubConsumerGroup 'Microsoft.Eve
 }
 
 resource eventHubNamespaceName_eventHubAuthRule 'Microsoft.EventHub/namespaces/AuthorizationRules@2021-11-01' = {
-  parent: eventHubNamespace_resource
+  parent: eventHubNamespace
   name: '${eventHubAuthRuleName}'
   properties: {
     rights: [
@@ -338,7 +328,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
         }
         {
           name: 'EVENTHUB_NAME'
-          value: eventHubName_var
+          value: eventHubName
         }
         {
           name: 'EVENTHUB_CONSUMER_CONNECTION'
@@ -392,6 +382,6 @@ resource functionAppName_MSDeploy 'Microsoft.Web/sites/extensions@2020-12-01' = 
 output sourceStorageAccountName string = sourceStorageAccountNameResolved_var
 output functionAppName string = functionAppName
 output eventHubNamespace string = eventHubNamespaceName
-output eventHubName string = eventHubName_var
+output eventHubName string = eventHubName
 output cursorStorageAccountName string = cursorStorageAccountName
 output eventGridSystemTopicName string = eventGridSystemTopicName_var
