@@ -96,7 +96,7 @@
 
         "sourceStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]",
 
-        "vnetFlowLogsForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip",
+        "vnetFlowLogsForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/VNetFlowForwarder.zip",
 
         "autoscalingASP": {
             "kind": "elastic",
@@ -415,6 +415,10 @@
                             "value": "0"
                         },
                         {
+                            "name": "VNETFLOWLOGS_RELAY_ENABLED",
+                            "value": "true"
+                        },
+                        {
                             "name": "VNETFLOWLOGS_FORWARDER_ENABLED",
                             "value": "true"
                         },
@@ -453,6 +457,26 @@
                         {
                             "name": "NR_ENDPOINT",
                             "value": "[parameters('newRelicEndpoint')]"
+                        },
+                        {
+                            "name": "NR_TAGS",
+                            "value": ""
+                        },
+                        {
+                            "name": "NR_MAX_RETRIES",
+                            "value": "3"
+                        },
+                        {
+                            "name": "NR_RETRY_INTERVAL",
+                            "value": "2000"
+                        },
+                        {
+                            "name": "EVENTHUB_BATCH_SIZE",
+                            "value": "10"
+                        },
+                        {
+                            "name": "DEBUG_ENABLED",
+                            "value": "false"
                         }
                     ]
                 }
