@@ -273,15 +273,13 @@
             "name": "[concat(variables('eventGridSystemTopicName'), '/', variables('eventGridSubscriptionName'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.EventGrid/systemTopics', variables('eventGridSystemTopicName'))]",
-                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+                "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHubName'))]"
             ],
             "properties": {
                 "destination": {
-                    "endpointType": "AzureFunction",
+                    "endpointType": "EventHub",
                     "properties": {
-                        "resourceId": "[resourceId('Microsoft.Web/sites/functions', variables('functionAppName'), 'VNetFlowRelay')]",
-                        "maxEventsPerBatch": 1,
-                        "preferredBatchSizeInKilobytes": 64
+                        "resourceId": "[resourceId('Microsoft.EventHub/namespaces/eventhubs', variables('eventHubNamespaceName'), variables('eventHubName'))]"
                     }
                 },
                 "filter": {
