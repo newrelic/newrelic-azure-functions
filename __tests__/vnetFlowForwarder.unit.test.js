@@ -13,8 +13,7 @@ process.env.CURSOR_STORAGE_CONNECTION =
 process.env.EVENTHUB_CONNECTION =
   'Endpoint=sb://test.servicebus.windows.net/;SharedAccessKeyName=test;SharedAccessKey=dGVzdA==';
 process.env.EVENTHUB_NAME = 'eh-vnetflow';
-process.env.CURSOR_TABLE_NAME = 'cursors';
-process.env.VNETFLOW_RELAY_ENABLED = 'true';
+process.env.VNETFLOWLOGS_RELAY_ENABLED = 'true';
 process.env.VNETFLOW_CONSUMER_ENABLED = 'true';
 
 const parser = require('../VNetFlowForwarder/parser');
@@ -74,13 +73,37 @@ describe('Parser', () => {
           {
             time: '2024-01-01T00:00:00Z',
             macAddress: 'AABBCCDDEEFF',
-            flowRecords: { flows: [] },
+            category: 'FlowLogFlowEvent',
+            flowLogVersion: 4,
+            flowLogGUID: 'guid-123',
+            flowLogResourceID: '/sub/rg/provider/res',
+            targetResourceID: '/sub/rg/provider/target',
+            operationName: 'FlowLogFlowEvent',
+            flowRecords: {
+              flows: [
+                {
+                  aclID: 'acl-1',
+                  flowGroups: [
+                    {
+                      rule: 'DefaultRule_AllowAll',
+                      flowTuples: [
+                        '1699990055,10.0.0.4,10.0.0.5,12345,443,6,O,A,C,10,1500,8,1200',
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
           },
         ],
       });
       const result = parser.parseRawDelta(json);
       expect(result).toHaveLength(1);
       expect(result[0].macAddress).toBe('AABBCCDDEEFF');
+      expect(result[0].category).toBe('FlowLogFlowEvent');
+      expect(result[0].flowLogVersion).toBe(4);
+      expect(result[0].flowRecords.flows).toHaveLength(1);
+      expect(result[0].flowRecords.flows[0].flowGroups[0].flowTuples).toHaveLength(1);
     });
 
     it('should parse a JSON fragment (appended blocks)', () => {
@@ -182,12 +205,32 @@ describe('Parser', () => {
       expect(entries).toHaveLength(2);
       expect(entries[0].timestamp).toBe(1699990055000);
       expect(entries[0].attributes['flow.srcAddr']).toBe('10.0.0.4');
+      expect(entries[0].attributes['flow.destAddr']).toBe('10.0.0.5');
+      expect(entries[0].attributes['flow.srcPort']).toBe(12345);
       expect(entries[0].attributes['flow.destPort']).toBe(443);
       expect(entries[0].attributes['flow.protocol']).toBe('TCP');
+      expect(entries[0].attributes['flow.direction']).toBe('Outbound');
+      expect(entries[0].attributes['flow.action']).toBe('Allowed');
+      expect(entries[0].attributes['flow.state']).toBe('Continuing');
+      expect(entries[0].attributes['flow.packetsSrcToDest']).toBe(10);
+      expect(entries[0].attributes['flow.bytesSrcToDest']).toBe(1500);
+      expect(entries[0].attributes['flow.packetsDestToSrc']).toBe(8);
+      expect(entries[0].attributes['flow.bytesDestToSrc']).toBe(1200);
       expect(entries[0].attributes['azure.subscriptionId']).toBe('sub-1');
 
       expect(entries[1].timestamp).toBe(1699990060000);
+      expect(entries[1].attributes['flow.srcAddr']).toBe('10.0.0.4');
       expect(entries[1].attributes['flow.destAddr']).toBe('10.0.0.6');
+      expect(entries[1].attributes['flow.srcPort']).toBe(12346);
+      expect(entries[1].attributes['flow.destPort']).toBe(80);
+      expect(entries[1].attributes['flow.protocol']).toBe('TCP');
+      expect(entries[1].attributes['flow.direction']).toBe('Outbound');
+      expect(entries[1].attributes['flow.action']).toBe('Allowed');
+      expect(entries[1].attributes['flow.state']).toBe('Begin');
+      expect(entries[1].attributes['flow.packetsSrcToDest']).toBe(1);
+      expect(entries[1].attributes['flow.bytesSrcToDest']).toBe(100);
+      expect(entries[1].attributes['flow.packetsDestToSrc']).toBe(0);
+      expect(entries[1].attributes['flow.bytesDestToSrc']).toBe(0);
     });
 
     it('should handle records with no flow tuples', () => {
@@ -215,11 +258,14 @@ describe('Cursor', () => {
         '/blobServices/default/containers/insights/blobs/resource/PT1H.json';
       const keys = cursor.encodeKeys(path);
 
-      expect(keys.partitionKey).toBe('vnetflow');
+      expect(keys.partitionKey).toBe('vnetflowlogs');
       expect(keys.rowKey).not.toContain('/');
       expect(keys.rowKey).not.toContain('\\');
       expect(keys.rowKey).not.toContain('#');
       expect(keys.rowKey).not.toContain('?');
+      expect(keys.rowKey).toBe(
+        '|2f|blobServices|2f|default|2f|containers|2f|insights|2f|blobs|2f|resource|2f|PT1H.json'
+      );
     });
 
     it('should produce consistent keys for same input', () => {
@@ -305,7 +351,7 @@ describe('Delivery', () => {
       expect(payload[0].common.attributes.plugin.type).toBe('azure');
       expect(payload[0].common.attributes.plugin.version).toBe(config.version);
       expect(payload[0].common.attributes.azure.forwardername).toBe(
-        'VNetFlowConsumer'
+        'VNetFlowLogsForwarder'
       );
       expect(payload[0].common.attributes.azure.invocationid).toBe('inv-123');
       expect(payload[0].logs).toEqual(entries);

@@ -13,9 +13,12 @@ const config = require('./config');
 const { relayHandler } = require('./relay');
 const { consumerHandler } = require('./consumer');
 
+// Validate configuration at startup (fail-fast before any invocation)
+config.validate();
+
 // Register the Event Grid -> Event Hub relay function
 if (config.relayEnabled) {
-  app.eventGrid('VNetFlowRelay', {
+  app.eventGrid('VNetFlowLogsRelay', {
     handler: async (event, context) => {
       await relayHandler(event, context);
     },
@@ -24,7 +27,7 @@ if (config.relayEnabled) {
 
 // Register the Event Hub consumer function
 if (config.consumerEnabled) {
-  app.eventHub('VNetFlowConsumer', {
+  app.eventHub('VNetFlowLogsConsumer', {
     eventHubName: config.eventhubName,
     connection: 'EVENTHUB_CONSUMER_CONNECTION',
     cardinality: 'many',

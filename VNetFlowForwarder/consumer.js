@@ -26,8 +26,6 @@ const delivery = require('./delivery');
  * @param {Object} context - Azure Function context
  */
 async function consumerHandler(messages, context) {
-  config.validate();
-
   const msgArray = Array.isArray(messages) ? messages : [messages];
   let totalRecords = 0;
   let totalBytes = 0;
@@ -64,7 +62,7 @@ async function consumerHandler(messages, context) {
   }
 
   context.log(
-    `VNetFlow batch complete: ${processedEvents} processed, ${skippedEvents} skipped, ${erroredEvents} errors. ` +
+    `VNetFlowLogs batch complete: ${processedEvents} processed, ${skippedEvents} skipped, ${erroredEvents} errors. ` +
       `Total records: ${totalRecords}, bytes downloaded: ${totalBytes}`
   );
 }

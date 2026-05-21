@@ -6,6 +6,11 @@ const { EventEmitter } = require('events');
 
 jest.mock('https');
 
+// LogForwarder/index.js transitively requires VNetFlowForwarder which validates
+// its own config at module load. Stub it out so LogForwarder tests don't need
+// VNet env vars and aren't affected by VNet startup validation.
+jest.mock('../VNetFlowForwarder/index', () => ({}));
+
 const OLD_ENV = process.env;
 process.env = {
   ...OLD_ENV,

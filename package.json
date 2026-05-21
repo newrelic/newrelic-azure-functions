@@ -34,8 +34,8 @@
     "@semantic-release/github": "^8.0.7",
     "@semantic-release/npm": "^9.0.1",
     "@semantic-release/release-notes-generator": "^10.0.3",
-    "axios": "^1.16.0",
-    "axios-retry": "^4.5.0",
+    "axios": "^1.6.8",
+    "axios-retry": "^4.1.0",
     "eslint": "^8.29.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
@@ -49,7 +49,6 @@
     "@azure/data-tables": "^13.3.2",
     "@azure/event-hubs": "^5.12.2",
     "@azure/functions": "^4.11.2",
-    "@azure/identity": "^4.13.1",
     "@azure/storage-blob": "^12.31.0"
   }
 }

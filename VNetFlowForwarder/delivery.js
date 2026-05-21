@@ -33,7 +33,7 @@ function buildPayload(logEntries, context) {
             version: config.version,
           },
           azure: {
-            forwardername: context.functionName || 'VNetFlowConsumer',
+            forwardername: 'VNetFlowLogsForwarder',
             invocationid: context.invocationId || '',
           },
           tags,

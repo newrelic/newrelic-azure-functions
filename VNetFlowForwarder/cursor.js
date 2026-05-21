@@ -11,6 +11,8 @@
 const { TableClient } = require('@azure/data-tables');
 const config = require('./config');
 
+const CURSOR_TABLE_NAME = 'vnetflowlogcursors';
+
 let tableClient = null;
 
 /**
@@ -20,7 +22,7 @@ function getTableClient() {
   if (!tableClient) {
     tableClient = TableClient.fromConnectionString(
       config.cursorStorageConnection,
-      config.cursorTableName
+      CURSOR_TABLE_NAME
     );
   }
   return tableClient;
@@ -41,7 +43,7 @@ function encodeKeys(blobPath) {
 
   // Use a fixed partition to keep queries simple; rowKey is the encoded path
   return {
-    partitionKey: 'vnetflow',
+    partitionKey: 'vnetflowlogs',
     rowKey: encoded,
   };
 }
@@ -126,6 +128,10 @@ async function incrementFailure(blobPath, lastBlockId, currentFailureCount) {
 function resetClient() {
   tableClient = null;
 }
+
+// TODO: Implement cursor cleanup strategy — rows accumulate over time (one per
+// hourly blob). Consider a scheduled function or TTL to delete entries older
+// than a configurable retention period (e.g. 7 days).
 
 module.exports = {
   getCursor,

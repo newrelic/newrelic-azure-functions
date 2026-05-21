@@ -65,6 +65,7 @@ async function relayHandler(event, context) {
     return;
   }
 
+  // SDK handles retries internally via built-in exponential backoff (retryOptions)
   await producer.sendBatch(batch);
 
   if (config.debugEnabled) {

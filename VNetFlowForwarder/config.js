@@ -18,16 +18,14 @@ const config = {
   // Azure Storage
   sourceStorageConnection: process.env.SOURCE_STORAGE_CONNECTION || '',
   cursorStorageConnection: process.env.CURSOR_STORAGE_CONNECTION || '',
-  cursorTableName: process.env.CURSOR_TABLE_NAME || 'vnetflowlogcursors',
 
   // Event Hub
   eventhubConnection: process.env.EVENTHUB_CONSUMER_CONNECTION || '',
   eventhubName: process.env.EVENTHUB_NAME || '',
   eventhubConsumerGroup: process.env.EVENTHUB_CONSUMER_GROUP || '$Default',
-  eventhubBatchSize: parseInt(process.env.EVENTHUB_BATCH_SIZE, 10) || 10,
 
   // Feature toggles
-  relayEnabled: process.env.VNETFLOW_RELAY_ENABLED === 'true',
+  relayEnabled: process.env.VNETFLOWLOGS_RELAY_ENABLED === 'true',
   consumerEnabled: process.env.VNETFLOWLOGS_FORWARDER_ENABLED === 'true',
 
   // Logging
