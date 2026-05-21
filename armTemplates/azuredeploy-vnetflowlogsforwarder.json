@@ -67,6 +67,41 @@
             "metadata": {
                 "description": "Optional. The scaling for the resources. If set to 'Enterprise', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynamic App Service Plan."
             }
+        },
+        "newRelicTags": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Optional. Custom tags to add to logs sent to New Relic (comma-separated key:value pairs)."
+            }
+        },
+        "maxRetries": {
+            "type": "int",
+            "defaultValue": 3,
+            "metadata": {
+                "description": "Optional. Maximum number of retries when sending logs to New Relic."
+            }
+        },
+        "retryInterval": {
+            "type": "int",
+            "defaultValue": 2000,
+            "metadata": {
+                "description": "Optional. Retry interval in milliseconds when sending logs to New Relic."
+            }
+        },
+        "eventHubBatchSize": {
+            "type": "int",
+            "defaultValue": 10,
+            "metadata": {
+                "description": "Optional. Event Hub batch size for processing messages."
+            }
+        },
+        "debugEnabled": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Optional. Enable debug logging for troubleshooting."
+            }
         }
     },
     "variables": {
@@ -462,23 +497,23 @@
                         },
                         {
                             "name": "NR_TAGS",
-                            "value": ""
+                            "value": "[parameters('newRelicTags')]"
                         },
                         {
                             "name": "NR_MAX_RETRIES",
-                            "value": "3"
+                            "value": "[string(parameters('maxRetries'))]"
                         },
                         {
                             "name": "NR_RETRY_INTERVAL",
-                            "value": "2000"
+                            "value": "[string(parameters('retryInterval'))]"
                         },
                         {
                             "name": "EVENTHUB_BATCH_SIZE",
-                            "value": "10"
+                            "value": "[string(parameters('eventHubBatchSize'))]"
                         },
                         {
                             "name": "DEBUG_ENABLED",
-                            "value": "false"
+                            "value": "[string(parameters('debugEnabled'))]"
                         }
                     ]
                 }
