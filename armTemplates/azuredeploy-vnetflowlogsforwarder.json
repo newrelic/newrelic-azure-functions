@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "newRelicLicenseKey": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "Required. New Relic License Key"
             }
@@ -12,35 +12,35 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Must be in the same resource group as this deployment. Leave this blank to create a new storage account (its name will start with 'nrvnetsrc')."
+                "description": "Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Must be in the same resource group as this deployment. Leave this blank to create a new storage account (its name will start with 'nrvnetflsrc')."
             }
         },
         "eventHubNamespace": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with 'nrvnetflowlogs-')."
+                "description": "Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with 'nrvnetflowlogs-ehns-')."
             }
         },
         "eventHubName": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrvnetflowlogs')."
+                "description": "Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrvnetflowlogs-ehub')."
             }
         },
         "eventGridSystemTopicName": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (will start with 'nrvnetflowlogs-egtopic-')."
+                "description": "Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (its name will start with 'nrvnetflowlogs-egtopic-')."
             }
         },
         "eventGridSubscriptionName": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Name for the Event Grid Subscription that will be created to filter PT1H.json files. Leave this blank to auto-generate a unique name (will start with 'nrvnetflowlogs-egsub-')."
+                "description": "Optional. Name for the Event Grid Subscription that will be created to filter PT1H.json files. Leave this blank to auto-generate a unique name (its name will start with 'nrvnetflowlogs-egsub-')."
             }
         },
         "location": {
@@ -54,7 +54,7 @@
             "type": "string",
             "defaultValue": "https://log-api.newrelic.com/log/v1",
             "metadata": {
-                "description": "Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. Otherwise, if you're in the European Union (EU) region, you should use https://log-api.eu.newrelic.com/log/v1"
+                "description": "Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. If you're in the European Union (EU) region, use https://log-api.eu.newrelic.com/log/v1. If you're in the Japan (JP) region, use https://log-api.jp.newrelic.com/log/v1"
             }
         },
         "scalingMode": {
@@ -68,11 +68,39 @@
                 "description": "Optional. The scaling for the resources. If set to 'Enterprise', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynamic App Service Plan."
             }
         },
-        "deployFunctionApp": {
-            "type": "bool",
-            "defaultValue": true,
+        "newRelicTags": {
+            "type": "string",
+            "defaultValue": "",
             "metadata": {
-                "description": "Optional. Set to false to skip deploying the App Service Plan and Function App (useful when the subscription lacks serverFarm quota). The Function App can then be created separately via CLI."
+                "description": "Optional. Custom tags to add to logs sent to New Relic (comma-separated key:value pairs)."
+            }
+        },
+        "maxRetries": {
+            "type": "int",
+            "defaultValue": 3,
+            "metadata": {
+                "description": "Optional. Maximum number of retries when sending logs to New Relic."
+            }
+        },
+        "retryInterval": {
+            "type": "int",
+            "defaultValue": 2000,
+            "metadata": {
+                "description": "Optional. Retry interval in milliseconds when sending logs to New Relic."
+            }
+        },
+        "eventHubBatchSize": {
+            "type": "int",
+            "defaultValue": 10,
+            "metadata": {
+                "description": "Optional. Event Hub batch size for processing messages."
+            }
+        },
+        "debugEnabled": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Optional. Enable debug logging for troubleshooting."
             }
         }
     },
@@ -81,27 +109,29 @@
         "location": "[if(empty(parameters('location')), resourceGroup().location, parameters('location'))]",
 
         "createNewSourceStorage": "[empty(parameters('sourceStorageAccountName'))]",
-        "sourceStorageAccountNameResolved": "[if(variables('createNewSourceStorage'), concat('nrvnetsrc', variables('uniqueResourceNameSuffix')), parameters('sourceStorageAccountName'))]",
+        "sourceStorageAccountNameResolved": "[if(variables('createNewSourceStorage'), concat('nrvnetflsrc', variables('uniqueResourceNameSuffix')), parameters('sourceStorageAccountName'))]",
 
         "createNewEventHubNamespace": "[empty(parameters('eventHubNamespace'))]",
         "createNewEventHub": "[or(empty(parameters('eventHubNamespace')), empty(parameters('eventHubName')))]",
 
-        "eventHubNamespaceName": "[if(variables('createNewEventHubNamespace'), concat('nrvnetflowlogs-', variables('uniqueResourceNameSuffix')), parameters('eventHubNamespace'))]",
-        "eventHubName": "[if(variables('createNewEventHub'), 'nrvnetflowlogs', parameters('eventHubName'))]",
-        "eventHubConsumerGroupName": "nrvnetflowlogs",
-        "eventHubAuthRuleName": "nrvnetflowlogs-auth-rule",
+        "eventHubNamespaceName": "[if(variables('createNewEventHubNamespace'), concat('nrvnetflowlogs-ehns-', variables('uniqueResourceNameSuffix')), parameters('eventHubNamespace'))]",
+        "eventHubName": "[if(variables('createNewEventHub'), 'nrvnetflowlogs-ehub', parameters('eventHubName'))]",
+        "eventHubConsumerGroupName": "nrvnetflowlogs-cg",
+        "eventHubAuthRuleName": "nrvnetflowlogs-auth",
 
         "eventGridSystemTopicName": "[if(empty(parameters('eventGridSystemTopicName')), concat('nrvnetflowlogs-egtopic-', variables('uniqueResourceNameSuffix')), parameters('eventGridSystemTopicName'))]",
         "eventGridSubscriptionName": "[if(empty(parameters('eventGridSubscriptionName')), concat('nrvnetflowlogs-egsub-', variables('uniqueResourceNameSuffix')), parameters('eventGridSubscriptionName'))]",
 
-        "cursorStorageAccountName": "[concat('nrvnetcur', variables('uniqueResourceNameSuffix'))]",
-        "cursorTableName": "vnetflowlogcursors",
+        "cursorStorageAccountName": "[concat('nrvnetflcur', variables('uniqueResourceNameSuffix'))]",
+        "cursorTableName": "nrvnetflowlogscursors",
 
-        "functionStorageAccountName": "[concat('nrvnetfunc', variables('uniqueResourceNameSuffix'))]",
+        "functionStorageAccountName": "[concat('nrvnetflfn', variables('uniqueResourceNameSuffix'))]",
         "servicePlanName": "[concat('nrvnetflowlogs-asp-', variables('uniqueResourceNameSuffix'))]",
         "functionAppName": "[concat('nrvnetflowlogs-func-', variables('uniqueResourceNameSuffix'))]",
 
         "sourceStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]",
+
+        "vnetFlowLogsForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/VNetFlowForwarder.zip",
 
         "autoscalingASP": {
             "kind": "elastic",
@@ -365,7 +395,6 @@
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2021-03-01",
-            "condition": "[parameters('deployFunctionApp')]",
             "name": "[variables('servicePlanName')]",
             "location": "[variables('location')]",
             "kind": "[variables('aspConfig').kind]",
@@ -375,7 +404,6 @@
         {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2021-03-01",
-            "condition": "[parameters('deployFunctionApp')]",
             "name": "[variables('functionAppName')]",
             "location": "[variables('location')]",
             "kind": "functionapp",
@@ -384,7 +412,7 @@
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('functionStorageAccountName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('cursorStorageAccountName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/tableServices/tables', variables('cursorStorageAccountName'), 'default', variables('cursorTableName'))]",
-                "[resourceId('Microsoft.EventHub/namespaces', variables('eventHubNamespaceName'))]"
+                "[resourceId('Microsoft.EventHub/namespaces/authorizationRules', variables('eventHubNamespaceName'), variables('eventHubAuthRuleName'))]"
             ],
             "properties": {
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
@@ -422,7 +450,7 @@
                             "value": "0"
                         },
                         {
-                            "name": "VNETFLOW_RELAY_ENABLED",
+                            "name": "VNETFLOWLOGS_RELAY_ENABLED",
                             "value": "true"
                         },
                         {
@@ -464,9 +492,40 @@
                         {
                             "name": "NR_ENDPOINT",
                             "value": "[parameters('newRelicEndpoint')]"
+                        },
+                        {
+                            "name": "NR_TAGS",
+                            "value": "[parameters('newRelicTags')]"
+                        },
+                        {
+                            "name": "NR_MAX_RETRIES",
+                            "value": "[string(parameters('maxRetries'))]"
+                        },
+                        {
+                            "name": "NR_RETRY_INTERVAL",
+                            "value": "[string(parameters('retryInterval'))]"
+                        },
+                        {
+                            "name": "EVENTHUB_BATCH_SIZE",
+                            "value": "[string(parameters('eventHubBatchSize'))]"
+                        },
+                        {
+                            "name": "DEBUG_ENABLED",
+                            "value": "[string(parameters('debugEnabled'))]"
                         }
                     ]
                 }
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites/extensions",
+            "apiVersion": "2020-12-01",
+            "name": "[concat(variables('functionAppName'), '/MSDeploy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+            ],
+            "properties": {
+                "packageUri": "[variables('vnetFlowLogsForwarderFunctionArtifact')]"
             }
         }
     ],
