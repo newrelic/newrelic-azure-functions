@@ -4,7 +4,7 @@
 ![GitHub release (latest SemVer including pre-releases)](https://img.shields.io/github/v/release/newrelic/newrelic-azure-functions?include_prereleases) [![Known Vulnerabilities](https://snyk.io/test/github/newrelic/newrelic-azure-functions/badge.svg?targetFile=package.json)](https://snyk.io/test/github/newrelic/newrelic-azure-functions?targetFile=package.json)
 
 This repository contains functions to collect and forward logs from Microsoft
-Azure Blob Storage and Event Hubs and [Azure ARM templates](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) 
+Azure Blob Storage, Event Hubs, and VNet Flow Logs, along with [Azure ARM templates](https://learn.microsoft.com/en-us/azure/azure-resource-manager/templates/overview) 
 to automate the deployment of those.
 
 ## Configuration
@@ -15,6 +15,7 @@ For setup instructions, click on the name of the function you wish to configure 
 | -------------| ----------- | -------------- |
 |[New Relic Event Hub Function](LogForwarder/EventHubForwarder)| Collects and forwards log data from Azure Event Hubs to New Relic Logs. | <ul><li>[Azure Activity and Resource Logs](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/resource-logs-stream-event-hubs)</li><li>[Azure Active Directory](https://docs.microsoft.com/en-us/azure/active-directory/reports-monitoring/tutorial-azure-monitor-stream-logs-to-event-hub)</li></ul>|
 |[New Relic Azure Blob Storage Function](LogForwarder/BlobForwarder) | Collects and forwards log data from Azure Blob Storage to New Relic Logs.| <ul><li>[Azure App Service](https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs#enable-application-logging-windows)</li><li>[Azure Web Server](https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs#enable-web-server-logging)</li></ul> |
+|[New Relic VNet Flow Logs Forwarder](VNetFlowForwarder/) | Collects and forwards Azure VNet Flow Logs to New Relic Logs using delta-only processing. | <ul><li>[Azure VNet Flow Logs](https://learn.microsoft.com/en-us/azure/network-watcher/vnet-flow-logs-overview)</li></ul> |
 
 ## Contributing
 

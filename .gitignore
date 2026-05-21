@@ -6,3 +6,7 @@ EventHubForwarder.zip
 LogForwarder.zip
 **/.DS_Store
 .DS_Store
+local.settings.json
+__azurite_db_*
+__blobstorage__/
+AzuriteConfig/

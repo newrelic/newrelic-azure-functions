@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "eslint ./**/*.js",
     "package:logforwarder": "npm ci --omit=dev && zip -r LogForwarder.zip LogForwarder/index.js host.json package.json node_modules/",
+    "package:vnetflow": "npm ci --omit=dev && zip -r VNetFlowForwarder.zip VNetFlowForwarder/ host.json package.json node_modules/",
     "test": "jest"
   },
   "jest": {
@@ -45,6 +46,9 @@
     "winston": "^3.13.0"
   },
   "dependencies": {
-    "@azure/functions": "^4.11.2"
+    "@azure/data-tables": "^13.3.2",
+    "@azure/event-hubs": "^5.12.2",
+    "@azure/functions": "^4.11.2",
+    "@azure/storage-blob": "^12.31.0"
   }
 }
