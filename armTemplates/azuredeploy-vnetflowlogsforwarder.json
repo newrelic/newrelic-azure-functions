@@ -1045,8 +1045,7 @@
                     "alwaysOn": "[parameters('disablePublicAccessToStorageAccount')]",
                     "ftpsState": "Disabled",
                     "publicNetworkAccess": "[if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')]"
-                },
-                "httpsOnly": true
+                }
             }
         },
         {
