@@ -20,7 +20,12 @@ param eventGridSubscriptionName string = ''
 @description('Optional. Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group.')
 param location string = ''
 
-@description('Optional. The Logs API endpoint used to send your logs to. By default, it is https://log-api.newrelic.com/log/v1 if your account is in the United States (US) region. If you\'re in the European Union (EU) region, use https://log-api.eu.newrelic.com/log/v1. If you\'re in the Japan (JP) region, use https://log-api.jp.newrelic.com/log/v1')
+@description('Optional. The Logs API endpoint for your New Relic account region. Select US (default), EU, or JP endpoint.')
+@allowed([
+  'https://log-api.newrelic.com/log/v1'
+  'https://log-api.eu.newrelic.com/log/v1'
+  'https://log-api.jp.newrelic.com/log/v1'
+])
 param newRelicEndpoint string = 'https://log-api.newrelic.com/log/v1'
 
 @description('Optional. The scaling for the resources. If set to \'Enterprise\', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynamic App Service Plan.')
