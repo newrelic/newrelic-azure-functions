@@ -79,7 +79,7 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Custom tags to add to logs sent to New Relic (comma-separated key:value pairs)."
+                "description": "Optional. Custom tags to add to logs sent to New Relic (semicolon-separated key:value pairs, e.g. env:prod;team:network)."
             }
         },
         "maxRetries": {
@@ -1013,7 +1013,7 @@
                             "value": "[string(parameters('retryInterval'))]"
                         },
                         {
-                            "name": "EVENTHUB_BATCH_SIZE",
+                            "name": "AzureFunctionsJobHost__extensions__eventHubs__maxEventBatchSize",
                             "value": "[string(parameters('eventHubBatchSize'))]"
                         },
                         {

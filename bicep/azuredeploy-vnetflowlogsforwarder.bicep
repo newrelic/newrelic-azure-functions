@@ -33,7 +33,7 @@ param scalingMode string = 'Basic'
 @description('Optional. Disables public network access to the Function and Cursor Storage Accounts (please note that even without enabling this option, access to these Storage Accounts is secured). As a consequence, communication with these Storage Accounts will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to \'Basic\', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, two subnets, DNS zone names, virtual network links, and private endpoints. The source storage account (containing VNet flow logs) will remain with its current network configuration.')
 param disablePublicAccessToStorageAccount bool = false
 
-@description('Optional. Custom tags to add to logs sent to New Relic (comma-separated key:value pairs).')
+@description('Optional. Custom tags to add to logs sent to New Relic (semicolon-separated key:value pairs, e.g. env:prod;team:network).')
 param newRelicTags string = ''
 
 @description('Optional. Maximum number of retries when sending logs to New Relic.')
@@ -829,7 +829,7 @@ resource functionApp 'Microsoft.Web/sites@2021-03-01' = {
           value: string(retryInterval)
         }
         {
-          name: 'EVENTHUB_BATCH_SIZE'
+          name: 'AzureFunctionsJobHost__extensions__eventHubs__maxEventBatchSize'
           value: string(eventHubBatchSize)
         }
         {
