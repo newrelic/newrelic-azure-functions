@@ -5,16 +5,16 @@ param newRelicLicenseKey string
 @description('Optional. Name of the existing storage account where VNet Flow Logs PT1H.json files are stored. Must be in the same resource group as this deployment. Leave this blank to create a new storage account (its name will start with \'nrvnetflsrc\').')
 param sourceStorageAccountName string = ''
 
-@description('Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with \'nrvnetflowlogs-ehns-\').')
+@description('Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with \'nrvnetflowlogs-eventhub-namespace-\').')
 param eventHubNamespace string = ''
 
-@description('Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be \'nrvnetflowlogs-ehub\').')
+@description('Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be \'nrvnetflowlogs-eventhub\').')
 param eventHubName string = ''
 
-@description('Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (its name will start with \'nrvnetflowlogs-egtopic-\').')
+@description('Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (its name will start with \'nrvnetflowlogs-eventgrid-topic-\').')
 param eventGridSystemTopicName string = ''
 
-@description('Optional. Name for the Event Grid Subscription that will be created to filter PT1H.json files. Leave this blank to auto-generate a unique name (its name will start with \'nrvnetflowlogs-egsub-\').')
+@description('Optional. Name for the Event Grid Subscription that will be created to filter PT1H.json files. Leave this blank to auto-generate a unique name (its name will start with \'nrvnetflowlogs-eventgrid-subscription-\').')
 param eventGridSubscriptionName string = ''
 
 @description('Optional. Region where all resources included in this template will be deployed. Leave this blank to use the same region as the one of the resource group.')
@@ -57,22 +57,22 @@ var sourceStorageAccountNameResolved_var = (createNewSourceStorage
 var createNewEventHubNamespace = empty(eventHubNamespace)
 var createNewEventHub = (empty(eventHubNamespace) || empty(eventHubName))
 var eventHubNamespaceName = (createNewEventHubNamespace
-  ? 'nrvnetflowlogs-ehns-${uniqueResourceNameSuffix}'
+  ? 'nrvnetflowlogs-eventhub-namespace-${uniqueResourceNameSuffix}'
   : eventHubNamespace)
-var eventHubName_var = (createNewEventHub ? 'nrvnetflowlogs-ehub' : eventHubName)
-var eventHubConsumerGroupName = 'nrvnetflowlogs-cg'
-var eventHubAuthRuleName = 'nrvnetflowlogs-auth'
+var eventHubName_var = (createNewEventHub ? 'nrvnetflowlogs-eventhub' : eventHubName)
+var eventHubConsumerGroupName = 'nrvnetflowlogs-consumergroup'
+var eventHubAuthRuleName = 'nrvnetflowlogs-consumer-policy'
 var eventGridSystemTopicName_var = (empty(eventGridSystemTopicName)
-  ? 'nrvnetflowlogs-egtopic-${uniqueResourceNameSuffix}'
+  ? 'nrvnetflowlogs-eventgrid-topic-${uniqueResourceNameSuffix}'
   : eventGridSystemTopicName)
 var eventGridSubscriptionName_var = (empty(eventGridSubscriptionName)
-  ? 'nrvnetflowlogs-egsub-${uniqueResourceNameSuffix}'
+  ? 'nrvnetflowlogs-eventgrid-subscription-${uniqueResourceNameSuffix}'
   : eventGridSubscriptionName)
 var cursorStorageAccountName = 'nrvnetflcur${uniqueResourceNameSuffix}'
 var cursorTableName = 'nrvnetflowlogscursors'
 var functionStorageAccountName = 'nrvnetflfn${uniqueResourceNameSuffix}'
-var servicePlanName = 'nrvnetflowlogs-asp-${uniqueResourceNameSuffix}'
-var functionAppName = 'nrvnetflowlogs-func-${uniqueResourceNameSuffix}'
+var servicePlanName = 'nrvnetflowlogs-serviceplan-${uniqueResourceNameSuffix}'
+var functionAppName = 'nrvnetflowlogs-forwarder-${uniqueResourceNameSuffix}'
 var sourceStorageAccountId = sourceStorageAccountNameResolved.id
 var vnetFlowLogsForwarderFunctionArtifact = 'https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/VNetFlowForwarder.zip'
 var privateNetworkASP = {

@@ -19,28 +19,28 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with 'nrvnetflowlogs-ehns-')."
+                "description": "Optional. Event Hub Namespace where VNet Flow Log events will be sent. Leave this blank for a new namespace to be created automatically (its name will start with 'nrvnetflowlogs-eventhub-namespace-')."
             }
         },
         "eventHubName": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrvnetflowlogs-ehub')."
+                "description": "Optional. Event Hub where VNet Flow Log events are sent. Leave this blank for a new Event Hub to be created automatically (its name will be 'nrvnetflowlogs-eventhub')."
             }
         },
         "eventGridSystemTopicName": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (its name will start with 'nrvnetflowlogs-egtopic-')."
+                "description": "Optional. Name for the Event Grid System Topic that will be created to monitor blob events from the source storage account. Leave this blank to auto-generate a unique name (its name will start with 'nrvnetflowlogs-eventgrid-topic-')."
             }
         },
         "eventGridSubscriptionName": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Optional. Name for the Event Grid Subscription that will be created to filter PT1H.json files. Leave this blank to auto-generate a unique name (its name will start with 'nrvnetflowlogs-egsub-')."
+                "description": "Optional. Name for the Event Grid Subscription that will be created to filter PT1H.json files. Leave this blank to auto-generate a unique name (its name will start with 'nrvnetflowlogs-eventgrid-subscription-')."
             }
         },
         "location": {
@@ -121,20 +121,20 @@
         "createNewEventHubNamespace": "[empty(parameters('eventHubNamespace'))]",
         "createNewEventHub": "[or(empty(parameters('eventHubNamespace')), empty(parameters('eventHubName')))]",
 
-        "eventHubNamespaceName": "[if(variables('createNewEventHubNamespace'), concat('nrvnetflowlogs-ehns-', variables('uniqueResourceNameSuffix')), parameters('eventHubNamespace'))]",
-        "eventHubName": "[if(variables('createNewEventHub'), 'nrvnetflowlogs-ehub', parameters('eventHubName'))]",
-        "eventHubConsumerGroupName": "nrvnetflowlogs-cg",
-        "eventHubAuthRuleName": "nrvnetflowlogs-auth",
+        "eventHubNamespaceName": "[if(variables('createNewEventHubNamespace'), concat('nrvnetflowlogs-eventhub-namespace-', variables('uniqueResourceNameSuffix')), parameters('eventHubNamespace'))]",
+        "eventHubName": "[if(variables('createNewEventHub'), 'nrvnetflowlogs-eventhub', parameters('eventHubName'))]",
+        "eventHubConsumerGroupName": "nrvnetflowlogs-consumergroup",
+        "eventHubAuthRuleName": "nrvnetflowlogs-consumer-policy",
 
-        "eventGridSystemTopicName": "[if(empty(parameters('eventGridSystemTopicName')), concat('nrvnetflowlogs-egtopic-', variables('uniqueResourceNameSuffix')), parameters('eventGridSystemTopicName'))]",
-        "eventGridSubscriptionName": "[if(empty(parameters('eventGridSubscriptionName')), concat('nrvnetflowlogs-egsub-', variables('uniqueResourceNameSuffix')), parameters('eventGridSubscriptionName'))]",
+        "eventGridSystemTopicName": "[if(empty(parameters('eventGridSystemTopicName')), concat('nrvnetflowlogs-eventgrid-topic-', variables('uniqueResourceNameSuffix')), parameters('eventGridSystemTopicName'))]",
+        "eventGridSubscriptionName": "[if(empty(parameters('eventGridSubscriptionName')), concat('nrvnetflowlogs-eventgrid-subscription-', variables('uniqueResourceNameSuffix')), parameters('eventGridSubscriptionName'))]",
 
         "cursorStorageAccountName": "[concat('nrvnetflcur', variables('uniqueResourceNameSuffix'))]",
         "cursorTableName": "nrvnetflowlogscursors",
 
         "functionStorageAccountName": "[concat('nrvnetflfn', variables('uniqueResourceNameSuffix'))]",
-        "servicePlanName": "[concat('nrvnetflowlogs-asp-', variables('uniqueResourceNameSuffix'))]",
-        "functionAppName": "[concat('nrvnetflowlogs-func-', variables('uniqueResourceNameSuffix'))]",
+        "servicePlanName": "[concat('nrvnetflowlogs-serviceplan-', variables('uniqueResourceNameSuffix'))]",
+        "functionAppName": "[concat('nrvnetflowlogs-forwarder-', variables('uniqueResourceNameSuffix'))]",
 
         "sourceStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('sourceStorageAccountNameResolved'))]",
 
