@@ -11,8 +11,6 @@
 const { TableClient } = require('@azure/data-tables');
 const config = require('./config');
 
-const CURSOR_TABLE_NAME = 'vnetflowlogcursors';
-
 let tableClient = null;
 
 /**
@@ -22,7 +20,7 @@ function getTableClient() {
   if (!tableClient) {
     tableClient = TableClient.fromConnectionString(
       config.cursorStorageConnection,
-      CURSOR_TABLE_NAME
+      config.cursorTableName
     );
   }
   return tableClient;

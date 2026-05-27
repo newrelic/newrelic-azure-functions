@@ -27,3 +27,21 @@ Cursor rows in Azure Table Storage accumulate over time (one per hourly PT1H.jso
 - On schedule (e.g. daily), delete rows where `updatedAt` is older than retention window
 - Add unit tests for the cleanup loop
 - Document the retention default in the README
+
+## 3. VNetFlow: populate missing attributes from targetResourceID fallback
+
+`transformRecords` in `VNetFlowForwarder/parser.js` populates `azure.subscriptionId`,
+`azure.resourceGroup`, `azure.resourceType`, and `azure.resourceName` solely from
+`pathMetadata` (derived from the blob storage path). When the blob path doesn't match
+the expected pattern, these fields arrive as empty strings in New Relic even though the
+record's `targetResourceID` contains all the information needed.
+
+- Parse `record.targetResourceID` as a fallback when `pathMetadata` is missing these values
+- Extract subscriptionId, resourceGroup, resourceType, and resourceName from the URI
+- Add unit tests covering the fallback path
+- Verify with the sample payload:
+  ```
+  targetResourceID: /subscriptions/9c99d7c5-…/resourceGroups/vnet-e2e-test/providers/Microsoft.Network/virtualNetworks/test-vnet
+  ```
+  should yield: subscriptionId=`9c99d7c5-…`, resourceGroup=`vnet-e2e-test`,
+  resourceType=`virtualNetworks`, resourceName=`test-vnet`

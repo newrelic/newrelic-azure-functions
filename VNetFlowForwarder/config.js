@@ -18,6 +18,7 @@ const config = {
   // Azure Storage
   sourceStorageConnection: process.env.SOURCE_STORAGE_CONNECTION || '',
   cursorStorageConnection: process.env.CURSOR_STORAGE_CONNECTION || '',
+  cursorTableName: process.env.CURSOR_TABLE_NAME || 'nrvnetflowlogscursors',
 
   // Event Hub
   eventhubConnection: process.env.EVENTHUB_CONSUMER_CONNECTION || '',

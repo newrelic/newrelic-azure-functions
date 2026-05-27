@@ -375,6 +375,3 @@ module.exports._test = {
   retryMax,
   wait,
 };
-
-// Load VNet Flow Logs Forwarder functions (registered via app.eventGrid / app.eventHub)
-require('../VNetFlowForwarder/index');
