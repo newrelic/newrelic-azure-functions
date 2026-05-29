@@ -1,3 +1,10 @@
+## [3.2.1](https://github.com/newrelic/newrelic-azure-functions/compare/v3.2.0...v3.2.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* update JP region endpoint to log-api.jp.nr-data.net/log/v1 ([#140](https://github.com/newrelic/newrelic-azure-functions/issues/140)) ([74b61f9](https://github.com/newrelic/newrelic-azure-functions/commit/74b61f93a3109042eeab7b76be2b577c3e35d5b9))
+
 # [3.2.0](https://github.com/newrelic/newrelic-azure-functions/compare/v3.1.0...v3.2.0) (2026-05-14)
 
 
