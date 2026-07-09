@@ -1,3 +1,10 @@
+# [3.3.0](https://github.com/newrelic/newrelic-azure-functions/compare/v3.2.1...v3.3.0) (2026-07-09)
+
+
+### Features
+
+* enforce TLS 1.2 on event hub forwarder storage account and function app ([#141](https://github.com/newrelic/newrelic-azure-functions/issues/141)) ([b85cec5](https://github.com/newrelic/newrelic-azure-functions/commit/b85cec5b56553eed377ec91571755e0753677ad9))
+
 ## [3.2.1](https://github.com/newrelic/newrelic-azure-functions/compare/v3.2.0...v3.2.1) (2026-05-29)
 
 
