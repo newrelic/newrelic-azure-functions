@@ -383,7 +383,7 @@
         },
         {
             "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
-            "apiVersion": "2017-04-01",
+            "apiVersion": "2024-01-01",
             "name": "[concat(variables('eventHubNamespaceName'), '/', variables('logConsumerAuthorizationRuleName'))]",
             "location": "[variables('location')]",
             "dependsOn": [
@@ -397,7 +397,7 @@
         },
         {
             "type": "Microsoft.EventHub/namespaces/AuthorizationRules",
-            "apiVersion": "2017-04-01",
+            "apiVersion": "2024-01-01",
             "name": "[concat(variables('eventHubNamespaceName'), '/', variables('logProducerAuthorizationRuleName'))]",
             "condition": "[variables('createActivityLogsDiagnosticSetting')]",
             "location": "[variables('location')]",
@@ -736,7 +736,7 @@
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "apiVersion": "2021-04-01",
+            "apiVersion": "2024-01-01",
             "name": "[variables('storageAccountName')]",
             "location": "[variables('location')]",
             "sku": {
@@ -744,6 +744,7 @@
             },
             "kind": "StorageV2",
             "properties": {
+                "minimumTlsVersion": "TLS1_2",
                 "publicNetworkAccess": "[if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')]",
                 "allowBlobPublicAccess": false,
                 "networkAcls": "[if(parameters('disablePublicAccessToStorageAccount'), json('{\"bypass\": \"None\", \"defaultAction\": \"Deny\"}'), json('null'))]"
@@ -751,7 +752,7 @@
         },
         {
             "type": "Microsoft.Web/serverfarms",
-            "apiVersion": "2022-09-01",
+            "apiVersion": "2024-11-01",
             "name": "[variables('servicePlanName')]",
             "kind": "[variables('aspConfig').kind]",
             "location": "[variables('location')]",
@@ -760,7 +761,7 @@
         },
         {
             "type": "Microsoft.Web/sites",
-            "apiVersion": "2020-12-01",
+            "apiVersion": "2024-11-01",
             "name": "[variables('functionAppName')]",
             "location": "[variables('location')]",
             "kind": "functionapp",
@@ -780,9 +781,11 @@
             "properties": {
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
                 "siteConfig": {
-                    "appSettings": "[concat(variables('baseAppSettings'), if(variables('useManagedIdentity'), variables('managedIdentityAppSettings'), createArray(createObject('name', 'EVENTHUB_CONSUMER_CONNECTION', 'value', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2017-04-01').primaryConnectionString))), createArray(createObject('name', 'AzureWebJobsStorage', 'value', format(variables('azureWebJobsStorageConnectionFormat'), listKeys(variables('storageAccountResourceId'), '2021-04-01').keys[0].value))))]",
+                    "appSettings": "[concat(variables('baseAppSettings'), if(variables('useManagedIdentity'), variables('managedIdentityAppSettings'), createArray(createObject('name', 'EVENTHUB_CONSUMER_CONNECTION', 'value', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2024-01-01').primaryConnectionString))), createArray(createObject('name', 'AzureWebJobsStorage', 'value', format(variables('azureWebJobsStorageConnectionFormat'), listKeys(variables('storageAccountResourceId'), '2024-01-01').keys[0].value))))]",
                     "alwaysOn": "[parameters('disablePublicAccessToStorageAccount')]",
                     "ftpsState": "Disabled",
+                    "minTlsVersion": "1.2",
+                    "scmMinTlsVersion": "1.2",
                     "publicNetworkAccess": "[if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')]"
                 },
                 "httpsOnly": true
@@ -799,7 +802,7 @@
             ],
             "properties": {
                 "roleDefinitionId": "[variables('eventHubsDataReceiverRoleDefinitionId')]",
-                "principalId": "[if(variables('useManagedIdentity'), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2020-12-01', 'full').identity.principalId, '')]",
+                "principalId": "[if(variables('useManagedIdentity'), reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-11-01', 'full').identity.principalId, '')]",
                 "principalType": "ServicePrincipal"
             }
         },
@@ -898,7 +901,7 @@
     "outputs": {
         "connectionString": {
             "type": "String",
-            "value": "[if(variables('useManagedIdentity'), '', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2017-04-01').primaryConnectionString)]"
+            "value": "[if(variables('useManagedIdentity'), '', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2024-01-01').primaryConnectionString)]"
         },
         "eventHubName": {
             "type": "string",
