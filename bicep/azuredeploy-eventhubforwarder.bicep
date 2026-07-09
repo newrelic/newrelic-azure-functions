@@ -213,7 +213,7 @@ resource eventHubNamespaceName_eventHubName_eventHubConsumerGroup 'Microsoft.Eve
   properties: {}
 }
 
-resource eventHubNamespaceName_logConsumerAuthorizationRule 'Microsoft.EventHub/namespaces/AuthorizationRules@2017-04-01' = {
+resource eventHubNamespaceName_logConsumerAuthorizationRule 'Microsoft.EventHub/namespaces/AuthorizationRules@2024-01-01' = {
   parent: eventHubNamespace_resource
   name: '${logConsumerAuthorizationRuleName}'
   location: location_var
@@ -228,7 +228,7 @@ resource eventHubNamespaceRef 'Microsoft.EventHub/namespaces@2024-01-01' existin
   name: eventHubNamespaceName
 }
 
-resource eventHubNamespaceName_logProducerAuthorizationRule 'Microsoft.EventHub/namespaces/AuthorizationRules@2017-04-01' = if (createActivityLogsDiagnosticSetting) {
+resource eventHubNamespaceName_logProducerAuthorizationRule 'Microsoft.EventHub/namespaces/AuthorizationRules@2024-01-01' = if (createActivityLogsDiagnosticSetting) {
   parent: eventHubNamespace_resource
   name: '${logProducerAuthorizationRuleName}'
   location: location_var
@@ -520,7 +520,7 @@ resource privateEndpointPrivateDnsZoneGroupsStorageQueue 'Microsoft.Network/priv
   ]
 }
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   name: storageAccountName
   location: location_var
   sku: {
@@ -528,6 +528,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   }
   kind: 'StorageV2'
   properties: {
+    minimumTlsVersion: 'TLS1_2'
     publicNetworkAccess: (disablePublicAccessToStorageAccount ? 'Disabled' : 'Enabled')
     allowBlobPublicAccess: false
     networkAcls: (disablePublicAccessToStorageAccount
@@ -536,7 +537,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
   }
 }
 
-resource servicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
+resource servicePlan 'Microsoft.Web/serverfarms@2024-11-01' = {
   name: servicePlanName
   kind: aspConfig.kind
   location: location_var
@@ -544,7 +545,7 @@ resource servicePlan 'Microsoft.Web/serverfarms@2022-09-01' = {
   properties: aspConfig.properties
 }
 
-resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
+resource functionApp 'Microsoft.Web/sites@2024-11-01' = {
   name: functionAppName
   location: location_var
   kind: 'functionapp'
@@ -596,7 +597,7 @@ resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
           }
           {
             name: 'AzureWebJobsStorage'
-            value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${listkeys(storageAccount.id, '2021-04-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+            value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${listkeys(storageAccount.id, '2024-01-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
           }
           {
             name: 'EVENTHUB_FORWARDER_ENABLED'
@@ -624,12 +625,14 @@ resource functionApp 'Microsoft.Web/sites@2020-12-01' = {
           : [
               {
                 name: 'EVENTHUB_CONSUMER_CONNECTION'
-                value: listKeys(eventHubNamespaceName_logConsumerAuthorizationRule.id, '2017-04-01').primaryConnectionString
+                value: listKeys(eventHubNamespaceName_logConsumerAuthorizationRule.id, '2024-01-01').primaryConnectionString
               }
             ]
       )
       alwaysOn: disablePublicAccessToStorageAccount
       ftpsState: 'Disabled'
+      minTlsVersion: '1.2'
+      scmMinTlsVersion: '1.2'
       publicNetworkAccess: (disablePublicAccessToStorageAccount ? 'Disabled' : 'Enabled')
     }
     httpsOnly: true
@@ -699,5 +702,5 @@ module activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment './activityLo
   ]
 }
 
-output connectionString string = useManagedIdentity ? '' : listKeys(eventHubNamespaceName_logConsumerAuthorizationRule.id, '2017-04-01').primaryConnectionString
+output connectionString string = useManagedIdentity ? '' : listKeys(eventHubNamespaceName_logConsumerAuthorizationRule.id, '2024-01-01').primaryConnectionString
 output eventHubName string = eventHubName_var
