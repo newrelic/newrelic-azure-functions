@@ -34,7 +34,7 @@
     "@semantic-release/npm": "^9.0.1",
     "@semantic-release/release-notes-generator": "^10.0.3",
     "axios": "^1.6.8",
-    "axios-retry": "^4.1.0",
+    "axios-retry": "^4.5.0",
     "eslint": "^8.29.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
