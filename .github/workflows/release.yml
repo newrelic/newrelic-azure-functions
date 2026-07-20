@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Avoid using GITHUB_TOKEN, instead use the Open Source Bot personal access token.
           persist-credentials: false
@@ -89,7 +89,7 @@ jobs:
     needs: [job-generate-third-party-notices]
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # Avoid using GITHUB_TOKEN, instead use the Open Source Bot personal access token.
           persist-credentials: false
