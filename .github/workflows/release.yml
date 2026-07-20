@@ -80,7 +80,7 @@ jobs:
 
       - name: Push Commit
         if: steps.generate-notices.outputs.commit == 'true'
-        uses: ad-m/github-push-action@v0.6.0
+        uses: ad-m/github-push-action@v1.3.0
         with:
           github_token: ${{ secrets.OPENSOURCE_BOT_TOKEN }}
 
