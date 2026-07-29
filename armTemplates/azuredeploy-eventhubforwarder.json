@@ -961,10 +961,9 @@
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
                 "reserved": "[variables('pc').functionAppReserved]",
                 "httpsOnly": true,
-                "vnetRouteAllEnabled": "[and(equals(parameters('functionAppPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
                 "virtualNetworkSubnetId": "[if(and(parameters('disablePublicAccessToStorageAccount'), not(empty(variables('pc').subnetDelegation))), resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('functionSubnetName')), null())]",
                 "functionAppConfig": "[variables('pc').functionAppConfig]",
-                "siteConfig": "[union(createObject('appSettings', concat(variables('baseAppSettings'), if(equals(parameters('functionAppPlan'), 'FlexConsumption'), createArray(), createArray(createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', 'node'), createObject('name', 'WEBSITE_NODE_DEFAULT_VERSION', 'value', '~22'))), if(or(variables('pc').usesIdentityStorage, variables('useManagedIdentity')), createArray(createObject('name', 'AzureWebJobsStorage__accountName', 'value', variables('storageAccountName'))), createArray(createObject('name', 'AzureWebJobsStorage', 'value', format(variables('azureWebJobsStorageConnectionFormat'), listKeys(variables('storageAccountResourceId'), '2024-01-01').keys[0].value)))), if(variables('useManagedIdentity'), variables('managedIdentityAppSettings'), createArray(createObject('name', 'EVENTHUB_CONSUMER_CONNECTION', 'value', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2024-01-01').primaryConnectionString))), variables('runFromPackageSetting')), 'ftpsState', 'Disabled', 'minTlsVersion', '1.2', 'scmMinTlsVersion', '1.2', 'publicNetworkAccess', if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')), if(equals(parameters('functionAppPlan'), 'FlexConsumption'), createObject(), createObject('alwaysOn', parameters('disablePublicAccessToStorageAccount'))))]"
+                "siteConfig": "[union(createObject('appSettings', concat(variables('baseAppSettings'), if(equals(parameters('functionAppPlan'), 'FlexConsumption'), createArray(), createArray(createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', 'node'), createObject('name', 'WEBSITE_NODE_DEFAULT_VERSION', 'value', '~22'))), if(or(variables('pc').usesIdentityStorage, variables('useManagedIdentity')), createArray(createObject('name', 'AzureWebJobsStorage__accountName', 'value', variables('storageAccountName'))), createArray(createObject('name', 'AzureWebJobsStorage', 'value', format(variables('azureWebJobsStorageConnectionFormat'), listKeys(variables('storageAccountResourceId'), '2024-01-01').keys[0].value)))), if(variables('useManagedIdentity'), variables('managedIdentityAppSettings'), createArray(createObject('name', 'EVENTHUB_CONSUMER_CONNECTION', 'value', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2024-01-01').primaryConnectionString))), variables('runFromPackageSetting')), 'ftpsState', 'Disabled', 'minTlsVersion', '1.2', 'scmMinTlsVersion', '1.2', 'publicNetworkAccess', if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled'), 'vnetRouteAllEnabled', and(equals(parameters('functionAppPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))), if(equals(parameters('functionAppPlan'), 'FlexConsumption'), createObject(), createObject('alwaysOn', parameters('disablePublicAccessToStorageAccount'))))]"
             }
         },
         {
@@ -1025,7 +1024,6 @@
             }
         },
         {
-            "condition": "[equals(parameters('functionAppPlan'), 'FlexConsumption')]",
             "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
             "apiVersion": "2023-01-31",
             "name": "[variables('deploymentIdentityName')]",
@@ -1106,7 +1104,7 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
             ],
-            "apiVersion": "2020-12-01",
+            "apiVersion": "2022-03-01",
             "properties": {
                 "packageUri": "[variables('eventHubForwarderFunctionArtifact')]"
             }
