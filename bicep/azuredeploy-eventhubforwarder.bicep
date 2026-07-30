@@ -166,7 +166,7 @@ var planConfig = {
     properties: {
       perSiteScaling: true
       elasticScaleEnabled: true
-      maximumElasticWorkerCount: 20
+      maximumElasticWorkerCount: (scalingMode == 'Enterprise' ? 20 : 4)
       zoneRedundant: false
     }
     sku: {
@@ -768,9 +768,11 @@ resource functionApp 'Microsoft.Web/sites@2024-11-01' = {
       minTlsVersion: '1.2'
       scmMinTlsVersion: '1.2'
       publicNetworkAccess: (disablePublicAccessToStorageAccount ? 'Disabled' : 'Enabled')
-    }, ((functionAppPlan == 'FlexConsumption') ? {} : {
-      alwaysOn: disablePublicAccessToStorageAccount
-    }))
+    }, ((functionAppPlan == 'Basic')
+      ? {
+          alwaysOn: true
+        }
+      : {}))
   }
   dependsOn: [
     invalidConsumptionPrivateCombo
