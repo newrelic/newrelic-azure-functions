@@ -18,7 +18,8 @@
       "placeholder": "0.0.0-development"
     }],
     ["@semantic-release/exec", {
-      "prepareCmd": "npm run package:logforwarder"
+      "prepareCmd": "npm run package:logforwarder",
+      "publishCmd": "sha256sum LogForwarder.zip > LogForwarder.zip.sha256 && az storage blob upload --account-name nrloggingprodreleases --container-name releases --name log-forwarder-${nextRelease.version}.zip --file LogForwarder.zip --auth-mode login --overwrite && az storage blob upload --account-name nrloggingprodreleases --container-name releases --name log-forwarder-${nextRelease.version}.zip.sha256 --file LogForwarder.zip.sha256 --auth-mode login --overwrite"
     }],
     ["@semantic-release/github", {
       "assets": [
