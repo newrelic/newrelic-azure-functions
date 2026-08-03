@@ -8,7 +8,6 @@ const {
   NRQL_QUERY_TIMEOUT_IN_SECONDS,
 } = require('./waitTimes');
 const { logAxiosError } = require('./errors');
-const { option } = require('yargs');
 
 const _messageComparer = (message1, message2) => {
   // Sort first by batch index, and then by segment ID
