@@ -73,7 +73,7 @@ This product includes source derived from [@azure/functions](https://github.com/
 
 ### @semantic-release/changelog
 
-This product includes source derived from [@semantic-release/changelog](https://github.com/semantic-release/changelog) ([v6.0.2](https://github.com/semantic-release/changelog/tree/v6.0.2)), distributed under the [MIT License](https://github.com/semantic-release/changelog/blob/v6.0.2/LICENSE):
+This product includes source derived from [@semantic-release/changelog](https://github.com/semantic-release/changelog) ([v6.0.3](https://github.com/semantic-release/changelog/tree/v6.0.3)), distributed under the [MIT License](https://github.com/semantic-release/changelog/blob/v6.0.3/LICENSE):
 
 ```
 MIT License
@@ -131,7 +131,7 @@ SOFTWARE.
 
 ### @semantic-release/exec
 
-This product includes source derived from [@semantic-release/exec](https://github.com/semantic-release/exec) ([v6.0.3](https://github.com/semantic-release/exec/tree/v6.0.3)), distributed under the [MIT License](https://github.com/semantic-release/exec/blob/v6.0.3/LICENSE):
+This product includes source derived from [@semantic-release/exec](https://github.com/semantic-release/exec) ([v7.1.0](https://github.com/semantic-release/exec/tree/v7.1.0)), distributed under the [MIT License](https://github.com/semantic-release/exec/blob/v7.1.0/LICENSE):
 
 ```
 MIT License
@@ -189,7 +189,7 @@ SOFTWARE.
 
 ### @semantic-release/github
 
-This product includes source derived from [@semantic-release/github](https://github.com/semantic-release/github) ([v8.0.7](https://github.com/semantic-release/github/tree/v8.0.7)), distributed under the [MIT License](https://github.com/semantic-release/github/blob/v8.0.7/LICENSE):
+This product includes source derived from [@semantic-release/github](https://github.com/semantic-release/github) ([v12.0.9](https://github.com/semantic-release/github/tree/v12.0.9)), distributed under the [MIT License](https://github.com/semantic-release/github/blob/v12.0.9/LICENSE):
 
 ```
 MIT License
@@ -218,7 +218,7 @@ SOFTWARE.
 
 ### @semantic-release/npm
 
-This product includes source derived from [@semantic-release/npm](https://github.com/semantic-release/npm) ([v9.0.1](https://github.com/semantic-release/npm/tree/v9.0.1)), distributed under the [MIT License](https://github.com/semantic-release/npm/blob/v9.0.1/LICENSE):
+This product includes source derived from [@semantic-release/npm](https://github.com/semantic-release/npm) ([v9.0.2](https://github.com/semantic-release/npm/tree/v9.0.2)), distributed under the [MIT License](https://github.com/semantic-release/npm/blob/v9.0.2/LICENSE):
 
 ```
 MIT License
@@ -247,7 +247,7 @@ SOFTWARE.
 
 ### @semantic-release/release-notes-generator
 
-This product includes source derived from [@semantic-release/release-notes-generator](https://github.com/semantic-release/release-notes-generator) ([v10.0.3](https://github.com/semantic-release/release-notes-generator/tree/v10.0.3)), distributed under the [MIT License](https://github.com/semantic-release/release-notes-generator/blob/v10.0.3/LICENSE):
+This product includes source derived from [@semantic-release/release-notes-generator](https://github.com/semantic-release/release-notes-generator) ([v14.1.1](https://github.com/semantic-release/release-notes-generator/tree/v14.1.1)), distributed under the [MIT License](https://github.com/semantic-release/release-notes-generator/blob/v14.1.1/LICENSE):
 
 ```
 MIT License
@@ -276,7 +276,7 @@ SOFTWARE.
 
 ### axios-retry
 
-This product includes source derived from [axios-retry](https://github.com/softonic/axios-retry) ([v4.1.0](https://github.com/softonic/axios-retry/tree/v4.1.0)), distributed under the [Apache-2.0 License](https://github.com/softonic/axios-retry/blob/v4.1.0/LICENSE):
+This product includes source derived from [axios-retry](https://github.com/softonic/axios-retry) ([v4.5.0](https://github.com/softonic/axios-retry/tree/v4.5.0)), distributed under the [Apache-2.0 License](https://github.com/softonic/axios-retry/blob/v4.5.0/LICENSE):
 
 ```
 Copyright 2019 Softonic International S.A.
@@ -296,7 +296,7 @@ limitations under the License.
 
 ### axios
 
-This product includes source derived from [axios](https://github.com/axios/axios) ([v1.6.8](https://github.com/axios/axios/tree/v1.6.8)), distributed under the [MIT License](https://github.com/axios/axios/blob/v1.6.8/LICENSE):
+This product includes source derived from [axios](https://github.com/axios/axios) ([v1.19.0](https://github.com/axios/axios/tree/v1.19.0)), distributed under the [MIT License](https://github.com/axios/axios/blob/v1.19.0/LICENSE):
 
 ```
 # Copyright (c) 2014-present Matt Zabriskie & Collaborators
@@ -311,12 +311,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### eslint-config-prettier
 
-This product includes source derived from [eslint-config-prettier](https://github.com/prettier/eslint-config-prettier) ([v8.5.0](https://github.com/prettier/eslint-config-prettier/tree/v8.5.0)), distributed under the [MIT License](https://github.com/prettier/eslint-config-prettier/blob/v8.5.0/LICENSE):
+This product includes source derived from [eslint-config-prettier](https://github.com/prettier/eslint-config-prettier) ([v10.1.8](https://github.com/prettier/eslint-config-prettier/tree/v10.1.8)), distributed under the [MIT License](https://github.com/prettier/eslint-config-prettier/blob/v10.1.8/LICENSE):
 
 ```
 The MIT License (MIT)
 
-Copyright (c) 2017, 2018, 2019, 2020, 2021, 2022 Simon Lydell and contributors
+Copyright (c) 2017, 2018, 2019, 2020, 2021, 2022, 2023 Simon Lydell and contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -399,12 +399,13 @@ THE SOFTWARE.
 
 ### jest
 
-This product includes source derived from [jest](https://github.com/jestjs/jest) ([v29.7.0](https://github.com/jestjs/jest/tree/v29.7.0)), distributed under the [MIT License](https://github.com/jestjs/jest/blob/v29.7.0/LICENSE):
+This product includes source derived from [jest](https://github.com/jestjs/jest) ([v30.4.2](https://github.com/jestjs/jest/tree/v30.4.2)), distributed under the [MIT License](https://github.com/jestjs/jest/blob/v30.4.2/LICENSE):
 
 ```
 MIT License
 
 Copyright (c) Meta Platforms, Inc. and affiliates.
+Copyright Contributors to the Jest project.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -6381,7 +6382,7 @@ By: Ika
 
 ### semantic-release-plugin-update-version-in-files
 
-This product includes source derived from [semantic-release-plugin-update-version-in-files](https://github.com/gr2m/semantic-release-plugin-update-version-in-files) ([v1.1.0](https://github.com/gr2m/semantic-release-plugin-update-version-in-files/tree/v1.1.0)), distributed under the [ISC License](https://github.com/gr2m/semantic-release-plugin-update-version-in-files/blob/v1.1.0/LICENSE):
+This product includes source derived from [semantic-release-plugin-update-version-in-files](https://github.com/gr2m/semantic-release-plugin-update-version-in-files) ([v2.1.0](https://github.com/gr2m/semantic-release-plugin-update-version-in-files/tree/v2.1.0)), distributed under the [ISC License](https://github.com/gr2m/semantic-release-plugin-update-version-in-files/blob/v2.1.0/LICENSE):
 
 ```
 Copyright 2019 Gregor Martynus
@@ -6411,7 +6412,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### winston
 
-This product includes source derived from [winston](https://github.com/winstonjs/winston) ([v3.13.0](https://github.com/winstonjs/winston/tree/v3.13.0)), distributed under the [MIT License](https://github.com/winstonjs/winston/blob/v3.13.0/LICENSE):
+This product includes source derived from [winston](https://github.com/winstonjs/winston) ([v3.19.0](https://github.com/winstonjs/winston/tree/v3.19.0)), distributed under the [MIT License](https://github.com/winstonjs/winston/blob/v3.19.0/LICENSE):
 
 ```
 Copyright (c) 2010 Charlie Robbins
