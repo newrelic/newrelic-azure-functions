@@ -1,3 +1,10 @@
+## [3.3.1](https://github.com/newrelic/newrelic-azure-functions/compare/v3.3.0...v3.3.1) (2026-08-03)
+
+
+### Bug Fixes
+
+* publish release artifacts to Azure Blob Storage via OIDC ([#162](https://github.com/newrelic/newrelic-azure-functions/issues/162)) ([a1bb939](https://github.com/newrelic/newrelic-azure-functions/commit/a1bb939d1e7601662d557da41f978c9e46a1e03b))
+
 # [3.3.0](https://github.com/newrelic/newrelic-azure-functions/compare/v3.2.1...v3.3.0) (2026-07-09)
 
 
