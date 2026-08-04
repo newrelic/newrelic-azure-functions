@@ -24,21 +24,13 @@ param maxRetriesToResendLogs int = 3
 @minValue(100)
 param retryInterval int = 2000
 
-@description('Optional. Controls Event Hub sizing and Function App scale-out. If set to \'Enterprise\', the Event Hub namespace is auto-inflated (higher maximum throughput units and partition count) and the Function App is allowed more instances/workers; otherwise smaller defaults are used. This no longer selects the hosting plan - use the functionAppPlan parameter to choose the plan.')
+@description('Optional. Selects the Function App hosting plan and the Event Hub / Function App scaling. \'Basic\' (default) uses a Consumption plan on public networks, or a Basic App Service Plan when private networking is enabled, with smaller Event Hub sizing - this matches the previous default behavior. \'Enterprise\' uses an Elastic Premium plan with a larger, auto-inflating Event Hub and more workers. \'Flex\' uses the Flex Consumption plan (modern serverless, where available) and supports private networking. Note: Azure does not allow changing the hosting plan of an existing deployment in place; switching modes on an existing resource group requires a fresh deployment.')
 @allowed([
   'Basic'
   'Enterprise'
+  'Flex'
 ])
 param scalingMode string = 'Basic'
-
-@description('Optional. Function App hosting plan. FlexConsumption (default) is the modern serverless plan, preferred where available. ElasticPremium is for production/bursty workloads or regions without Flex. Basic is a low-cost dedicated tier that still supports private networking. Consumption is pay-per-use for public dev/test only - deployment fails if combined with disablePublicAccessToStorageAccount=true. Note: Azure does not allow in-place plan changes across tier families; moving an existing deployment to a different plan requires a fresh deployment in a new resource group.')
-@allowed([
-  'FlexConsumption'
-  'ElasticPremium'
-  'Basic'
-  'Consumption'
-])
-param functionAppPlan string = 'FlexConsumption'
 
 @description('Optional. Contains the record of all create, update, delete, and action operations performed through Resource Manager. Examples of Administrative events include create virtual machine and delete network security group. Every action taken by a user or application using Resource Manager is modeled as an operation on a particular resource type. If the operation type is Write, Delete, or Action, the records of both the start and success or fail of that operation are recorded in the Administrative category. Administrative events also include any changes to Azure role-based access control in a subscription.')
 param forwardAdministrativeAzureActivityLogs bool = false
@@ -225,7 +217,8 @@ var planConfig = {
     functionAppReserved: false
   }
 }
-var pc = planConfig[functionAppPlan]
+var selectedPlan = scalingMode == 'Flex' ? 'FlexConsumption' : (scalingMode == 'Enterprise' ? 'ElasticPremium' : (disablePublicAccessToStorageAccount ? 'Basic' : 'Consumption'))
+var pc = planConfig[selectedPlan]
 var runFromPackageSetting = ((pc.usesRunFromPackage && disablePublicAccessToStorageAccount)
   ? [
       {
@@ -642,19 +635,6 @@ resource storageAccountName_deploymentsContainer 'Microsoft.Storage/storageAccou
   }
 }
 
-resource invalidConsumptionPrivateCombo 'Microsoft.Resources/deploymentScripts@2023-08-01' = if ((functionAppPlan == 'Consumption') && disablePublicAccessToStorageAccount) {
-  name: 'nrlogs-validate-plan-${onePerResourceGroupAndEventHubUniqueSuffix}'
-  location: location_var
-  kind: 'AzureCLI'
-  properties: {
-    azCliVersion: '2.61.0'
-    timeout: 'PT5M'
-    retentionInterval: 'PT1H'
-    cleanupPreference: 'OnSuccess'
-    scriptContent: 'echo \'ERROR: Consumption (Y1) plan does not support private networking. Choose ElasticPremium or Basic for a private deployment, or set disablePublicAccessToStorageAccount=false to keep Consumption on the public network.\' >&2; exit 1'
-  }
-}
-
 resource servicePlan 'Microsoft.Web/serverfarms@2024-11-01' = {
   name: servicePlanName
   kind: pc.kind
@@ -728,7 +708,7 @@ resource functionApp 'Microsoft.Web/sites@2024-11-01' = {
             value: maxWaitTime
           }
         ],
-        ((functionAppPlan == 'FlexConsumption')
+        ((selectedPlan == 'FlexConsumption')
           ? []
           : [
               {
@@ -763,19 +743,18 @@ resource functionApp 'Microsoft.Web/sites@2024-11-01' = {
             ]),
         runFromPackageSetting
       )
-      vnetRouteAllEnabled: ((functionAppPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount)
+      vnetRouteAllEnabled: ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount)
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
       scmMinTlsVersion: '1.2'
       publicNetworkAccess: (disablePublicAccessToStorageAccount ? 'Disabled' : 'Enabled')
-    }, ((functionAppPlan == 'Basic')
+    }, ((selectedPlan == 'Basic')
       ? {
           alwaysOn: true
         }
       : {}))
   }
   dependsOn: [
-    invalidConsumptionPrivateCombo
     storageAccountName_deploymentsContainer
     privateEndpointPrivateDnsZoneGroupsStorageTable
     privateEndpointPrivateDnsZoneGroupsStorageFile
@@ -827,7 +806,7 @@ resource deploymentIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@20
   location: location_var
 }
 
-resource deploymentScriptWebsiteContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (functionAppPlan == 'FlexConsumption') {
+resource deploymentScriptWebsiteContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (selectedPlan == 'FlexConsumption') {
   scope: functionApp
   name: guid(functionApp.id, deploymentIdentityName, 'WebsiteContributor')
   properties: {
@@ -837,7 +816,7 @@ resource deploymentScriptWebsiteContributorAssignment 'Microsoft.Authorization/r
   }
 }
 
-resource deploymentScriptStorageFileContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if ((functionAppPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
+resource deploymentScriptStorageFileContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
   scope: storageAccount
   name: guid(storageAccount.id, deploymentIdentityName, 'StorageFileDataPrivilegedContributor')
   properties: {
@@ -847,12 +826,12 @@ resource deploymentScriptStorageFileContributorAssignment 'Microsoft.Authorizati
   }
 }
 
-resource functionAppSitesPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if ((functionAppPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
+resource functionAppSitesPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
   name: sitesPrivateDnsZoneName
   location: 'global'
 }
 
-resource functionAppSitesPrivateDnsZoneVirtualNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if ((functionAppPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
+resource functionAppSitesPrivateDnsZoneVirtualNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
   name: sitesPrivateDnsZoneVirtualNetworkLinkName
   location: 'global'
   properties: {
@@ -867,7 +846,7 @@ resource functionAppSitesPrivateDnsZoneVirtualNetworkLink 'Microsoft.Network/pri
   ]
 }
 
-resource functionAppSitesPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-05-01' = if ((functionAppPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
+resource functionAppSitesPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-05-01' = if ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
   name: functionAppPrivateEndpointName
   location: location_var
   properties: {
@@ -891,7 +870,7 @@ resource functionAppSitesPrivateEndpoint 'Microsoft.Network/privateEndpoints@202
   ]
 }
 
-resource functionAppSitesPrivateEndpointDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = if ((functionAppPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
+resource functionAppSitesPrivateEndpointDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = if ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
   name: functionAppPrivateEndpointDnsZoneGroupName
   properties: {
     privateDnsZoneConfigs: [
@@ -909,7 +888,7 @@ resource functionAppSitesPrivateEndpointDnsZoneGroup 'Microsoft.Network/privateE
   ]
 }
 
-resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = if (functionAppPlan == 'FlexConsumption') {
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = if (selectedPlan == 'FlexConsumption') {
   name: deploymentScriptName
   location: location_var
   kind: 'AzureCLI'

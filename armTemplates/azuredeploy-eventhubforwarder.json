@@ -97,24 +97,12 @@
             "type": "string",
             "allowedValues": [
                 "Basic",
-                "Enterprise"
+                "Enterprise",
+                "Flex"
             ],
             "defaultValue": "Basic",
             "metadata": {
-                "description": "Optional. Controls Event Hub sizing and Function App scale-out. If set to 'Enterprise', the Event Hub namespace is auto-inflated (higher maximum throughput units and partition count) and the Function App is allowed more instances/workers; otherwise smaller defaults are used. This no longer selects the hosting plan - use the functionAppPlan parameter to choose the plan."
-            }
-        },
-        "functionAppPlan": {
-            "type": "string",
-            "defaultValue": "FlexConsumption",
-            "allowedValues": [
-                "FlexConsumption",
-                "ElasticPremium",
-                "Basic",
-                "Consumption"
-            ],
-            "metadata": {
-                "description": "Optional. Function App hosting plan. FlexConsumption (default) is the modern serverless plan, preferred where available. ElasticPremium is for production/bursty workloads or regions without Flex. Basic is a low-cost dedicated tier that still supports private networking. Consumption is pay-per-use for public dev/test only - deployment fails if combined with disablePublicAccessToStorageAccount=true. Note: Azure does not allow in-place plan changes across tier families; moving an existing deployment to a different plan requires a fresh deployment in a new resource group."
+                "description": "Optional. Selects the Function App hosting plan and the Event Hub / Function App scaling. 'Basic' (default) uses a Consumption plan on public networks, or a Basic App Service Plan when private networking is enabled, with smaller Event Hub sizing - this matches the previous default behavior. 'Enterprise' uses an Elastic Premium plan with a larger, auto-inflating Event Hub and more workers. 'Flex' uses the Flex Consumption plan (modern serverless, where available) and supports private networking. Note: Azure does not allow changing the hosting plan of an existing deployment in place; switching modes on an existing resource group requires a fresh deployment."
             }
         },
         "forwardAdministrativeAzureActivityLogs": {
@@ -322,7 +310,8 @@
                 "functionAppReserved": false
             }
         },
-        "pc": "[variables('planConfig')[parameters('functionAppPlan')]]",
+        "selectedPlan": "[if(equals(parameters('scalingMode'), 'Flex'), 'FlexConsumption', if(equals(parameters('scalingMode'), 'Enterprise'), 'ElasticPremium', if(parameters('disablePublicAccessToStorageAccount'), 'Basic', 'Consumption')))]",
+        "pc": "[variables('planConfig')[variables('selectedPlan')]]",
         "runFromPackageSetting": "[if(and(variables('pc').usesRunFromPackage, parameters('disablePublicAccessToStorageAccount')), createArray(createObject('name', 'WEBSITE_RUN_FROM_PACKAGE', 'value', variables('eventHubForwarderFunctionArtifact'))), createArray())]",
 
         "useManagedIdentity": "[equals(parameters('authenticationMode'), 'Managed Identity')]",
@@ -403,21 +392,6 @@
 
     },
     "resources": [
-        {
-            "condition": "[and(equals(parameters('functionAppPlan'), 'Consumption'), parameters('disablePublicAccessToStorageAccount'))]",
-            "type": "Microsoft.Resources/deploymentScripts",
-            "apiVersion": "2023-08-01",
-            "name": "[concat('nrlogs-validate-plan-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
-            "location": "[variables('location')]",
-            "kind": "AzureCLI",
-            "properties": {
-                "azCliVersion": "2.61.0",
-                "timeout": "PT5M",
-                "retentionInterval": "PT1H",
-                "cleanupPreference": "OnSuccess",
-                "scriptContent": "echo 'ERROR: Consumption (Y1) plan does not support private networking. Choose ElasticPremium or Basic for a private deployment, or set disablePublicAccessToStorageAccount=false to keep Consumption on the public network.' >&2; exit 1"
-            }
-        },
         {
             "type": "Microsoft.EventHub/namespaces",
             "apiVersion": "2024-01-01",
@@ -855,14 +829,14 @@
             }
         },
         {
-            "condition": "[and(equals(parameters('functionAppPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
+            "condition": "[and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
             "type": "Microsoft.Network/privateDnsZones",
             "apiVersion": "2020-06-01",
             "name": "[variables('sitesPrivateDnsZoneName')]",
             "location": "global"
         },
         {
-            "condition": "[and(equals(parameters('functionAppPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
+            "condition": "[and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
             "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
             "apiVersion": "2020-06-01",
             "name": "[variables('sitesPrivateDnsZoneVirtualNetworkLinkName')]",
@@ -879,7 +853,7 @@
             }
         },
         {
-            "condition": "[and(equals(parameters('functionAppPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
+            "condition": "[and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
             "type": "Microsoft.Network/privateEndpoints",
             "apiVersion": "2022-05-01",
             "name": "[variables('functionAppPrivateEndpointName')]",
@@ -906,7 +880,7 @@
             }
         },
         {
-            "condition": "[and(equals(parameters('functionAppPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
+            "condition": "[and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
             "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
             "apiVersion": "2022-05-01",
             "name": "[variables('functionAppPrivateEndpointDnsZoneGroupName')]",
@@ -963,7 +937,7 @@
                 "httpsOnly": true,
                 "virtualNetworkSubnetId": "[if(and(parameters('disablePublicAccessToStorageAccount'), not(empty(variables('pc').subnetDelegation))), resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('functionSubnetName')), null())]",
                 "functionAppConfig": "[variables('pc').functionAppConfig]",
-                "siteConfig": "[union(createObject('appSettings', concat(variables('baseAppSettings'), if(equals(parameters('functionAppPlan'), 'FlexConsumption'), createArray(), createArray(createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', 'node'), createObject('name', 'WEBSITE_NODE_DEFAULT_VERSION', 'value', '~22'))), if(or(variables('pc').usesIdentityStorage, variables('useManagedIdentity')), createArray(createObject('name', 'AzureWebJobsStorage__accountName', 'value', variables('storageAccountName'))), createArray(createObject('name', 'AzureWebJobsStorage', 'value', format(variables('azureWebJobsStorageConnectionFormat'), listKeys(variables('storageAccountResourceId'), '2024-01-01').keys[0].value)))), if(variables('useManagedIdentity'), variables('managedIdentityAppSettings'), createArray(createObject('name', 'EVENTHUB_CONSUMER_CONNECTION', 'value', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2024-01-01').primaryConnectionString))), variables('runFromPackageSetting')), 'ftpsState', 'Disabled', 'minTlsVersion', '1.2', 'scmMinTlsVersion', '1.2', 'publicNetworkAccess', if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled'), 'vnetRouteAllEnabled', and(equals(parameters('functionAppPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))), if(equals(parameters('functionAppPlan'), 'Basic'), createObject('alwaysOn', true()), createObject()))]"
+                "siteConfig": "[union(createObject('appSettings', concat(variables('baseAppSettings'), if(equals(variables('selectedPlan'), 'FlexConsumption'), createArray(), createArray(createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', 'node'), createObject('name', 'WEBSITE_NODE_DEFAULT_VERSION', 'value', '~22'))), if(or(variables('pc').usesIdentityStorage, variables('useManagedIdentity')), createArray(createObject('name', 'AzureWebJobsStorage__accountName', 'value', variables('storageAccountName'))), createArray(createObject('name', 'AzureWebJobsStorage', 'value', format(variables('azureWebJobsStorageConnectionFormat'), listKeys(variables('storageAccountResourceId'), '2024-01-01').keys[0].value)))), if(variables('useManagedIdentity'), variables('managedIdentityAppSettings'), createArray(createObject('name', 'EVENTHUB_CONSUMER_CONNECTION', 'value', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2024-01-01').primaryConnectionString))), variables('runFromPackageSetting')), 'ftpsState', 'Disabled', 'minTlsVersion', '1.2', 'scmMinTlsVersion', '1.2', 'publicNetworkAccess', if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled'), 'vnetRouteAllEnabled', and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))), if(equals(variables('selectedPlan'), 'Basic'), createObject('alwaysOn', true()), createObject()))]"
             }
         },
         {
@@ -1030,7 +1004,7 @@
             "location": "[variables('location')]"
         },
         {
-            "condition": "[equals(parameters('functionAppPlan'), 'FlexConsumption')]",
+            "condition": "[equals(variables('selectedPlan'), 'FlexConsumption')]",
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
             "name": "[guid(resourceId('Microsoft.Web/sites', variables('functionAppName')), variables('deploymentIdentityName'), 'WebsiteContributor')]",
@@ -1046,7 +1020,7 @@
             }
         },
         {
-            "condition": "[and(equals(parameters('functionAppPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
+            "condition": "[and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2022-04-01",
             "name": "[guid(variables('storageAccountResourceId'), variables('deploymentIdentityName'), 'StorageFileDataPrivilegedContributor')]",
@@ -1062,7 +1036,7 @@
             }
         },
         {
-            "condition": "[equals(parameters('functionAppPlan'), 'FlexConsumption')]",
+            "condition": "[equals(variables('selectedPlan'), 'FlexConsumption')]",
             "type": "Microsoft.Resources/deploymentScripts",
             "apiVersion": "2023-08-01",
             "name": "[variables('deploymentScriptName')]",
