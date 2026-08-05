@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "Wed Aug 05 2026 05:19:52 GMT+0000 (Coordinated Universal Time)",
+  "lastUpdated": "Wed Aug 05 2026 06:52:34 GMT+0000 (Coordinated Universal Time)",
   "projectName": "newrelic-azure-functions",
   "projectUrl": "git+https://github.com/newrelic-experimental/newrelic-azure-functions.git",
   "includeOptDeps": false,
@@ -84,15 +84,15 @@
       "publisher": "Pierre Vanduynslager",
       "url": "https://twitter.com/@pvdlg_"
     },
-    "@semantic-release/npm@9.0.2": {
+    "@semantic-release/npm@13.1.5": {
       "name": "@semantic-release/npm",
-      "version": "9.0.2",
-      "range": "^9.0.1",
+      "version": "13.1.5",
+      "range": "^13.1.5",
       "licenses": "MIT",
       "repoUrl": "https://github.com/semantic-release/npm",
-      "versionedRepoUrl": "https://github.com/semantic-release/npm/tree/v9.0.2",
+      "versionedRepoUrl": "https://github.com/semantic-release/npm/tree/v13.1.5",
       "licenseFile": "node_modules/@semantic-release/npm/LICENSE",
-      "licenseUrl": "https://github.com/semantic-release/npm/blob/v9.0.2/LICENSE",
+      "licenseUrl": "https://github.com/semantic-release/npm/blob/v13.1.5/LICENSE",
       "licenseTextSource": "file",
       "publisher": "Pierre Vanduynslager",
       "url": "https://twitter.com/@pvdlg_"

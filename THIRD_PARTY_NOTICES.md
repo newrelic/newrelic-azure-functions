@@ -218,7 +218,7 @@ SOFTWARE.
 
 ### @semantic-release/npm
 
-This product includes source derived from [@semantic-release/npm](https://github.com/semantic-release/npm) ([v9.0.2](https://github.com/semantic-release/npm/tree/v9.0.2)), distributed under the [MIT License](https://github.com/semantic-release/npm/blob/v9.0.2/LICENSE):
+This product includes source derived from [@semantic-release/npm](https://github.com/semantic-release/npm) ([v13.1.5](https://github.com/semantic-release/npm/tree/v13.1.5)), distributed under the [MIT License](https://github.com/semantic-release/npm/blob/v13.1.5/LICENSE):
 
 ```
 MIT License
