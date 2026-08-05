@@ -97,11 +97,12 @@
             "type": "string",
             "allowedValues": [
                 "Basic",
-                "Enterprise"
+                "Enterprise",
+                "Flex"
             ],
             "defaultValue": "Basic",
             "metadata": {
-                "description": "Optional. The scaling for the resources. If set to 'Enterprise', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynamic App Service Plan."
+                "description": "Optional. Selects the Function App hosting plan and the Event Hub / Function App scaling. 'Basic' (default) uses a Consumption plan on public networks, or a Basic App Service Plan when private networking is enabled, with smaller Event Hub sizing - this matches the previous default behavior. 'Enterprise' uses an Elastic Premium plan with a larger, auto-inflating Event Hub and more workers. 'Flex' uses the Flex Consumption plan (modern serverless, where available) and supports private networking. Note: Azure does not allow changing the hosting plan of an existing deployment in place; switching modes on an existing resource group requires a fresh deployment."
             }
         },
         "forwardAdministrativeAzureActivityLogs": {
@@ -211,61 +212,123 @@
         "privateEndpointPrivateDnsZoneGroupsStorageTableName": "[format('{0}/{1}', variables('privateEndpointStorageTableName'), 'tablePrivateDnsZoneGroup')]",
         "privateEndpointPrivateDnsZoneGroupsStorageQueueName": "[format('{0}/{1}', variables('privateEndpointStorageQueueName'), 'queuePrivateDnsZoneGroup')]",
 
-        "functionNetworkConfigName": "[format('{0}/{1}', variables('functionAppName'), 'virtualNetwork')]",
-        "autoscalingASP": {
-            "kind": "elastic",
-            "properties": {
-                "perSiteScaling": true,
-                "elasticScaleEnabled": true,
-                "maximumElasticWorkerCount": 20,
-                "zoneRedundant": false
+        "planConfig": {
+            "FlexConsumption": {
+                "kind": "functionapp,linux",
+                "properties": {
+                    "reserved": true
+                },
+                "sku": {
+                    "tier": "FlexConsumption",
+                    "name": "FC1"
+                },
+                "functionAppConfig": {
+                    "deployment": {
+                        "storage": {
+                            "type": "blobContainer",
+                            "value": "[concat('https://', variables('storageAccountName'), '.blob.', environment().suffixes.storage, '/deployments')]",
+                            "authentication": {
+                                "type": "SystemAssignedIdentity"
+                            }
+                        }
+                    },
+                    "scaleAndConcurrency": {
+                        "maximumInstanceCount": "[if(equals(parameters('scalingMode'), 'Enterprise'), 32, 4)]",
+                        "instanceMemoryMB": 2048
+                    },
+                    "runtime": {
+                        "name": "node",
+                        "version": "22"
+                    }
+                },
+                "subnetDelegation": "Microsoft.App/environments",
+                "usesRunFromPackage": false,
+                "usesIdentityStorage": true,
+                "functionAppReserved": true
             },
-            "sku": {
-                "name": "EP1",
-                "tier": "ElasticPremium",
-                "size": "EP1",
-                "family": "EP",
-                "capacity": 1
+            "ElasticPremium": {
+                "kind": "elastic",
+                "properties": {
+                    "perSiteScaling": true,
+                    "elasticScaleEnabled": true,
+                    "maximumElasticWorkerCount": "[if(equals(parameters('scalingMode'), 'Enterprise'), 20, 4)]",
+                    "zoneRedundant": false
+                },
+                "sku": {
+                    "name": "EP1",
+                    "tier": "ElasticPremium",
+                    "size": "EP1",
+                    "family": "EP",
+                    "capacity": 1
+                },
+                "functionAppConfig": null,
+                "subnetDelegation": "Microsoft.Web/serverFarms",
+                "usesRunFromPackage": true,
+                "usesIdentityStorage": false,
+                "functionAppReserved": false
+            },
+            "Basic": {
+                "kind": "app",
+                "properties": {
+                    "name": "[variables('servicePlanName')]",
+                    "targetWorkerCount": 1,
+                    "targetWorkerSizeId": 1,
+                    "workerSize": 1,
+                    "numberOfWorkers": 1,
+                    "computeMode": "Dynamic",
+                    "zoneRedundant": false
+                },
+                "sku": {
+                    "name": "B1",
+                    "tier": "Basic",
+                    "capacity": 1
+                },
+                "functionAppConfig": null,
+                "subnetDelegation": "Microsoft.Web/serverFarms",
+                "usesRunFromPackage": true,
+                "usesIdentityStorage": false,
+                "functionAppReserved": false
+            },
+            "Consumption": {
+                "kind": "functionapp",
+                "properties": {
+                    "name": "[variables('servicePlanName')]",
+                    "targetWorkerCount": 1,
+                    "targetWorkerSizeId": 1,
+                    "workerSize": "1",
+                    "numberOfWorkers": 1,
+                    "computeMode": "Dynamic"
+                },
+                "sku": {
+                    "name": "Y1",
+                    "tier": "Dynamic"
+                },
+                "functionAppConfig": null,
+                "subnetDelegation": "",
+                "usesRunFromPackage": true,
+                "usesIdentityStorage": false,
+                "functionAppReserved": false
             }
         },
-        "privateNetworkASP": {
-            "kind": "app",
-            "properties": {
-                "name": "[variables('servicePlanName')]",
-                "targetWorkerCount": 1,
-                "targetWorkerSizeId": 1,
-                "workerSize": 1,
-                "numberOfWorkers": 1,
-                "computeMode": "Dynamic",
-                "zoneRedundant": false
-            },
-            "sku": {
-                "name": "B1",
-                "tier": "Basic",
-                "capacity": 1
-            }
-        },
-        "defaultASP": {
-            "kind": "functionapp",
-            "properties": {
-                "name": "[variables('servicePlanName')]",
-                "targetWorkerCount": 1,
-                "targetWorkerSizeId": 1,
-                "workerSize": "1",
-                "numberOfWorkers": 1,
-                "computeMode": "Dynamic"
-            },
-            "sku": {
-                "name": "Y1",
-                "tier": "Dynamic"
-            }
-        },
-        "isHighScalabing": "[if(equals(parameters('scalingMode'), 'Enterprise'), true(), false())]",
-        "basicScaleConfig": "[if(and(equals(parameters('scalingMode'), 'Basic'), parameters('disablePublicAccessToStorageAccount')), variables('privateNetworkASP'), variables('defaultASP'))]",
-        "aspConfig": "[if(variables('isHighScalabing'), variables('autoscalingASP'), variables('basicScaleConfig'))]",
+        "selectedPlan": "[if(equals(parameters('scalingMode'), 'Flex'), 'FlexConsumption', if(equals(parameters('scalingMode'), 'Enterprise'), 'ElasticPremium', if(parameters('disablePublicAccessToStorageAccount'), 'Basic', 'Consumption')))]",
+        "pc": "[variables('planConfig')[variables('selectedPlan')]]",
+        "runFromPackageSetting": "[if(and(variables('pc').usesRunFromPackage, parameters('disablePublicAccessToStorageAccount')), createArray(createObject('name', 'WEBSITE_RUN_FROM_PACKAGE', 'value', variables('eventHubForwarderFunctionArtifact'))), createArray())]",
 
         "useManagedIdentity": "[equals(parameters('authenticationMode'), 'Managed Identity')]",
         "eventHubsDataReceiverRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')]",
+        "storageBlobDataOwnerRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b')]",
+        "storageQueueDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '974c5e8b-45b9-4653-ba55-5f855dd0fb88')]",
+        "storageTableDataContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')]",
+        "websiteContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'de139f84-1756-47ae-9be6-808fbbe84772')]",
+        "deploymentIdentityName": "[concat('nrlogs-deploy-identity-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
+        "deploymentScriptName": "[concat('nrlogs-deploy-script-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
+        "storageFileDataPrivilegedContributorRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '69566ab7-960f-475b-8e7c-b3118f30c6bd')]",
+        "deploymentScriptsSubnetName": "deployment-scripts-subnet",
+        "deploymentScriptsSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('deploymentScriptsSubnetName'))]",
+        "sitesPrivateDnsZoneName": "privatelink.azurewebsites.net",
+        "sitesPrivateDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('sitesPrivateDnsZoneName'), variables('virtualNetworkName'))]",
+        "functionAppPrivateEndpointName": "[format('{0}-sites-private-endpoint', variables('functionAppName'))]",
+        "functionAppPrivateEndpointDnsZoneGroupName": "[format('{0}/{1}', variables('functionAppPrivateEndpointName'), 'sitesPrivateDnsZoneGroup')]",
         "logConsumerAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName'))]",
         "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "azureWebJobsStorageConnectionFormat": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey={0};EndpointSuffix=', environment().suffixes.storage)]",
@@ -316,20 +379,8 @@
                 "value": "~4"
             },
             {
-                "name": "FUNCTIONS_WORKER_RUNTIME",
-                "value": "node"
-            },
-            {
-                "name": "WEBSITE_NODE_DEFAULT_VERSION",
-                "value": "~22"
-            },
-            {
                 "name": "EVENTHUB_FORWARDER_ENABLED",
                 "value": "true"
-            },
-            {
-                "name": "WEBSITE_RUN_FROM_PACKAGE",
-                "value": "[if(parameters('disablePublicAccessToStorageAccount'), variables('eventHubForwarderFunctionArtifact'),'0')]"
             }
         ],
         "managedIdentityAppSettings": [
@@ -428,14 +479,7 @@
                         "properties": {
                             "privateEndpointNetworkPolicies": "Enabled",
                             "privateLinkServiceNetworkPolicies": "Enabled",
-                            "delegations": [
-                            {
-                                "name": "webapp",
-                                "properties": {
-                                "serviceName": "Microsoft.Web/serverFarms"
-                                }
-                            }
-                            ],
+                            "delegations": "[if(empty(variables('pc').subnetDelegation), createArray(), createArray(createObject('name', 'delegation', 'properties', createObject('serviceName', variables('pc').subnetDelegation))))]",
                             "addressPrefix": "10.2.0.0/24"
                         }
                     },
@@ -445,6 +489,20 @@
                             "privateEndpointNetworkPolicies": "Disabled",
                             "privateLinkServiceNetworkPolicies": "Enabled",
                             "addressPrefix": "10.2.1.0/24"
+                        }
+                    },
+                    {
+                        "name": "[variables('deploymentScriptsSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "10.2.2.0/28",
+                            "delegations": [
+                                {
+                                    "name": "delegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.ContainerInstance/containerGroups"
+                                    }
+                                }
+                            ]
                         }
                     }
                 ]
@@ -747,27 +805,122 @@
                 "minimumTlsVersion": "TLS1_2",
                 "publicNetworkAccess": "[if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')]",
                 "allowBlobPublicAccess": false,
-                "networkAcls": "[if(parameters('disablePublicAccessToStorageAccount'), json('{\"bypass\": \"None\", \"defaultAction\": \"Deny\"}'), json('null'))]"
+                "networkAcls": "[if(parameters('disablePublicAccessToStorageAccount'), json('{\"bypass\": \"AzureServices\", \"defaultAction\": \"Deny\"}'), json('null'))]"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(variables('storageAccountName'), '/default')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+            ],
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2024-01-01",
+            "name": "[concat(variables('storageAccountName'), '/default/deployments')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]"
+            ],
+            "properties": {
+                "publicAccess": "None"
+            }
+        },
+        {
+            "condition": "[and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2020-06-01",
+            "name": "[variables('sitesPrivateDnsZoneName')]",
+            "location": "global"
+        },
+        {
+            "condition": "[and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
+            "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+            "apiVersion": "2020-06-01",
+            "name": "[variables('sitesPrivateDnsZoneVirtualNetworkLinkName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('sitesPrivateDnsZoneName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ],
+            "location": "global",
+            "properties": {
+                "registrationEnabled": false,
+                "virtualNetwork": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+                }
+            }
+        },
+        {
+            "condition": "[and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2022-05-01",
+            "name": "[variables('functionAppPrivateEndpointName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ],
+            "location": "[variables('location')]",
+            "properties": {
+                "subnet": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('privateEndpointsSubnetName'))]"
+                },
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "MyFunctionAppSitesPrivateLinkConnection",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+                            "groupIds": [
+                                "sites"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
+            "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+            "apiVersion": "2022-05-01",
+            "name": "[variables('functionAppPrivateEndpointDnsZoneGroupName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', variables('functionAppPrivateEndpointName'))]",
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('sitesPrivateDnsZoneName'))]"
+            ],
+            "properties": {
+                "privateDnsZoneConfigs": [
+                    {
+                        "name": "config",
+                        "properties": {
+                            "privateDnsZoneId": "[resourceId('Microsoft.Network/privateDnsZones', variables('sitesPrivateDnsZoneName'))]"
+                        }
+                    }
+                ]
             }
         },
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2024-11-01",
             "name": "[variables('servicePlanName')]",
-            "kind": "[variables('aspConfig').kind]",
+            "kind": "[variables('pc').kind]",
             "location": "[variables('location')]",
-            "sku": "[variables('aspConfig').sku]",
-            "properties": "[variables('aspConfig').properties]"
+            "sku": "[variables('pc').sku]",
+            "properties": "[variables('pc').properties]"
         },
         {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2024-11-01",
             "name": "[variables('functionAppName')]",
             "location": "[variables('location')]",
-            "kind": "functionapp",
-            "identity": "[if(variables('useManagedIdentity'), json('{\"type\": \"SystemAssigned\"}'), json('null'))]",
+            "kind": "[if(variables('pc').functionAppReserved, 'functionapp,linux', 'functionapp')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
             "dependsOn": [
+                "[resourceId('Microsoft.Resources/deploymentScripts', concat('nrlogs-validate-plan-', variables('onePerResourceGroupAndEventHubUniqueSuffix')))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', 'deployments')]",
                 "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
                 "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', variables('privateEndpointStorageBlobName'), 'blobPrivateDnsZoneGroup')]",
                 "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', variables('privateEndpointStorageFileName'), 'filePrivateDnsZoneGroup')]",
@@ -780,15 +933,11 @@
             ],
             "properties": {
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
-                "siteConfig": {
-                    "appSettings": "[concat(variables('baseAppSettings'), if(variables('useManagedIdentity'), variables('managedIdentityAppSettings'), createArray(createObject('name', 'EVENTHUB_CONSUMER_CONNECTION', 'value', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2024-01-01').primaryConnectionString))), createArray(createObject('name', 'AzureWebJobsStorage', 'value', format(variables('azureWebJobsStorageConnectionFormat'), listKeys(variables('storageAccountResourceId'), '2024-01-01').keys[0].value))))]",
-                    "alwaysOn": "[parameters('disablePublicAccessToStorageAccount')]",
-                    "ftpsState": "Disabled",
-                    "minTlsVersion": "1.2",
-                    "scmMinTlsVersion": "1.2",
-                    "publicNetworkAccess": "[if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')]"
-                },
-                "httpsOnly": true
+                "reserved": "[variables('pc').functionAppReserved]",
+                "httpsOnly": true,
+                "virtualNetworkSubnetId": "[if(and(parameters('disablePublicAccessToStorageAccount'), not(empty(variables('pc').subnetDelegation))), resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('functionSubnetName')), null())]",
+                "functionAppConfig": "[variables('pc').functionAppConfig]",
+                "siteConfig": "[union(createObject('appSettings', concat(variables('baseAppSettings'), if(equals(variables('selectedPlan'), 'FlexConsumption'), createArray(), createArray(createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', 'node'), createObject('name', 'WEBSITE_NODE_DEFAULT_VERSION', 'value', '~22'))), if(or(variables('pc').usesIdentityStorage, variables('useManagedIdentity')), createArray(createObject('name', 'AzureWebJobsStorage__accountName', 'value', variables('storageAccountName'))), createArray(createObject('name', 'AzureWebJobsStorage', 'value', format(variables('azureWebJobsStorageConnectionFormat'), listKeys(variables('storageAccountResourceId'), '2024-01-01').keys[0].value)))), if(variables('useManagedIdentity'), variables('managedIdentityAppSettings'), createArray(createObject('name', 'EVENTHUB_CONSUMER_CONNECTION', 'value', listKeys(variables('logConsumerAuthorizationRuleResourceId'), '2024-01-01').primaryConnectionString))), variables('runFromPackageSetting')), 'ftpsState', 'Disabled', 'minTlsVersion', '1.2', 'scmMinTlsVersion', '1.2', 'publicNetworkAccess', if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled'), 'vnetRouteAllEnabled', and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))), if(equals(variables('selectedPlan'), 'Basic'), createObject('alwaysOn', true()), createObject()))]"
             }
         },
         {
@@ -807,29 +956,131 @@
             }
         },
         {
-            "condition": "[not(parameters('disablePublicAccessToStorageAccount'))]",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[guid(resourceId('Microsoft.Web/sites', variables('functionAppName')), variables('storageAccountResourceId'), 'StorageBlobDataOwner')]",
+            "scope": "[variables('storageAccountResourceId')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('storageBlobDataOwnerRoleId')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-11-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[guid(resourceId('Microsoft.Web/sites', variables('functionAppName')), variables('storageAccountResourceId'), 'StorageQueueDataContributor')]",
+            "scope": "[variables('storageAccountResourceId')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('storageQueueDataContributorRoleId')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-11-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[guid(resourceId('Microsoft.Web/sites', variables('functionAppName')), variables('storageAccountResourceId'), 'StorageTableDataContributor')]",
+            "scope": "[variables('storageAccountResourceId')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('storageTableDataContributorRoleId')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2024-11-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2023-01-31",
+            "name": "[variables('deploymentIdentityName')]",
+            "location": "[variables('location')]"
+        },
+        {
+            "condition": "[equals(variables('selectedPlan'), 'FlexConsumption')]",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[guid(resourceId('Microsoft.Web/sites', variables('functionAppName')), variables('deploymentIdentityName'), 'WebsiteContributor')]",
+            "scope": "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('deploymentIdentityName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('websiteContributorRoleId')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('deploymentIdentityName')), '2023-01-31').principalId]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "condition": "[and(equals(variables('selectedPlan'), 'FlexConsumption'), parameters('disablePublicAccessToStorageAccount'))]",
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2022-04-01",
+            "name": "[guid(variables('storageAccountResourceId'), variables('deploymentIdentityName'), 'StorageFileDataPrivilegedContributor')]",
+            "scope": "[variables('storageAccountResourceId')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('deploymentIdentityName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('storageFileDataPrivilegedContributorRoleId')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('deploymentIdentityName')), '2023-01-31').principalId]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "condition": "[equals(variables('selectedPlan'), 'FlexConsumption')]",
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2023-08-01",
+            "name": "[variables('deploymentScriptName')]",
+            "location": "[variables('location')]",
+            "kind": "AzureCLI",
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('deploymentIdentityName'))]": {}
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
+                "[extensionResourceId(resourceId('Microsoft.Web/sites', variables('functionAppName')), 'Microsoft.Authorization/roleAssignments', guid(resourceId('Microsoft.Web/sites', variables('functionAppName')), variables('deploymentIdentityName'), 'WebsiteContributor'))]",
+                "[extensionResourceId(variables('storageAccountResourceId'), 'Microsoft.Authorization/roleAssignments', guid(variables('storageAccountResourceId'), variables('deploymentIdentityName'), 'StorageFileDataPrivilegedContributor'))]",
+                "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', variables('privateEndpointStorageBlobName'), 'blobPrivateDnsZoneGroup')]",
+                "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', variables('privateEndpointStorageFileName'), 'filePrivateDnsZoneGroup')]",
+                "[resourceId('Microsoft.Network/privateEndpoints/privateDnsZoneGroups', variables('functionAppPrivateEndpointName'), 'sitesPrivateDnsZoneGroup')]"
+            ],
+            "properties": {
+                "azCliVersion": "2.61.0",
+                "timeout": "PT15M",
+                "retentionInterval": "PT1H",
+                "cleanupPreference": "OnSuccess",
+                "containerSettings": "[if(parameters('disablePublicAccessToStorageAccount'), json(concat('{\"subnetIds\": [{\"id\": \"', variables('deploymentScriptsSubnetId'), '\"}]}')), json('null'))]",
+                "storageAccountSettings": "[if(parameters('disablePublicAccessToStorageAccount'), json(concat('{\"storageAccountName\": \"', variables('storageAccountName'), '\"}')), json('null'))]",
+                "environmentVariables": [
+                    { "name": "ZIP_URL", "value": "[variables('eventHubForwarderFunctionArtifact')]" },
+                    { "name": "FUNCTION_APP", "value": "[variables('functionAppName')]" },
+                    { "name": "RESOURCE_GROUP", "value": "[resourceGroup().name]" }
+                ],
+                "scriptContent": "set -euo pipefail\necho 'Downloading package...'\npython3 -c \"import os, urllib.request; urllib.request.urlretrieve(os.environ['ZIP_URL'], '/tmp/package.zip')\"\nls -la /tmp/package.zip\necho 'Deploying via az functionapp deployment source config-zip...'\naz functionapp deployment source config-zip --resource-group \"$RESOURCE_GROUP\" --name \"$FUNCTION_APP\" --src /tmp/package.zip --build-remote false --timeout 300\n"
+            }
+        },
+        {
+            "condition": "[and(not(parameters('disablePublicAccessToStorageAccount')), variables('pc').usesRunFromPackage)]",
             "type": "Microsoft.Web/sites/extensions",
             "name": "[concat(variables('functionAppName'), '/ZipDeploy')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
             ],
-            "apiVersion": "2020-12-01",
+            "apiVersion": "2022-03-01",
             "properties": {
                 "packageUri": "[variables('eventHubForwarderFunctionArtifact')]"
-            }
-        },
-        {
-            "condition": "[parameters('disablePublicAccessToStorageAccount')]",
-            "type": "Microsoft.Web/sites/networkConfig",
-            "apiVersion": "2022-03-01",
-            "name": "[variables('functionNetworkConfigName')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
-            ],
-            "properties": {
-                "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('functionSubnetName'))]",
-                "swiftSupported": true
             }
         },
         {

@@ -24,10 +24,11 @@ param maxRetriesToResendLogs int = 3
 @minValue(100)
 param retryInterval int = 2000
 
-@description('Optional. The scaling for the resources. If set to \'Enterprise\', the Function app will be deployed in a Premium Function App Service Plan (with Scaling), otherwise it will be deployed in a Basic/Dynamic App Service Plan.')
+@description('Optional. Selects the Function App hosting plan and the Event Hub / Function App scaling. \'Basic\' (default) uses a Consumption plan on public networks, or a Basic App Service Plan when private networking is enabled, with smaller Event Hub sizing - this matches the previous default behavior. \'Enterprise\' uses an Elastic Premium plan with a larger, auto-inflating Event Hub and more workers. \'Flex\' uses the Flex Consumption plan (modern serverless, where available) and supports private networking. Note: Azure does not allow changing the hosting plan of an existing deployment in place; switching modes on an existing resource group requires a fresh deployment.')
 @allowed([
   'Basic'
   'Enterprise'
+  'Flex'
 ])
 param scalingMode string = 'Basic'
 
@@ -118,63 +119,130 @@ var privateEndpointPrivateDnsZoneGroupsStorageFileName = '${privateEndpointStora
 var privateEndpointPrivateDnsZoneGroupsStorageBlobName = '${privateEndpointStorageBlobName}/blobPrivateDnsZoneGroup'
 var privateEndpointPrivateDnsZoneGroupsStorageTableName = '${privateEndpointStorageTableName}/tablePrivateDnsZoneGroup'
 var privateEndpointPrivateDnsZoneGroupsStorageQueueName = '${privateEndpointStorageQueueName}/queuePrivateDnsZoneGroup'
-var functionNetworkConfigName = '${functionAppName}/virtualNetwork'
-var autoscalingASP = {
-  kind: 'elastic'
-  properties: {
-    perSiteScaling: true
-    elasticScaleEnabled: true
-    maximumElasticWorkerCount: 20
-    zoneRedundant: false
+var planConfig = {
+  FlexConsumption: {
+    kind: 'functionapp,linux'
+    properties: {
+      reserved: true
+    }
+    sku: {
+      tier: 'FlexConsumption'
+      name: 'FC1'
+    }
+    functionAppConfig: {
+      deployment: {
+        storage: {
+          type: 'blobContainer'
+          value: 'https://${storageAccountName}.blob.${environment().suffixes.storage}/deployments'
+          authentication: {
+            type: 'SystemAssignedIdentity'
+          }
+        }
+      }
+      scaleAndConcurrency: {
+        maximumInstanceCount: ((scalingMode == 'Enterprise') ? 32 : 4)
+        instanceMemoryMB: 2048
+      }
+      runtime: {
+        name: 'node'
+        version: '22'
+      }
+    }
+    subnetDelegation: 'Microsoft.App/environments'
+    usesRunFromPackage: false
+    usesIdentityStorage: true
+    functionAppReserved: true
   }
-  sku: {
-    name: 'EP1'
-    tier: 'ElasticPremium'
-    size: 'EP1'
-    family: 'EP'
-    capacity: 1
+  ElasticPremium: {
+    kind: 'elastic'
+    properties: {
+      perSiteScaling: true
+      elasticScaleEnabled: true
+      maximumElasticWorkerCount: (scalingMode == 'Enterprise' ? 20 : 4)
+      zoneRedundant: false
+    }
+    sku: {
+      name: 'EP1'
+      tier: 'ElasticPremium'
+      size: 'EP1'
+      family: 'EP'
+      capacity: 1
+    }
+    functionAppConfig: null
+    subnetDelegation: 'Microsoft.Web/serverFarms'
+    usesRunFromPackage: true
+    usesIdentityStorage: false
+    functionAppReserved: false
+  }
+  Basic: {
+    kind: 'app'
+    properties: {
+      name: servicePlanName
+      targetWorkerCount: 1
+      targetWorkerSizeId: 1
+      workerSize: 1
+      numberOfWorkers: 1
+      computeMode: 'Dynamic'
+      zoneRedundant: false
+    }
+    sku: {
+      name: 'B1'
+      tier: 'Basic'
+      capacity: 1
+    }
+    functionAppConfig: null
+    subnetDelegation: 'Microsoft.Web/serverFarms'
+    usesRunFromPackage: true
+    usesIdentityStorage: false
+    functionAppReserved: false
+  }
+  Consumption: {
+    kind: 'functionapp'
+    properties: {
+      name: servicePlanName
+      targetWorkerCount: 1
+      targetWorkerSizeId: 1
+      workerSize: '1'
+      numberOfWorkers: 1
+      computeMode: 'Dynamic'
+    }
+    sku: {
+      name: 'Y1'
+      tier: 'Dynamic'
+    }
+    functionAppConfig: null
+    subnetDelegation: ''
+    usesRunFromPackage: true
+    usesIdentityStorage: false
+    functionAppReserved: false
   }
 }
-var privateNetworkASP = {
-  kind: 'app'
-  properties: {
-    name: servicePlanName
-    targetWorkerCount: 1
-    targetWorkerSizeId: 1
-    workerSize: 1
-    numberOfWorkers: 1
-    computeMode: 'Dynamic'
-    zoneRedundant: false
-  }
-  sku: {
-    name: 'B1'
-    tier: 'Basic'
-    capacity: 1
-  }
-}
-var defaultASP = {
-  kind: 'functionapp'
-  properties: {
-    name: servicePlanName
-    targetWorkerCount: 1
-    targetWorkerSizeId: 1
-    workerSize: '1'
-    numberOfWorkers: 1
-    computeMode: 'Dynamic'
-  }
-  sku: {
-    name: 'Y1'
-    tier: 'Dynamic'
-  }
-}
-var isHighScalabing = ((scalingMode == 'Enterprise') ? true : false)
-var basicScaleConfig = (((scalingMode == 'Basic') && disablePublicAccessToStorageAccount)
-  ? privateNetworkASP
-  : defaultASP)
-var aspConfig = (isHighScalabing ? autoscalingASP : basicScaleConfig)
+var selectedPlan = scalingMode == 'Flex' ? 'FlexConsumption' : (scalingMode == 'Enterprise' ? 'ElasticPremium' : (disablePublicAccessToStorageAccount ? 'Basic' : 'Consumption'))
+var pc = planConfig[selectedPlan]
+var runFromPackageSetting = ((pc.usesRunFromPackage && disablePublicAccessToStorageAccount)
+  ? [
+      {
+        name: 'WEBSITE_RUN_FROM_PACKAGE'
+        value: eventHubForwarderFunctionArtifact
+      }
+    ]
+  : [])
 
 var useManagedIdentity = authenticationMode == 'Managed Identity'
 var eventHubsDataReceiverRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')
+var storageBlobDataOwnerRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b')
+var storageQueueDataContributorRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '974c5e8b-45b9-4653-ba55-5f855dd0fb88')
+var storageTableDataContributorRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3')
+var websiteContributorRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'de139f84-1756-47ae-9be6-808fbbe84772')
+var storageFileDataPrivilegedContributorRoleId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '69566ab7-960f-475b-8e7c-b3118f30c6bd')
+var deploymentIdentityName = 'nrlogs-deploy-identity-${onePerResourceGroupAndEventHubUniqueSuffix}'
+var deploymentScriptName = 'nrlogs-deploy-script-${onePerResourceGroupAndEventHubUniqueSuffix}'
+var deploymentScriptsSubnetName = 'deployment-scripts-subnet'
+var deploymentScriptsSubnetId = resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, deploymentScriptsSubnetName)
+var sitesPrivateDnsZoneName = 'privatelink.azurewebsites.net'
+var sitesPrivateDnsZoneVirtualNetworkLinkName = '${sitesPrivateDnsZoneName}/${virtualNetworkName}-link'
+var functionAppPrivateEndpointName = '${functionAppName}-sites-private-endpoint'
+var functionAppPrivateEndpointDnsZoneGroupName = '${functionAppPrivateEndpointName}/sitesPrivateDnsZoneGroup'
 var managedIdentityAppSettings = [
   {
     name: 'EVENTHUB_CONSUMER_CONNECTION__fullyQualifiedNamespace'
@@ -257,14 +325,16 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-09-01' = if (dis
         properties: {
           privateEndpointNetworkPolicies: 'Enabled'
           privateLinkServiceNetworkPolicies: 'Enabled'
-          delegations: [
-            {
-              name: 'webapp'
-              properties: {
-                serviceName: 'Microsoft.Web/serverFarms'
-              }
-            }
-          ]
+          delegations: (empty(pc.subnetDelegation)
+            ? []
+            : [
+                {
+                  name: 'delegation'
+                  properties: {
+                    serviceName: pc.subnetDelegation
+                  }
+                }
+              ])
           addressPrefix: '10.2.0.0/24'
         }
       }
@@ -274,6 +344,20 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-09-01' = if (dis
           privateEndpointNetworkPolicies: 'Disabled'
           privateLinkServiceNetworkPolicies: 'Enabled'
           addressPrefix: '10.2.1.0/24'
+        }
+      }
+      {
+        name: deploymentScriptsSubnetName
+        properties: {
+          addressPrefix: '10.2.2.0/28'
+          delegations: [
+            {
+              name: 'delegation'
+              properties: {
+                serviceName: 'Microsoft.ContainerInstance/containerGroups'
+              }
+            }
+          ]
         }
       }
     ]
@@ -532,27 +616,47 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2024-01-01' = {
     publicNetworkAccess: (disablePublicAccessToStorageAccount ? 'Disabled' : 'Enabled')
     allowBlobPublicAccess: false
     networkAcls: (disablePublicAccessToStorageAccount
-      ? json('{"bypass": "None", "defaultAction": "Deny"}')
+      ? json('{"bypass": "AzureServices", "defaultAction": "Deny"}')
       : json('null'))
+  }
+}
+
+resource storageAccountName_blobServices 'Microsoft.Storage/storageAccounts/blobServices@2024-01-01' = {
+  parent: storageAccount
+  name: 'default'
+  properties: {}
+}
+
+resource storageAccountName_deploymentsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2024-01-01' = {
+  parent: storageAccountName_blobServices
+  name: 'deployments'
+  properties: {
+    publicAccess: 'None'
   }
 }
 
 resource servicePlan 'Microsoft.Web/serverfarms@2024-11-01' = {
   name: servicePlanName
-  kind: aspConfig.kind
+  kind: pc.kind
   location: location_var
-  sku: aspConfig.sku
-  properties: aspConfig.properties
+  sku: pc.sku
+  properties: pc.properties
 }
 
 resource functionApp 'Microsoft.Web/sites@2024-11-01' = {
   name: functionAppName
   location: location_var
-  kind: 'functionapp'
-  identity: useManagedIdentity ? { type: 'SystemAssigned' } : null
+  kind: (pc.functionAppReserved ? 'functionapp,linux' : 'functionapp')
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     serverFarmId: servicePlan.id
-    siteConfig: {
+    reserved: pc.functionAppReserved
+    httpsOnly: true
+    virtualNetworkSubnetId: ((disablePublicAccessToStorageAccount && !empty(pc.subnetDelegation)) ? resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, functionSubnetName) : null)
+    functionAppConfig: pc.functionAppConfig
+    siteConfig: union({
       appSettings: concat(
         [
           {
@@ -588,24 +692,8 @@ resource functionApp 'Microsoft.Web/sites@2024-11-01' = {
             value: '~4'
           }
           {
-            name: 'FUNCTIONS_WORKER_RUNTIME'
-            value: 'node'
-          }
-          {
-            name: 'WEBSITE_NODE_DEFAULT_VERSION'
-            value: '~22'
-          }
-          {
-            name: 'AzureWebJobsStorage'
-            value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${listkeys(storageAccount.id, '2024-01-01').keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
-          }
-          {
             name: 'EVENTHUB_FORWARDER_ENABLED'
             value: 'true'
-          }
-          {
-            name: 'WEBSITE_RUN_FROM_PACKAGE'
-            value: (disablePublicAccessToStorageAccount ? eventHubForwarderFunctionArtifact : '0')
           }
           {
             name: 'AzureFunctionsJobHost__extensions__eventHubs__maxEventBatchSize'
@@ -620,24 +708,54 @@ resource functionApp 'Microsoft.Web/sites@2024-11-01' = {
             value: maxWaitTime
           }
         ],
-        useManagedIdentity
+        ((selectedPlan == 'FlexConsumption')
+          ? []
+          : [
+              {
+                name: 'FUNCTIONS_WORKER_RUNTIME'
+                value: 'node'
+              }
+              {
+                name: 'WEBSITE_NODE_DEFAULT_VERSION'
+                value: '~22'
+              }
+            ]),
+        ((pc.usesIdentityStorage || useManagedIdentity)
+          ? [
+              {
+                name: 'AzureWebJobsStorage__accountName'
+                value: storageAccountName
+              }
+            ]
+          : [
+              {
+                name: 'AzureWebJobsStorage'
+                value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+              }
+            ]),
+        (useManagedIdentity
           ? managedIdentityAppSettings
           : [
               {
                 name: 'EVENTHUB_CONSUMER_CONNECTION'
                 value: listKeys(eventHubNamespaceName_logConsumerAuthorizationRule.id, '2024-01-01').primaryConnectionString
               }
-            ]
+            ]),
+        runFromPackageSetting
       )
-      alwaysOn: disablePublicAccessToStorageAccount
+      vnetRouteAllEnabled: ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount)
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
       scmMinTlsVersion: '1.2'
       publicNetworkAccess: (disablePublicAccessToStorageAccount ? 'Disabled' : 'Enabled')
-    }
-    httpsOnly: true
+    }, ((selectedPlan == 'Basic')
+      ? {
+          alwaysOn: true
+        }
+      : {}))
   }
   dependsOn: [
+    storageAccountName_deploymentsContainer
     privateEndpointPrivateDnsZoneGroupsStorageTable
     privateEndpointPrivateDnsZoneGroupsStorageFile
   ]
@@ -653,24 +771,187 @@ resource eventHubDataReceiverRoleAssignment 'Microsoft.Authorization/roleAssignm
   }
 }
 
-resource functionAppName_ZipDeploy 'Microsoft.Web/sites/extensions@2020-12-01' = if (!disablePublicAccessToStorageAccount) {
-  parent: functionApp
-  name: 'MSDeploy'
+resource functionAppStorageBlobDataOwnerAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
+  name: guid(functionApp.id, storageAccount.id, 'StorageBlobDataOwner')
   properties: {
-    packageUri: eventHubForwarderFunctionArtifact
+    roleDefinitionId: storageBlobDataOwnerRoleId
+    principalId: functionApp.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
-resource functionNetworkConfig 'Microsoft.Web/sites/networkConfig@2022-03-01' = if (disablePublicAccessToStorageAccount) {
-  name: functionNetworkConfigName
+resource functionAppStorageQueueDataContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
+  name: guid(functionApp.id, storageAccount.id, 'StorageQueueDataContributor')
   properties: {
-    subnetResourceId: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, functionSubnetName)
-    swiftSupported: true
+    roleDefinitionId: storageQueueDataContributorRoleId
+    principalId: functionApp.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource functionAppStorageTableDataContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: storageAccount
+  name: guid(functionApp.id, storageAccount.id, 'StorageTableDataContributor')
+  properties: {
+    roleDefinitionId: storageTableDataContributorRoleId
+    principalId: functionApp.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource deploymentIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: deploymentIdentityName
+  location: location_var
+}
+
+resource deploymentScriptWebsiteContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (selectedPlan == 'FlexConsumption') {
+  scope: functionApp
+  name: guid(functionApp.id, deploymentIdentityName, 'WebsiteContributor')
+  properties: {
+    roleDefinitionId: websiteContributorRoleId
+    principalId: deploymentIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource deploymentScriptStorageFileContributorAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
+  scope: storageAccount
+  name: guid(storageAccount.id, deploymentIdentityName, 'StorageFileDataPrivilegedContributor')
+  properties: {
+    roleDefinitionId: storageFileDataPrivilegedContributorRoleId
+    principalId: deploymentIdentity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource functionAppSitesPrivateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = if ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
+  name: sitesPrivateDnsZoneName
+  location: 'global'
+}
+
+resource functionAppSitesPrivateDnsZoneVirtualNetworkLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = if ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
+  name: sitesPrivateDnsZoneVirtualNetworkLinkName
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: resourceId('Microsoft.Network/virtualNetworks', virtualNetworkName)
+    }
+  }
+  dependsOn: [
+    functionAppSitesPrivateDnsZone
+    virtualNetwork
+  ]
+}
+
+resource functionAppSitesPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-05-01' = if ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
+  name: functionAppPrivateEndpointName
+  location: location_var
+  properties: {
+    subnet: {
+      id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, privateEndpointsSubnetName)
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'MyFunctionAppSitesPrivateLinkConnection'
+        properties: {
+          privateLinkServiceId: functionApp.id
+          groupIds: [
+            'sites'
+          ]
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    virtualNetwork
+  ]
+}
+
+resource functionAppSitesPrivateEndpointDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-05-01' = if ((selectedPlan == 'FlexConsumption') && disablePublicAccessToStorageAccount) {
+  name: functionAppPrivateEndpointDnsZoneGroupName
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config'
+        properties: {
+          privateDnsZoneId: resourceId('Microsoft.Network/privateDnsZones', sitesPrivateDnsZoneName)
+        }
+      }
+    ]
+  }
+  dependsOn: [
+    functionAppSitesPrivateEndpoint
+    functionAppSitesPrivateDnsZone
+  ]
+}
+
+resource deploymentScript 'Microsoft.Resources/deploymentScripts@2023-08-01' = if (selectedPlan == 'FlexConsumption') {
+  name: deploymentScriptName
+  location: location_var
+  kind: 'AzureCLI'
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${deploymentIdentity.id}': {}
+    }
+  }
+  properties: {
+    azCliVersion: '2.61.0'
+    timeout: 'PT15M'
+    retentionInterval: 'PT1H'
+    cleanupPreference: 'OnSuccess'
+    containerSettings: (disablePublicAccessToStorageAccount
+      ? {
+          subnetIds: [
+            {
+              id: deploymentScriptsSubnetId
+            }
+          ]
+        }
+      : null)
+    storageAccountSettings: (disablePublicAccessToStorageAccount
+      ? {
+          storageAccountName: storageAccountName
+        }
+      : null)
+    environmentVariables: [
+      {
+        name: 'ZIP_URL'
+        value: eventHubForwarderFunctionArtifact
+      }
+      {
+        name: 'FUNCTION_APP'
+        value: functionAppName
+      }
+      {
+        name: 'RESOURCE_GROUP'
+        value: resourceGroup().name
+      }
+    ]
+    scriptContent: 'set -euo pipefail\necho \'Downloading package...\'\npython3 -c "import os, urllib.request; urllib.request.urlretrieve(os.environ[\'ZIP_URL\'], \'/tmp/package.zip\')"\nls -la /tmp/package.zip\necho \'Deploying via az functionapp deployment source config-zip...\'\naz functionapp deployment source config-zip --resource-group "$RESOURCE_GROUP" --name "$FUNCTION_APP" --src /tmp/package.zip --build-remote false --timeout 300\n'
   }
   dependsOn: [
     functionApp
-    virtualNetwork
+    deploymentScriptWebsiteContributorAssignment
+    deploymentScriptStorageFileContributorAssignment
+    functionAppSitesPrivateEndpointDnsZoneGroup
+    privateEndpointPrivateDnsZoneGroupsStorageBlob
+    privateEndpointPrivateDnsZoneGroupsStorageFile
   ]
+}
+
+resource functionAppName_ZipDeploy 'Microsoft.Web/sites/extensions@2022-03-01' = if (!disablePublicAccessToStorageAccount && pc.usesRunFromPackage) {
+  parent: functionApp
+  // Azure accepts the ZipDeploy extension name; the Bicep type list for this
+  // API version only enumerates MSDeploy/onedeploy, so suppress the false positive.
+  #disable-next-line BCP088
+  name: 'ZipDeploy'
+  properties: {
+    packageUri: eventHubForwarderFunctionArtifact
+  }
 }
 
 module activityLogsDiagnosticSettingsAtSubscriptionLevelDeployment './activityLogConfiguration.bicep' = if (createActivityLogsDiagnosticSetting) {
