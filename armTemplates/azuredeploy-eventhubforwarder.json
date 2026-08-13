@@ -186,32 +186,26 @@
         "activityLogsDiagnosticSettingName": "[concat('nrlogs-activity-log-diagnostic-setting-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
         "createActivityLogsDiagnosticSetting": "[or(parameters('forwardAdministrativeAzureActivityLogs'), parameters('forwardAlertAzureActivityLogs'), parameters('forwardAutoscaleAzureActivityLogs'), parameters('forwardPolicyAzureActivityLogs'), parameters('forwardRecommendationAzureActivityLogs'), parameters('forwardResourceHealthAzureActivityLogs'), parameters('forwardSecurityAzureActivityLogs'), parameters('forwardServiceHealthAzureActivityLogs'))]",
         "eventHubForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip",
-        
         "virtualNetworkName": "[format('nrlogs{0}-virtual-network', variables('onePerResourceGroupUniqueSuffix'))]",
         "functionSubnetName": "[format('{0}-internal-functions-subnet', variables('virtualNetworkName'))]",
         "privateEndpointsSubnetName": "[format('{0}-private-endpoints-subnet', variables('virtualNetworkName'))]",
-
         "dnsSuffix": "[environment().suffixes.storage]",
         "privateStorageFileDnsZoneName": "[format('privatelink.file.{0}', variables('dnsSuffix'))]",
         "privateStorageBlobDnsZoneName": "[format('privatelink.blob.{0}', variables('dnsSuffix'))]",
         "privateStorageQueueDnsZoneName": "[format('privatelink.queue.{0}', variables('dnsSuffix'))]",
         "privateStorageTableDnsZoneName": "[format('privatelink.table.{0}', variables('dnsSuffix'))]",
-
         "privateStorageFileDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageFileDnsZoneName'), variables('virtualNetworkName'))]",
         "privateStorageBlobDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageBlobDnsZoneName'), variables('virtualNetworkName'))]",
         "privateStorageQueueDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageQueueDnsZoneName'), variables('virtualNetworkName'))]",
         "privateStorageTableDnsZoneVirtualNetworkLinkName": "[format('{0}/{1}-link', variables('privateStorageTableDnsZoneName'), variables('virtualNetworkName'))]",
-
         "privateEndpointStorageFileName": "[format('{0}-file-private-endpoint', variables('storageAccountName'))]",
         "privateEndpointStorageTableName": "[format('{0}-table-private-endpoint', variables('storageAccountName'))]",
         "privateEndpointStorageBlobName": "[format('{0}-blob-private-endpoint', variables('storageAccountName'))]",
         "privateEndpointStorageQueueName": "[format('{0}-queue-private-endpoint', variables('storageAccountName'))]",
-
         "privateEndpointPrivateDnsZoneGroupsStorageFileName": "[format('{0}/{1}', variables('privateEndpointStorageFileName'), 'filePrivateDnsZoneGroup')]",
         "privateEndpointPrivateDnsZoneGroupsStorageBlobName": "[format('{0}/{1}', variables('privateEndpointStorageBlobName'), 'blobPrivateDnsZoneGroup')]",
         "privateEndpointPrivateDnsZoneGroupsStorageTableName": "[format('{0}/{1}', variables('privateEndpointStorageTableName'), 'tablePrivateDnsZoneGroup')]",
         "privateEndpointPrivateDnsZoneGroupsStorageQueueName": "[format('{0}/{1}', variables('privateEndpointStorageQueueName'), 'queuePrivateDnsZoneGroup')]",
-
         "planConfig": {
             "FlexConsumption": {
                 "kind": "functionapp,linux",
@@ -313,7 +307,6 @@
         "selectedPlan": "[if(equals(parameters('scalingMode'), 'Flex'), 'FlexConsumption', if(equals(parameters('scalingMode'), 'Enterprise'), 'ElasticPremium', if(parameters('disablePublicAccessToStorageAccount'), 'Basic', 'Consumption')))]",
         "pc": "[variables('planConfig')[variables('selectedPlan')]]",
         "runFromPackageSetting": "[if(and(variables('pc').usesRunFromPackage, parameters('disablePublicAccessToStorageAccount')), createArray(createObject('name', 'WEBSITE_RUN_FROM_PACKAGE', 'value', variables('eventHubForwarderFunctionArtifact'))), createArray())]",
-
         "useManagedIdentity": "[equals(parameters('authenticationMode'), 'Managed Identity')]",
         "eventHubsDataReceiverRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde')]",
         "storageBlobDataOwnerRoleId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b')]",
@@ -332,7 +325,6 @@
         "logConsumerAuthorizationRuleResourceId": "[resourceId('Microsoft.EventHub/namespaces/AuthorizationRules', variables('eventHubNamespaceName'), variables('logConsumerAuthorizationRuleName'))]",
         "storageAccountResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "azureWebJobsStorageConnectionFormat": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey={0};EndpointSuffix=', environment().suffixes.storage)]",
-
         "baseAppSettings": [
             {
                 "name": "EVENTHUB_NAME",
@@ -389,7 +381,6 @@
                 "value": "[concat(variables('eventHubNamespaceName'), '.servicebus.windows.net')]"
             }
         ]
-
     },
     "resources": [
         {
@@ -918,7 +909,6 @@
                 "type": "SystemAssigned"
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/deploymentScripts', concat('nrlogs-validate-plan-', variables('onePerResourceGroupAndEventHubUniqueSuffix')))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', variables('storageAccountName'), 'default', 'deployments')]",
                 "[resourceId('Microsoft.Web/serverfarms', variables('servicePlanName'))]",
@@ -1064,9 +1054,18 @@
                 "containerSettings": "[if(parameters('disablePublicAccessToStorageAccount'), json(concat('{\"subnetIds\": [{\"id\": \"', variables('deploymentScriptsSubnetId'), '\"}]}')), json('null'))]",
                 "storageAccountSettings": "[if(parameters('disablePublicAccessToStorageAccount'), json(concat('{\"storageAccountName\": \"', variables('storageAccountName'), '\"}')), json('null'))]",
                 "environmentVariables": [
-                    { "name": "ZIP_URL", "value": "[variables('eventHubForwarderFunctionArtifact')]" },
-                    { "name": "FUNCTION_APP", "value": "[variables('functionAppName')]" },
-                    { "name": "RESOURCE_GROUP", "value": "[resourceGroup().name]" }
+                    {
+                        "name": "ZIP_URL",
+                        "value": "[variables('eventHubForwarderFunctionArtifact')]"
+                    },
+                    {
+                        "name": "FUNCTION_APP",
+                        "value": "[variables('functionAppName')]"
+                    },
+                    {
+                        "name": "RESOURCE_GROUP",
+                        "value": "[resourceGroup().name]"
+                    }
                 ],
                 "scriptContent": "set -euo pipefail\necho 'Downloading package...'\npython3 -c \"import os, urllib.request; urllib.request.urlretrieve(os.environ['ZIP_URL'], '/tmp/package.zip')\"\nls -la /tmp/package.zip\necho 'Deploying via az functionapp deployment source config-zip...'\naz functionapp deployment source config-zip --resource-group \"$RESOURCE_GROUP\" --name \"$FUNCTION_APP\" --src /tmp/package.zip --build-remote false --timeout 300\n"
             }
