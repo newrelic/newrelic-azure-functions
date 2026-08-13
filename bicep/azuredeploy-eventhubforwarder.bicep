@@ -77,6 +77,9 @@ param maxWaitTime string = '00:00:30'
 ])
 param authenticationMode string = 'Local Authentication'
 
+@description('Optional. Version of the newrelic-azure-functions deployment package to install, hosted in Azure Blob Storage (e.g. \'3.3.1\'). Defaults to the latest version tested with this template at release time.')
+param packageVersion string = '0.0.0-development'
+
 var location_var = ((location == '') ? resourceGroup().location : location)
 var onePerResourceGroupUniqueSuffix = uniqueString(resourceGroup().id)
 var createNewEventHubNamespace = (eventHubNamespace == '')
@@ -98,7 +101,7 @@ var onePerResourceGroupAndEventHubUniqueSuffix = uniqueString(
 var functionAppName = 'nrlogs-eventhubforwarder-${onePerResourceGroupAndEventHubUniqueSuffix}'
 var activityLogsDiagnosticSettingName = 'nrlogs-activity-log-diagnostic-setting-${onePerResourceGroupAndEventHubUniqueSuffix}'
 var createActivityLogsDiagnosticSetting = (forwardAdministrativeAzureActivityLogs || forwardAlertAzureActivityLogs || forwardAutoscaleAzureActivityLogs || forwardPolicyAzureActivityLogs || forwardRecommendationAzureActivityLogs || forwardResourceHealthAzureActivityLogs || forwardSecurityAzureActivityLogs || forwardServiceHealthAzureActivityLogs)
-var eventHubForwarderFunctionArtifact = 'https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip'
+var eventHubForwarderFunctionArtifact = 'https://nrloggingprodreleases.blob.core.windows.net/releases/log-forwarder-${packageVersion}.zip'
 var virtualNetworkName = 'nrlogs${onePerResourceGroupUniqueSuffix}-virtual-network'
 var functionSubnetName = '${virtualNetworkName}-internal-functions-subnet'
 var privateEndpointsSubnetName = '${virtualNetworkName}-private-endpoints-subnet'

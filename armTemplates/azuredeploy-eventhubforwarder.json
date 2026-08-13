@@ -167,6 +167,13 @@
             "metadata": {
                 "description": "Optional. Disables public network access to the Storage Account (please note that even without enabling this option, access to the Storage Account is secured). As a consequence, communication with the Service Account will be performed through a private Virtual Network (VNet). Please note that due to this, the hosting pricing plan for the Function app server farm will need to be upgraded to 'Basic', as it is the minimum one providing VNet integration for Function apps (you can later upgrade this plan if you require more scaling options). Also note that the following extra resources will be created: a virtual network, a subnet, DNS zone names, virtual network links, private endpoints and a Storage Account file share."
             }
+        },
+        "packageVersion": {
+            "type": "string",
+            "defaultValue": "0.0.0-development",
+            "metadata": {
+                "description": "Optional. Version of the newrelic-azure-functions deployment package to install, hosted in Azure Blob Storage (e.g. '3.3.1'). Defaults to the latest version tested with this template at release time."
+            }
         }
     },
     "variables": {
@@ -185,7 +192,7 @@
         "functionAppName": "[concat('nrlogs-eventhubforwarder-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
         "activityLogsDiagnosticSettingName": "[concat('nrlogs-activity-log-diagnostic-setting-', variables('onePerResourceGroupAndEventHubUniqueSuffix'))]",
         "createActivityLogsDiagnosticSetting": "[or(parameters('forwardAdministrativeAzureActivityLogs'), parameters('forwardAlertAzureActivityLogs'), parameters('forwardAutoscaleAzureActivityLogs'), parameters('forwardPolicyAzureActivityLogs'), parameters('forwardRecommendationAzureActivityLogs'), parameters('forwardResourceHealthAzureActivityLogs'), parameters('forwardSecurityAzureActivityLogs'), parameters('forwardServiceHealthAzureActivityLogs'))]",
-        "eventHubForwarderFunctionArtifact": "https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip",
+        "eventHubForwarderFunctionArtifact": "[concat('https://nrloggingprodreleases.blob.core.windows.net/releases/log-forwarder-', parameters('packageVersion'), '.zip')]",
         "virtualNetworkName": "[format('nrlogs{0}-virtual-network', variables('onePerResourceGroupUniqueSuffix'))]",
         "functionSubnetName": "[format('{0}-internal-functions-subnet', variables('virtualNetworkName'))]",
         "privateEndpointsSubnetName": "[format('{0}-private-endpoints-subnet', variables('virtualNetworkName'))]",
