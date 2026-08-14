@@ -176,9 +176,7 @@ If you have an existing deployment on `scalingMode=Basic` or `scalingMode=Enterp
 
 ## Manual Installation
 
-> **Note:** Manual installation is only recommended for `scalingMode=Basic` or `scalingMode=Enterprise` deployments. For `scalingMode=Flex`, use [Automatic Installation](#automatic-installation-recommended) — Flex requires a deployment script, a blob container for code delivery, and a user-assigned managed identity that are impractical to configure through the Azure portal UI manually.
-
-Use this method if you want to manually create and configure the Function App for Basic or Enterprise deployments.
+Use this method if you want to manually create and configure the Function App yourself, or if you need more control over the setup process.
 
 ### Prerequisites
 
