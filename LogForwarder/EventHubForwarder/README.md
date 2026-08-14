@@ -56,7 +56,7 @@ Parameters that can be configured in your Azure Resource Manager Template
 | Max Wait Time         | no | `00:00:30` | Maximum time to wait to build up a batch before delivering to the function (format HH:MM:SS). |
 | Event Hub Namespace Name | no | `none` | Namespace in which Event Hubs are allocated. Leave blank for a new namespace to be created automatically. |
 | Event Hub Name | no | `none` | Name of the Event Hub where logs are allocated. Leave blank for a new Event Hub to be created automatically. |
-| Scaling Mode | no | `Basic` | The scaling mode option configured for the New Relic Azure Log Forwarder. Setting this to `Enterprise` will configure autoscaling. **Note:** If you upgrade from Basic to Enterprise you will need to reprovision the EventHub due to Azure limits on partition count changes for Standard SKU. |
+| Scaling Mode | no | `Basic` | Selects the Function App hosting plan and Event Hub sizing. `Flex` is recommended for new deployments — it uses the modern Flex Consumption plan (FC1 / Linux), scales to zero, and supports both public and private networking. `Basic` (default) uses the Consumption plan (Y1) on public networks or the Basic plan (B1) on private networks, with smaller Event Hub sizing — this matches the previous default behavior. `Enterprise` uses the Elastic Premium plan (EP1) with a larger, auto-inflating Event Hub and more workers. **Existing customers:** Your forwarder stays on its current plan when you redeploy as long as `scalingMode` remains unchanged (or is explicitly set to match your current setup). Moving to `Flex` requires a fresh deployment — see [Migrating to Flex Consumption](#migrating-to-flex-consumption) below. **Note:** Upgrading from `Basic` to `Enterprise` requires reprovisioning the Event Hub due to Azure limits on partition count changes for Standard SKU. |
 | Disable Public Access To Storage Account | no | `false` | When set to `true`, disables public network access to the internal storage account used by the Function App. This creates a private network deployment with VNet integration, private endpoints, private DNS zones, and requires a Basic hosting plan or higher. When `false`, uses App Service plan with public access. |
 | Authentication Mode | no | `Local Authentication` | Authentication method for connecting to the Event Hub. Use `Local Authentication` (default) to connect via a shared access key connection string, or `Managed Identity` for keyless authentication using a system-assigned Azure AD identity. When set to `Managed Identity`, the Function App is assigned a system-assigned managed identity and granted the `Azure Event Hubs Data Receiver` role on the Event Hub namespace — no connection string is stored. |
 | Enable Administrative Azure Activity Logs | no | `false` | Contains the record of all create, update, delete, and action operations performed through Resource Manager. More information about Administrative category in [azure official documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/activity-log-schema#administrative-category). |
@@ -157,9 +157,28 @@ Conditionally Created:
 
 ---
 
+## Migrating to Flex Consumption
+
+If you have an existing deployment on `scalingMode=Basic` or `scalingMode=Enterprise` and want to move to Flex, Azure does not permit changing the hosting plan tier family in place (Y1/B1/EP1 → FC1). Migration follows a blue-green pattern: deploy the new Flex forwarder alongside the existing one, verify it is working, then cut over and retire the old deployment.
+
+**High-level steps:**
+
+1. **Preflight** — confirm your Azure region supports Flex Consumption and back up your existing app settings (`newRelicLicenseKey`, `newRelicEndpoint`, any custom attributes, and `forwardXxx` activity-log flags).
+2. **Deploy a new Flex forwarder** — create a new resource group and deploy the template with `scalingMode=Flex`. The template creates its own Event Hub namespace and hub automatically.
+3. **Verify** — send a test event and confirm logs appear in New Relic before touching your existing setup.
+4. **Parallel run** — add upstream Azure diagnostic settings pointing at the new Event Hub alongside the existing ones, so both forwarders receive events. Test and verify to your satisfaction.
+5. **Cut over** — remove the diagnostic settings pointing at the old Event Hub.
+6. **Retire** — once confident, delete the old resource group and all its resources.
+
+> **Note:** Flex is not available in Azure Government or Azure China. Customers in those clouds should stay on `scalingMode=Basic` or `scalingMode=Enterprise`.
+
+---
+
 ## Manual Installation
 
-Use this method if you want to manually create and configure the Function App yourself, or if you need more control over the setup process.
+> **Note:** Manual installation is only recommended for `scalingMode=Basic` or `scalingMode=Enterprise` deployments. For `scalingMode=Flex`, use [Automatic Installation](#automatic-installation-recommended) — Flex requires a deployment script, a blob container for code delivery, and a user-assigned managed identity that are impractical to configure through the Azure portal UI manually.
+
+Use this method if you want to manually create and configure the Function App for Basic or Enterprise deployments.
 
 ### Prerequisites
 
