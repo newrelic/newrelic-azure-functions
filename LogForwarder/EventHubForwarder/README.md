@@ -166,7 +166,7 @@ If you have an existing deployment on `scalingMode=Basic` or `scalingMode=Enterp
 1. **Preflight** — confirm your Azure region supports Flex Consumption and back up your existing app settings (`newRelicLicenseKey`, `newRelicEndpoint`, any custom attributes, and `forwardXxx` activity-log flags).
 2. **Deploy a new Flex forwarder** — create a new resource group and deploy the template with `scalingMode=Flex`. The template creates its own Event Hub namespace and hub automatically.
 3. **Verify** — send a test event and confirm logs appear in New Relic before touching your existing setup.
-4. **Parallel run** — add upstream Azure diagnostic settings pointing at the new Event Hub alongside the existing ones, so both forwarders receive events. Test and verify to your satisfaction.
+4. **Parallel run** — rewire upstream sources to also send to the new Event Hub alongside the existing ones, so both forwarders receive events. Test and verify to your satisfaction.
 5. **Cut over** — remove the diagnostic settings pointing at the old Event Hub.
 6. **Retire** — once confident, delete the old resource group and all its resources.
 
