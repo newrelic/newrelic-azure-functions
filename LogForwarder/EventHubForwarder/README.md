@@ -159,7 +159,7 @@ Conditionally Created:
 
 ## Migrating to Flex Consumption
 
-If you have an existing deployment on `scalingMode=Basic` or `scalingMode=Enterprise` and want to move to Flex, Azure does not permit changing the hosting plan tier family in place (Y1/B1/EP1 → FC1). Migration follows a blue-green pattern: deploy the new Flex forwarder alongside the existing one, verify it is working, then cut over and retire the old deployment.
+If you have an existing deployment on `scalingMode=Basic` or `scalingMode=Enterprise` and want to move to Flex, Azure does not permit the change in place — the existing plans run on Windows and Flex runs on Linux. Migration follows a blue-green pattern: deploy the new Flex forwarder alongside the existing one, verify it is working, then cut over and retire the old deployment.
 
 **High-level steps:**
 
