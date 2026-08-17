@@ -164,11 +164,12 @@ If you have an existing deployment on `scalingMode=Basic` or `scalingMode=Enterp
 **High-level steps:**
 
 1. **Preflight** — confirm your Azure region supports Flex Consumption and back up your existing app settings (`newRelicLicenseKey`, `newRelicEndpoint`, any custom attributes, and `forwardXxx` activity-log flags).
-2. **Deploy a new Flex forwarder** — create a new resource group and deploy the template with `scalingMode=Flex`. The template creates its own Event Hub namespace and hub automatically.
-3. **Verify** — send a test event and confirm logs appear in New Relic before touching your existing setup.
-4. **Parallel run** — rewire upstream sources to also send to the new Event Hub alongside the existing ones, so both forwarders receive events. Test and verify to your satisfaction.
-5. **Cut over** — remove the diagnostic settings pointing at the old Event Hub.
-6. **Retire** — once confident, delete the old resource group and all its resources.
+2. **Validate in a non-production environment first** — deploy with `scalingMode=Flex` in a dev or UAT environment and confirm logs are flowing correctly to New Relic before attempting the migration in production.
+3. **Deploy a new Flex forwarder** — create a new resource group and deploy the template with `scalingMode=Flex`. The template creates its own Event Hub namespace and hub automatically.
+4. **Verify** — send a test event and confirm logs appear in New Relic before touching your existing setup.
+5. **Parallel run** — rewire upstream sources to also send to the new Event Hub alongside the existing ones, so both forwarders receive events. Test and verify to your satisfaction.
+6. **Cut over** — remove the diagnostic settings pointing at the old Event Hub.
+7. **Retire** — once confident, delete the old resource group and all its resources.
 
 > **Note:** Flex is not available in Azure Government or Azure China. Customers in those clouds should stay on `scalingMode=Basic` or `scalingMode=Enterprise`.
 
