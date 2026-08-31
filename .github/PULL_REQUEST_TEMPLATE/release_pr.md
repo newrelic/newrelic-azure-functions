@@ -6,8 +6,8 @@
 
 <!-- List all stories going out in this release -->
 
-- [ ] [NR-XXXXX](https://new-relic.atlassian.net/browse/NR-XXXXX) — short description
-- [ ] [NR-XXXXX](https://new-relic.atlassian.net/browse/NR-XXXXX) — short description
+- [NR-XXXXX](https://new-relic.atlassian.net/browse/NR-XXXXX) — short description of what was delivered
+- [NR-XXXXX](https://new-relic.atlassian.net/browse/NR-XXXXX) — short description of what was delivered
 
 ## Production surfaces being updated
 

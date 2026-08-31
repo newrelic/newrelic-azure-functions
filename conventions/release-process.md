@@ -46,6 +46,8 @@ Non-customer-impacting changes (README updates, CI workflow changes, test additi
 - [ ] All stories in this release are merged to `develop` and verified
 - [ ] All stories are linked to the release ticket in Jira
 - [ ] Release ticket is created with the story list and surfaces being updated
+- [ ] Every commit on `develop` since the last release is accounted for in the release ticket — run `git log origin/master..origin/develop --oneline` to check
+- [ ] All customer-facing commits use `feat:` or `fix:` prefix — if not, push an empty `feat:` commit before merging (see [Known Gaps](./known-gaps.md))
 - [ ] CI is passing on `develop`
 - [ ] No incomplete changes are on `develop`
 

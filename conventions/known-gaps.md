@@ -28,6 +28,13 @@ CI only runs lint and unit tests. There are no automated tests that deploy to Az
 
 There is no check preventing a customer-facing change from being committed as `chore:`, which would skip the release. The commit prefix on every PR should be verified against the change type during review — see [Branching & Commit Standards](./branching-and-commits.md).
 
+If commits on `develop` lack conventional prefixes and no release would be triggered on merge, an empty `feat:` commit can be pushed to `develop` before merging the release PR:
+
+```
+git commit --allow-empty -m "feat(<scope>): <summary of what this release delivers>"
+git push origin develop
+```
+
 ---
 
 ## Templates Are Not Independently Versioned
