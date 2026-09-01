@@ -1,3 +1,10 @@
+# [3.4.0](https://github.com/newrelic/newrelic-azure-functions/compare/v3.3.1...v3.4.0) (2026-09-01)
+
+
+### Features
+
+* **templates:** add Flex Consumption for event hub and TLS 1.2 for blob forwarder ([5e31b62](https://github.com/newrelic/newrelic-azure-functions/commit/5e31b62f52fa2e9939c4d73ff0803d514f54fa54))
+
 ## [3.3.1](https://github.com/newrelic/newrelic-azure-functions/compare/v3.3.0...v3.3.1) (2026-08-03)
 
 
