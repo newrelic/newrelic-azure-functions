@@ -427,7 +427,7 @@
     },
     {
         "type": "Microsoft.Storage/storageAccounts",
-        "apiVersion": "2021-04-01",
+        "apiVersion": "2024-01-01",
         "name": "[variables('internalStorageAccountName')]",
         "location": "[variables('location')]",
         "sku": {
@@ -435,6 +435,7 @@
         },
         "kind": "StorageV2",
         "properties": {
+            "minimumTlsVersion": "TLS1_2",
             "publicNetworkAccess": "[if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')]",
             "allowBlobPublicAccess": false,
             "networkAcls": "[if(parameters('disablePublicAccessToStorageAccount'), json('{\"bypass\": \"None\", \"defaultAction\": \"Deny\"}'), json('null'))]"
@@ -442,7 +443,7 @@
     },
     {
         "type": "Microsoft.Web/serverfarms",
-        "apiVersion": "2022-09-01",
+        "apiVersion": "2024-11-01",
         "kind": "[if(parameters('disablePublicAccessToStorageAccount'), 'app', 'functionapp')]",
         "location": "[variables('location')]",
         "name": "[variables('servicePlanName')]",
@@ -451,7 +452,7 @@
     },
     {
         "type": "Microsoft.Web/sites",
-        "apiVersion": "2020-12-01",
+        "apiVersion": "2024-11-01",
         "name": "[variables('functionAppName')]",
         "location": "[variables('location')]",
         "kind": "functionapp",
@@ -497,7 +498,7 @@
               },
               {
                 "name": "AzureWebJobsStorage",
-                "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('internalStorageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName')), '2021-04-01').keys[0].value,';EndpointSuffix=',environment().suffixes.storage)]"
+                "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('internalStorageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('internalStorageAccountName')), '2024-01-01').keys[0].value,';EndpointSuffix=',environment().suffixes.storage)]"
               },
               {
                 "name": "FUNCTIONS_WORKER_RUNTIME",
@@ -521,7 +522,9 @@
               }
             ],
             "alwaysOn": "[parameters('disablePublicAccessToStorageAccount')]",
-            "ftpsState": "Disabled"
+            "ftpsState": "Disabled",
+            "minTlsVersion": "1.2",
+            "scmMinTlsVersion": "1.2"
         },
         "httpsOnly": true,
         "publicNetworkAccess": "[if(parameters('disablePublicAccessToStorageAccount'), 'Disabled', 'Enabled')]"
