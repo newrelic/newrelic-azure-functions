@@ -21,4 +21,4 @@
 - [ ] All stories are linked to the release ticket in Jira
 - [ ] CI is passing on `develop`
 - [ ] Release ticket is approved by manager
-- [ ] Post-release verification steps noted in [Release Process](../conventions/release-process.md)
+- [ ] Post-release verification completed per CLAUDE.md
