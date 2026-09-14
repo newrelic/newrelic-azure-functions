@@ -1,8 +1,10 @@
 ## Jira ticket
 
-<!-- NR-XXXXX -->
+[NR-XXXXX](https://new-relic.atlassian.net/browse/NR-XXXXX)
 
 ## What changed and why
+
+_Describe what was changed and the reason for the change._
 
 ## Production surfaces affected
 
@@ -12,8 +14,7 @@
 
 ## Testing proof
 
-<!-- Attach screenshots, CLI output, or logs showing the change works end-to-end.
-     See conventions/testing-guide.md for what is expected per surface type. -->
+_Attach screenshots, CLI output, or logs showing the change works end-to-end. See CLAUDE.md for what is expected per surface type._
 
 ### Hosting plans tested
 
@@ -28,7 +29,7 @@
 
 ## Checklist
 
-- [ ] Commit message follows conventional commit format (`feat:` / `fix:` / `chore:`)
-- [ ] Unit tests added or updated (if function code changed)
-- [ ] Testing proof attached above
 - [ ] PR title follows conventional commit format (it becomes the commit message on merge)
+- [ ] Unit tests added or updated (if function code changed)
+- [ ] README updated (if setup steps, parameters, or behaviour changed)
+- [ ] Testing proof attached above

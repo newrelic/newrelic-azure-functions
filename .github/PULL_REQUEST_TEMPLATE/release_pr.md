@@ -1,13 +1,11 @@
 ## Release ticket
 
-<!-- NR-XXXXX — must be linked and approved by manager before merge -->
+[NR-XXXXX](https://new-relic.atlassian.net/browse/NR-XXXXX)
 
 ## Stories in this release
 
-<!-- List all stories going out in this release -->
-
-- [NR-XXXXX](https://new-relic.atlassian.net/browse/NR-XXXXX) — short description of what was delivered
-- [NR-XXXXX](https://new-relic.atlassian.net/browse/NR-XXXXX) — short description of what was delivered
+- [NR-XXXXX](https://new-relic.atlassian.net/browse/NR-XXXXX) — _short description of what was delivered_
+- [NR-XXXXX](https://new-relic.atlassian.net/browse/NR-XXXXX) — _short description of what was delivered_
 
 ## Production surfaces being updated
 
