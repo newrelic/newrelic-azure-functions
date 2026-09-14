@@ -227,7 +227,7 @@
                         }
                     },
                     "scaleAndConcurrency": {
-                        "maximumInstanceCount": "[if(equals(parameters('scalingMode'), 'Enterprise'), 32, 4)]",
+                        "maximumInstanceCount": 32,
                         "instanceMemoryMB": 2048
                     },
                     "runtime": {
@@ -396,8 +396,8 @@
             },
             "properties": {
                 "minimumTlsVersion": "1.2",
-                "isAutoInflateEnabled": "[if(equals(parameters('scalingMode'), 'Enterprise'), true(), false())]",
-                "maximumThroughputUnits": "[if(equals(parameters('scalingMode'), 'Enterprise'), 40, 0)]"
+                "isAutoInflateEnabled": "[if(or(equals(parameters('scalingMode'), 'Enterprise'), equals(parameters('scalingMode'), 'Flex')), true(), false())]",
+                "maximumThroughputUnits": "[if(or(equals(parameters('scalingMode'), 'Enterprise'), equals(parameters('scalingMode'), 'Flex')), 40, 0)]"
             }
         },
         {
@@ -411,7 +411,7 @@
             ],
             "properties": {
                 "messageRetentionInDays": 1,
-                "partitionCount": "[if(equals(parameters('scalingMode'), 'Enterprise'), 32, 4)]"
+                "partitionCount": "[if(or(equals(parameters('scalingMode'), 'Enterprise'), equals(parameters('scalingMode'), 'Flex')), 32, 4)]"
             }
         },
         {

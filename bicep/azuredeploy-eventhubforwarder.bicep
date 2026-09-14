@@ -140,7 +140,7 @@ var planConfig = {
         }
       }
       scaleAndConcurrency: {
-        maximumInstanceCount: ((scalingMode == 'Enterprise') ? 32 : 4)
+        maximumInstanceCount: 32
         instanceMemoryMB: 2048
       }
       runtime: {
@@ -260,8 +260,8 @@ resource eventHubNamespace_resource 'Microsoft.EventHub/namespaces@2024-01-01' =
   }
   properties: {
     minimumTlsVersion: '1.2'
-    isAutoInflateEnabled: ((scalingMode == 'Enterprise') ? true : false)
-    maximumThroughputUnits: ((scalingMode == 'Enterprise') ? 40 : 0)
+    isAutoInflateEnabled: (((scalingMode == 'Enterprise') || (scalingMode == 'Flex')) ? true : false)
+    maximumThroughputUnits: (((scalingMode == 'Enterprise') || (scalingMode == 'Flex')) ? 40 : 0)
   }
 }
 
@@ -271,7 +271,7 @@ resource eventHubNamespaceName_eventHub 'Microsoft.EventHub/namespaces/eventhubs
   location: location_var
   properties: {
     messageRetentionInDays: 1
-    partitionCount: ((scalingMode == 'Enterprise') ? 32 : 4)
+    partitionCount: (((scalingMode == 'Enterprise') || (scalingMode == 'Flex')) ? 32 : 4)
   }
 }
 
