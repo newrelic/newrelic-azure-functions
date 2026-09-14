@@ -19,4 +19,7 @@
 - [ ] All stories are linked to the release ticket in Jira
 - [ ] CI is passing on `develop`
 - [ ] Release ticket is approved by manager
+
+## Post-merge checklist
+
 - [ ] Post-release verification completed per CLAUDE.md
