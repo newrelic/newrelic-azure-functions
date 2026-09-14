@@ -1,4 +1,8 @@
 {
+  "branches": [
+    "master",
+    { "name": "develop", "prerelease": true }
+  ],
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
@@ -8,18 +12,28 @@
     ["@semantic-release/npm", {
       "npmPublish": false
     }],
-    ["@semantic-release/git", {
-      "assets": ["docs/CHANGELOG.md", "package.json", "package-lock.json"]
-    }],
     ["semantic-release-plugin-update-version-in-files", {
       "files": [
-        "LogForwarder/index.js"
+        "LogForwarder/index.js",
+        "armTemplates/azuredeploy-eventhubforwarder.json",
+        "armTemplates/azuredeploy-blobforwarder.json",
+        "bicep/azuredeploy-eventhubforwarder.bicep"
       ],
       "placeholder": "0.0.0-development"
     }],
+    ["@semantic-release/git", {
+      "assets": [
+        "docs/CHANGELOG.md",
+        "package.json",
+        "package-lock.json",
+        "armTemplates/azuredeploy-eventhubforwarder.json",
+        "armTemplates/azuredeploy-blobforwarder.json",
+        "bicep/azuredeploy-eventhubforwarder.bicep"
+      ]
+    }],
     ["@semantic-release/exec", {
       "prepareCmd": "npm run package:logforwarder",
-      "publishCmd": "sha256sum LogForwarder.zip > LogForwarder.zip.sha256 && az storage blob upload --account-name nrloggingprodreleases --container-name releases --name log-forwarder-${nextRelease.version}.zip --file LogForwarder.zip --auth-mode login --overwrite && az storage blob upload --account-name nrloggingprodreleases --container-name releases --name log-forwarder-${nextRelease.version}.zip.sha256 --file LogForwarder.zip.sha256 --auth-mode login --overwrite"
+      "publishCmd": "V=\"${nextRelease.version}\"; sha256sum LogForwarder.zip > LogForwarder.zip.sha256 && az storage blob upload --account-name nrloggingprodreleases --container-name releases --name log-forwarder-$V.zip --file LogForwarder.zip --auth-mode login --overwrite && az storage blob upload --account-name nrloggingprodreleases --container-name releases --name log-forwarder-$V.zip.sha256 --file LogForwarder.zip.sha256 --auth-mode login --overwrite && case \"$V\" in *-*) CUTOFF=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ); az storage blob list --account-name nrloggingprodreleases --container-name releases --auth-mode login --query \"[?contains(name, '-develop.') && properties.lastModified < '$CUTOFF'].name\" -o tsv | xargs -r -I{} az storage blob delete --account-name nrloggingprodreleases --container-name releases --name {} --auth-mode login || true;; esac"
     }],
     ["@semantic-release/github", {
       "assets": [
