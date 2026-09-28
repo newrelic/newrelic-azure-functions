@@ -4,6 +4,7 @@ const { requireEnvironmentVariable } = require('./lib/environmentVariables');
 const { waitForLogMessageContaining, countAll } = require('./lib/test-util');
 
 const { beforeEach } = require('node:test');
+const { WAIT_FOR_TEST_COMPLETION } = require('./lib/waitTimes');
 
 process.env.NR_LICENSE_KEY = requireEnvironmentVariable('LICENSE_KEY');
 process.env.NR_ENDPOINT = requireEnvironmentVariable('LOGS_API');
@@ -53,7 +54,7 @@ describe('Event Hub message Forwader tests', () => {
     await eventHubForwarder([line], context);
     // Wait for that log line to show up in NRDB
     await waitForLogMessageContaining(nrdb, line);
-  }, 20000);
+  }, WAIT_FOR_TEST_COMPLETION);
 
   test('a simple event hub forwarding count test', async () => {
     // Create a string with a unique value in it so that we can find it later
@@ -72,7 +73,7 @@ describe('Event Hub message Forwader tests', () => {
       `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
       nLine
     );
-  }, 20000);
+  }, WAIT_FOR_TEST_COMPLETION);
 });
 
 const generateNLines = (content, nLine) => {

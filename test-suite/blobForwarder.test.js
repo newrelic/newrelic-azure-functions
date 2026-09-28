@@ -5,6 +5,7 @@ const { waitForLogMessageContaining, countAll } = require('./lib/test-util');
 
 const { beforeEach } = require('node:test');
 const { ONE_MINUTE } = require('./lib/time');
+const { WAIT_FOR_TEST_COMPLETION } = require('./lib/waitTimes');
 
 process.env.NR_LICENSE_KEY = requireEnvironmentVariable('LICENSE_KEY');
 process.env.NR_ENDPOINT = requireEnvironmentVariable('LOGS_API');
@@ -55,7 +56,7 @@ describe('Blob Forwader tests', () => {
     await blobForwader(buffer, context);
     // Wait for that log line to show up in NRDB
     await waitForLogMessageContaining(nrdb, line);
-  }, 20000);
+  }, WAIT_FOR_TEST_COMPLETION);
 
   test('a simple blob forwarding count test', async () => {
     // Create a string with a unique value in it so that we can find it later
@@ -75,7 +76,7 @@ describe('Blob Forwader tests', () => {
       `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
       nLine
     );
-  }, 20000);
+  }, WAIT_FOR_TEST_COMPLETION);
 
   test(
     'a huge blob forwarding divide and conquer test',
