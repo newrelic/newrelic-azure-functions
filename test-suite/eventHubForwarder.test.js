@@ -46,34 +46,42 @@ describe('Event Hub message Forwader tests', () => {
     process.env = OLD_ENV; // Restore old environment
   });
 
-  test('a simple event hub message forwarding', async () => {
-    // Create a string with a unique value in it so that we can find it later
-    const uuid = uuidv4();
-    const line = `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`;
+  test(
+    'a simple event hub message forwarding',
+    async () => {
+      // Create a string with a unique value in it so that we can find it later
+      const uuid = uuidv4();
+      const line = `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`;
 
-    await eventHubForwarder([line], context);
-    // Wait for that log line to show up in NRDB
-    await waitForLogMessageContaining(nrdb, line);
-  }, WAIT_FOR_TEST_COMPLETION);
+      await eventHubForwarder([line], context);
+      // Wait for that log line to show up in NRDB
+      await waitForLogMessageContaining(nrdb, line);
+    },
+    WAIT_FOR_TEST_COMPLETION
+  );
 
-  test('a simple event hub forwarding count test', async () => {
-    // Create a string with a unique value in it so that we can find it later
-    const uuid = uuidv4();
+  test(
+    'a simple event hub forwarding count test',
+    async () => {
+      // Create a string with a unique value in it so that we can find it later
+      const uuid = uuidv4();
 
-    let nLine = 5;
-    let lines = generateNLines(
-      `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
-      nLine
-    );
+      let nLine = 5;
+      let lines = generateNLines(
+        `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
+        nLine
+      );
 
-    await eventHubForwarder(lines, context);
-    // Wait for that log line to show up in NRDB
-    await countAll(
-      nrdb,
-      `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
-      nLine
-    );
-  }, WAIT_FOR_TEST_COMPLETION);
+      await eventHubForwarder(lines, context);
+      // Wait for that log line to show up in NRDB
+      await countAll(
+        nrdb,
+        `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
+        nLine
+      );
+    },
+    WAIT_FOR_TEST_COMPLETION
+  );
 });
 
 const generateNLines = (content, nLine) => {
