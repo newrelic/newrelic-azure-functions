@@ -65,7 +65,7 @@
       "type": "string",
       "defaultValue": "0.0.0-development",
       "metadata": {
-        "description": "Optional. Version of the newrelic-azure-functions deployment package to install, hosted in Azure Blob Storage (e.g. '3.3.1'). Defaults to the latest version tested with this template at release time."
+        "description": "Optional. Version of the newrelic-azure-functions deployment package to install, hosted in Azure Blob Storage (e.g. '3.3.1'). Defaults to the latest version tested with this template at release time. For develop prerelease builds, set this to the prerelease version (e.g. '3.4.0-develop.1')."
       }
     }
   },

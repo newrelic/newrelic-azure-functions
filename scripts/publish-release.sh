@@ -19,7 +19,7 @@ fi
 
 sha256sum LogForwarder.zip > LogForwarder.zip.sha256
 
-# --overwrite false: fail loudly an already-published version.
+# --overwrite false: fail loudly on an already-published version.
 az storage blob upload \
   --account-name "$ACCOUNT" --container-name "$CONTAINER" \
   --name "log-forwarder-$VERSION.zip" --file LogForwarder.zip \
@@ -35,7 +35,7 @@ case "$VERSION" in
     CUTOFF=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)
     az storage blob list \
       --account-name "$ACCOUNT" --container-name "$CONTAINER" --auth-mode login \
-      --query "[?contains(name, '-develop.') && properties.lastModified < '$CUTOFF'].name" \
+      --query "[?starts_with(name, 'log-forwarder-') && contains(name, '-develop.') && properties.lastModified < '$CUTOFF'].name" \
       -o tsv \
       | xargs -r -I{} az storage blob delete \
           --account-name "$ACCOUNT" --container-name "$CONTAINER" \

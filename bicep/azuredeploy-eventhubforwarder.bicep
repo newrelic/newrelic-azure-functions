@@ -77,7 +77,7 @@ param maxWaitTime string = '00:00:30'
 ])
 param authenticationMode string = 'Local Authentication'
 
-@description('Optional. Version of the newrelic-azure-functions deployment package to install, hosted in Azure Blob Storage (e.g. \'3.3.1\'). Defaults to the latest version tested with this template at release time.')
+@description('Optional. Version of the newrelic-azure-functions deployment package to install, hosted in Azure Blob Storage (e.g. \'3.3.1\'). Defaults to the latest version tested with this template at release time. For develop prerelease builds, set this to the prerelease version (e.g. \'3.4.0-develop.1\').')
 param packageVersion string = '0.0.0-development'
 
 var location_var = ((location == '') ? resourceGroup().location : location)
