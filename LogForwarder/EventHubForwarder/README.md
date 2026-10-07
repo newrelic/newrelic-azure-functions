@@ -220,7 +220,7 @@ Azure Functions v4 uses a package deployment model. Code cannot be edited direct
 | `EVENTHUB_NAME` | `your-eventhub-name` | Name of the Event Hub to read logs from. Example: `insights-logs-activitylogs` |
 | `EVENTHUB_CONSUMER_CONNECTION` | Event Hub connection string | Connection string from your Event Hub **namespace** (not the hub itself). Found in Event Hub Namespace → Settings → Shared access policies → RootManageSharedAccessKey → Connection string-primary key. |
 | `EVENTHUB_CONSUMER_GROUP` | `$Default` | Consumer group name. Use `$Default` or create a dedicated consumer group in your Event Hub. |
-| `WEBSITE_RUN_FROM_PACKAGE` | `https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip` | URL to the deployment package. This tells Azure to download and run the latest function code from GitHub. |
+| `WEBSITE_RUN_FROM_PACKAGE` | `https://nrloggingprodreleases.blob.core.windows.net/releases/log-forwarder-<packageVersion>.zip` | URL to the deployment package, built from the `packageVersion` template parameter. This tells Azure to download and run that version of the function code from Azure Blob Storage. |
 
 #### Optional Settings
 
