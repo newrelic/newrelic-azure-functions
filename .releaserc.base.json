@@ -1,4 +1,8 @@
 {
+  "branches": [
+    "master",
+    { "name": "develop", "prerelease": true }
+  ],
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
@@ -8,18 +12,28 @@
     ["@semantic-release/npm", {
       "npmPublish": false
     }],
-    ["@semantic-release/git", {
-      "assets": ["docs/CHANGELOG.md", "package.json", "package-lock.json"]
-    }],
     ["semantic-release-plugin-update-version-in-files", {
       "files": [
-        "LogForwarder/index.js"
+        "LogForwarder/index.js",
+        "armTemplates/azuredeploy-eventhubforwarder.json",
+        "armTemplates/azuredeploy-blobforwarder.json",
+        "bicep/azuredeploy-eventhubforwarder.bicep"
       ],
       "placeholder": "0.0.0-development"
     }],
+    ["@semantic-release/git", {
+      "assets": [
+        "docs/CHANGELOG.md",
+        "package.json",
+        "package-lock.json",
+        "armTemplates/azuredeploy-eventhubforwarder.json",
+        "armTemplates/azuredeploy-blobforwarder.json",
+        "bicep/azuredeploy-eventhubforwarder.bicep"
+      ]
+    }],
     ["@semantic-release/exec", {
       "prepareCmd": "npm run package:logforwarder",
-      "publishCmd": "sha256sum LogForwarder.zip > LogForwarder.zip.sha256 && az storage blob upload --account-name nrloggingprodreleases --container-name releases --name log-forwarder-${nextRelease.version}.zip --file LogForwarder.zip --auth-mode login --overwrite && az storage blob upload --account-name nrloggingprodreleases --container-name releases --name log-forwarder-${nextRelease.version}.zip.sha256 --file LogForwarder.zip.sha256 --auth-mode login --overwrite"
+      "publishCmd": "bash scripts/publish-release.sh ${nextRelease.version}"
     }],
     ["@semantic-release/github", {
       "assets": [

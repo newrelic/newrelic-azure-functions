@@ -193,7 +193,7 @@ Azure Functions v4 uses a package deployment model. Code cannot be edited direct
 | `BLOB_FORWARDER_ENABLED` | `true`                                                                                           | Enables the Blob Storage trigger. **Must be lowercase** `true`. |
 | `CONTAINER_NAME` | `your-container-name`                                                                            | Name of the container in the target storage account. Example: `logs` to monitor all blobs in the `logs` container. Do NOT include `/{name}` - the function adds this automatically. |
 | `TargetAccountConnection` | Storage account connection string                                                                | Connection string from your target storage account (where logs are stored). Found in Storage Account → Security + networking → Access keys → Connection string. |
-| `WEBSITE_RUN_FROM_PACKAGE` | `https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip` | URL to the deployment package. This tells Azure to download and run the latest function code from GitHub. |
+| `WEBSITE_RUN_FROM_PACKAGE` | `https://nrloggingprodreleases.blob.core.windows.net/releases/log-forwarder-<packageVersion>.zip` | URL to the deployment package, built from the `packageVersion` template parameter. This tells Azure to download and run that version of the function code from Azure Blob Storage. |
 
 #### Optional Settings
 
