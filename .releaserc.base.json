@@ -32,7 +32,7 @@
       ]
     }],
     ["@semantic-release/exec", {
-      "prepareCmd": "if grep -l 0.0.0-development armTemplates/*.json bicep/*.bicep; then echo 'version placeholder was not stamped into the templates' >&2; exit 1; fi && npm run package:logforwarder",
+      "prepareCmd": "bash scripts/verify-template-version.sh ${nextRelease.version} && npm run package:logforwarder",
       "publishCmd": "bash scripts/publish-release.sh ${nextRelease.version}"
     }],
     ["@semantic-release/github", {
