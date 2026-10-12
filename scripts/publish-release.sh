@@ -33,13 +33,17 @@ az storage blob upload \
 case "$VERSION" in
   *-*)
     CUTOFF=$(date -u -d '30 days ago' +%Y-%m-%dT%H:%M:%SZ)
-    az storage blob list \
-      --account-name "$ACCOUNT" --container-name "$CONTAINER" --auth-mode login \
-      --query "[?starts_with(name, 'log-forwarder-') && contains(name, '-develop.') && properties.lastModified < '$CUTOFF'].name" \
-      -o tsv \
-      | xargs -r -I{} az storage blob delete \
+    # List on its own so a failed list is reported instead of looking like "nothing to clean".
+    if STALE=$(az storage blob list \
+        --account-name "$ACCOUNT" --container-name "$CONTAINER" --auth-mode login \
+        --query "[?starts_with(name, 'log-forwarder-') && contains(name, '-develop.') && properties.lastModified < '$CUTOFF'].name" \
+        -o tsv); then
+      printf '%s\n' "$STALE" | xargs -r -I{} az storage blob delete \
           --account-name "$ACCOUNT" --container-name "$CONTAINER" \
           --name {} --auth-mode login \
-      || echo "::warning::cleanup of stale develop prerelease blobs failed"
+        || echo "::warning::deleting stale develop prerelease blobs failed"
+    else
+      echo "::warning::could not list stale develop prerelease blobs; cleanup skipped"
+    fi
     ;;
 esac
