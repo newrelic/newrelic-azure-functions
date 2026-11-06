@@ -22,7 +22,9 @@ for f in armTemplates/azuredeploy-eventhubforwarder.json armTemplates/azuredeplo
   fi
 done
 
-if ! grep -qF "param packageVersion string = '$VERSION'" bicep/azuredeploy-eventhubforwarder.bicep; then
-  echo "bicep/azuredeploy-eventhubforwarder.bicep: packageVersion default is not '$VERSION'" >&2
-  exit 1
-fi
+for f in bicep/azuredeploy-eventhubforwarder.bicep bicep/azuredeploy-blobforwarder.bicep; do
+  if ! grep -qF "param packageVersion string = '$VERSION'" "$f"; then
+    echo "$f: packageVersion default is not '$VERSION'" >&2
+    exit 1
+  fi
+done

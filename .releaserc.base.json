@@ -17,7 +17,8 @@
         "LogForwarder/index.js",
         "armTemplates/azuredeploy-eventhubforwarder.json",
         "armTemplates/azuredeploy-blobforwarder.json",
-        "bicep/azuredeploy-eventhubforwarder.bicep"
+        "bicep/azuredeploy-eventhubforwarder.bicep",
+        "bicep/azuredeploy-blobforwarder.bicep"
       ],
       "placeholder": "0.0.0-development"
     }],
@@ -28,7 +29,8 @@
         "package-lock.json",
         "armTemplates/azuredeploy-eventhubforwarder.json",
         "armTemplates/azuredeploy-blobforwarder.json",
-        "bicep/azuredeploy-eventhubforwarder.bicep"
+        "bicep/azuredeploy-eventhubforwarder.bicep",
+        "bicep/azuredeploy-blobforwarder.bicep"
       ]
     }],
     ["@semantic-release/exec", {
