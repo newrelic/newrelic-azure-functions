@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - develop
     repository_dispatch:
       types: [semantic-release]
 
@@ -51,8 +52,10 @@ jobs:
         run: |
           sudo npm install -g @newrelic/newrelic-oss-cli
 
+      # Not needed on develop: notices aren't in the release zip and are regenerated on master.
       - name: Generate Third Party Notices
         id: generate-notices
+        if: github.ref_name == 'master'
         run: |
           if [ ! -f "third_party_manifest.json" ]; then
             echo "::error::third_party_manifest.json is missing. Must generate using the newrelic-oss-cli."
@@ -99,9 +102,9 @@ jobs:
         with:
           # Avoid using GITHUB_TOKEN, instead use the Open Source Bot personal access token.
           persist-credentials: false
-          # Checkout ref: master because previous job committed third_party_notices and
-          # we need to checkout master to pick up that commit
-          ref: master
+          # Checkout the branch that triggered this run (master or develop) because the
+          # previous job committed third_party_notices there and we need to pick it up
+          ref: ${{ github.ref_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v7

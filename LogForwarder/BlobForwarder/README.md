@@ -51,6 +51,7 @@ Parameters that can be configured in your Azure Resource Manager Template
 | Max Retries To Resend Logs  | no | `3` | Number of times the function will attempt to resend data if there's a failure. |
 | Retry Interval  | no | `2000` | Interval between retry attempts in milliseconds. |
 | Disable Public Access To Storage Account | no | `false` | When set to `true`, disables public network access to the internal storage account used by the Function App. This creates a private network deployment with VNet integration, private endpoints, private DNS zones, and requires a Basic hosting plan or higher. When `false`, uses App Service plan with public access. |
+| Package Version | no | Latest released version (e.g. `3.5.0`) | Version of the function package to install from Azure Blob Storage, e.g. `3.5.0`. For `develop` prerelease builds, set it to the prerelease version (`X.Y.Z-develop.N`). |
 
 ### Architecture
 
@@ -105,7 +106,7 @@ Private VNet Infrastructure (18):
 - 4 Private DNS Zone Groups (connecting private endpoints to DNS zones)
 - 1 Network Configuration (VNet integration for Function App)
 
-**Deployment Method:** WEBSITE_RUN_FROM_PACKAGE with GitHub URL (public ZipDeploy endpoint not accessible)
+**Deployment Method:** WEBSITE_RUN_FROM_PACKAGE with Azure Blob Storage URL (public ZipDeploy endpoint not accessible)
 
 **Use Case:** Compliance requirements, corporate security policies requiring network isolation, no public internet access
 
@@ -193,7 +194,7 @@ Azure Functions v4 uses a package deployment model. Code cannot be edited direct
 | `BLOB_FORWARDER_ENABLED` | `true`                                                                                           | Enables the Blob Storage trigger. **Must be lowercase** `true`. |
 | `CONTAINER_NAME` | `your-container-name`                                                                            | Name of the container in the target storage account. Example: `logs` to monitor all blobs in the `logs` container. Do NOT include `/{name}` - the function adds this automatically. |
 | `TargetAccountConnection` | Storage account connection string                                                                | Connection string from your target storage account (where logs are stored). Found in Storage Account → Security + networking → Access keys → Connection string. |
-| `WEBSITE_RUN_FROM_PACKAGE` | `https://github.com/newrelic/newrelic-azure-functions/releases/latest/download/LogForwarder.zip` | URL to the deployment package. This tells Azure to download and run the latest function code from GitHub. |
+| `WEBSITE_RUN_FROM_PACKAGE` | `https://nrloggingprodreleases.blob.core.windows.net/releases/log-forwarder-<packageVersion>.zip` | URL to the deployment package, built from the `packageVersion` template parameter. This tells Azure to download and run that version of the function code from Azure Blob Storage. |
 
 #### Optional Settings
 
