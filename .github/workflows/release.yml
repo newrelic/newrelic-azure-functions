@@ -49,8 +49,10 @@ jobs:
         run: |
           sudo npm install -g @newrelic/newrelic-oss-cli
 
+      # Not needed on develop: notices aren't in the release zip and are regenerated on master.
       - name: Generate Third Party Notices
         id: generate-notices
+        if: github.ref_name == 'master'
         run: |
           if [ ! -f "third_party_manifest.json" ]; then
             echo "::error::third_party_manifest.json is missing. Must generate using the newrelic-oss-cli."
