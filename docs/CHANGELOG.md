@@ -1,3 +1,17 @@
+# [3.5.0](https://github.com/newrelic/newrelic-azure-functions/compare/v3.4.0...v3.5.0) (2026-11-18)
+
+
+### Bug Fixes
+
+* add explicit workflow permissions to release and repolinter workflows ([950c086](https://github.com/newrelic/newrelic-azure-functions/commit/950c0862fb7f40942b63540cc40f89931d5d62a7))
+* add package URL example to Blob forwarder README ([#210](https://github.com/newrelic/newrelic-azure-functions/issues/210)) ([757a33e](https://github.com/newrelic/newrelic-azure-functions/commit/757a33e37ef036c91ffcc6a554c82c92120fc7ac))
+* increase flaky integration test timeouts to WAIT_FOR_TEST_COMPLETION ([0d60406](https://github.com/newrelic/newrelic-azure-functions/commit/0d60406787e0fb7031895503c41030728d4bf6d2))
+
+
+### Features
+
+* point deployment package URL to Azure Blob Storage ([#179](https://github.com/newrelic/newrelic-azure-functions/issues/179)) ([48b335f](https://github.com/newrelic/newrelic-azure-functions/commit/48b335fc97d35f67b2497edbadd33a44d706fe2d))
+
 # [3.4.0](https://github.com/newrelic/newrelic-azure-functions/compare/v3.3.1...v3.4.0) (2026-09-01)
 
 
