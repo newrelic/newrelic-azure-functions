@@ -5,6 +5,7 @@ const { waitForLogMessageContaining, countAll } = require('./lib/test-util');
 
 const { beforeEach } = require('node:test');
 const { ONE_MINUTE } = require('./lib/time');
+const { WAIT_FOR_TEST_COMPLETION } = require('./lib/waitTimes');
 
 process.env.NR_LICENSE_KEY = requireEnvironmentVariable('LICENSE_KEY');
 process.env.NR_ENDPOINT = requireEnvironmentVariable('LOGS_API');
@@ -46,36 +47,44 @@ describe('Blob Forwader tests', () => {
     process.env = OLD_ENV; // Restore old environment
   });
 
-  test('a simple blob forwarding', async () => {
-    // Create a string with a unique value in it so that we can find it later
-    const uuid = uuidv4();
-    const line = `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`;
-    let buffer = Buffer.from(line);
+  test(
+    'a simple blob forwarding',
+    async () => {
+      // Create a string with a unique value in it so that we can find it later
+      const uuid = uuidv4();
+      const line = `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`;
+      let buffer = Buffer.from(line);
 
-    await blobForwader(buffer, context);
-    // Wait for that log line to show up in NRDB
-    await waitForLogMessageContaining(nrdb, line);
-  }, 20000);
+      await blobForwader(buffer, context);
+      // Wait for that log line to show up in NRDB
+      await waitForLogMessageContaining(nrdb, line);
+    },
+    WAIT_FOR_TEST_COMPLETION
+  );
 
-  test('a simple blob forwarding count test', async () => {
-    // Create a string with a unique value in it so that we can find it later
-    const uuid = uuidv4();
+  test(
+    'a simple blob forwarding count test',
+    async () => {
+      // Create a string with a unique value in it so that we can find it later
+      const uuid = uuidv4();
 
-    let nLine = 5;
-    let line = generateNLines(
-      `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
-      nLine
-    );
-    let buffer = Buffer.from(line);
+      let nLine = 5;
+      let line = generateNLines(
+        `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
+        nLine
+      );
+      let buffer = Buffer.from(line);
 
-    await blobForwader(buffer, context);
-    // Wait for that log line to show up in NRDB
-    await countAll(
-      nrdb,
-      `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
-      nLine
-    );
-  }, 20000);
+      await blobForwader(buffer, context);
+      // Wait for that log line to show up in NRDB
+      await countAll(
+        nrdb,
+        `Lorem Ipsum is simply dummy text of the printing and typesetting industry - ${uuid}`,
+        nLine
+      );
+    },
+    WAIT_FOR_TEST_COMPLETION
+  );
 
   test(
     'a huge blob forwarding divide and conquer test',
