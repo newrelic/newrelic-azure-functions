@@ -1,0 +1,10 @@
+{
+  "name": "a2q-blob-generator-function",
+  "private": true,
+  "description": "Timer-triggered A2Q generator for the Azure Blob Storage log forwarder",
+  "main": "index.js",
+  "dependencies": {
+    "@azure/functions": "^4.11.2",
+    "@azure/storage-blob": "^12.26.0"
+  }
+}

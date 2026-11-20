@@ -1,0 +1,8 @@
+{
+  "name": "a2q-blob-generator",
+  "private": true,
+  "description": "Deterministic sequence-numbered blob writer for A2Q real-traffic coverage of the Azure Blob Storage log forwarder",
+  "dependencies": {
+    "@azure/storage-blob": "^12.26.0"
+  }
+}
