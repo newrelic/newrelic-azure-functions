@@ -126,6 +126,60 @@ Private VNet Infrastructure (18):
 
 ---
 
+## Deploying with Bicep (CLI)
+
+A [Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/overview) version of the template is available at [`bicep/azuredeploy-blobforwarder.bicep`](../../bicep/azuredeploy-blobforwarder.bicep). It is a direct port of the ARM template above and produces the same resources, so it takes the same parameters (see the [ARM Template Parameters](#arm-template-parameters) table) and supports the same two architectures (standard and private network).
+
+### Prerequisites
+
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (the Bicep tooling ships with it; run `az bicep install` once if needed).
+- An existing resource group to deploy into.
+
+### Lint and build
+
+Before deploying, lint and build the template to confirm it is valid:
+
+```bash
+# Lint — reports any warnings or errors
+az bicep lint --file bicep/azuredeploy-blobforwarder.bicep
+
+# Build — compiles the Bicep to ARM JSON (also surfaces any build errors)
+az bicep build --file bicep/azuredeploy-blobforwarder.bicep
+```
+
+A clean build produces no errors. A few informational lint warnings are expected and are consistent with the Event Hub forwarder Bicep template (for example, a hardcoded storage host for the release package URL).
+
+### Deploy
+
+**Standard (public) deployment:**
+
+```bash
+az deployment group create \
+  --resource-group <your-resource-group> \
+  --template-file bicep/azuredeploy-blobforwarder.bicep \
+  --parameters \
+    newRelicLicenseKey=<your-license-key> \
+    targetStorageAccountName=<target-storage-account> \
+    targetContainerName=<target-container>
+```
+
+**Private network deployment** — add `disablePublicAccessToStorageAccount=true`:
+
+```bash
+az deployment group create \
+  --resource-group <your-resource-group> \
+  --template-file bicep/azuredeploy-blobforwarder.bicep \
+  --parameters \
+    newRelicLicenseKey=<your-license-key> \
+    targetStorageAccountName=<target-storage-account> \
+    targetContainerName=<target-container> \
+    disablePublicAccessToStorageAccount=true
+```
+
+To pin a specific package version, add `packageVersion=<version>` (e.g. `packageVersion=3.5.0`).
+
+---
+
 ## Manual Installation
 
 Use this method if you want to manually create and configure the Function App yourself, or if you need more control over the setup process.
