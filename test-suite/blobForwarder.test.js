@@ -1,5 +1,5 @@
 const Nrdb = require('./lib/nrdb');
-const { v4: uuidv4 } = require('uuid');
+let uuidv4; // uuid v14 is ESM-only; loaded via dynamic import() in beforeAll
 const { requireEnvironmentVariable } = require('./lib/environmentVariables');
 const { waitForLogMessageContaining, countAll } = require('./lib/test-util');
 
@@ -26,7 +26,9 @@ describe('Blob Forwader tests', () => {
   });
   const OLD_ENV = process.env;
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    ({ v4: uuidv4 } = await import('uuid'));
+
     const accountId = requireEnvironmentVariable('ACCOUNT_ID');
     const apiKey = requireEnvironmentVariable('API_KEY');
     const nerdGraphUrl = requireEnvironmentVariable('NERD_GRAPH_URL');
