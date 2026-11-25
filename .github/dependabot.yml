@@ -10,7 +10,6 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-      - "github-actions"
     commit-message:
       prefix: "build"
       include: "scope"
@@ -25,7 +24,6 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-      - "javascript"
     commit-message:
       prefix: "build"
       include: "scope"
